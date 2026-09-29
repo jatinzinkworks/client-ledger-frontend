@@ -21,6 +21,7 @@ packages/
 - `pnpm install` — install everything (pnpm 12, Node ≥ 22)
 - `pnpm dev` / `pnpm dev:web` — Vite dev server for the web app (http://localhost:5173)
 - `pnpm dev:mobile` — `expo start` for the mobile app (press `a` / `i` / `w`, or scan with Expo Go)
+- `pnpm dev:mobile:usb` — Android phone over USB: `adb reverse` for 8081/8080, then Expo with the API pointed at `localhost:8080` (no Wi-Fi/firewall needed). `--no-start` only re-applies the reverse routes after re-plugging. Script: [apps/mobile/scripts/usb.mjs](apps/mobile/scripts/usb.mjs)
 - `pnpm build` · `pnpm typecheck` · `pnpm lint` — Turborepo across all workspaces
 - `pnpm test` — Vitest across the workspaces that have tests
 - `pnpm api:fetch-spec` — refresh `packages/api/openapi.json` from a running backend (`API_SPEC_URL` overrides `http://localhost:8080/v3/api-docs`)

@@ -9,6 +9,7 @@
     "dev": "turbo run dev --filter=@cl/web",
     "dev:web": "turbo run dev --filter=@cl/web",
     "dev:mobile": "pnpm --filter @cl/mobile start",
+    "dev:mobile:usb": "pnpm --filter @cl/mobile usb",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",

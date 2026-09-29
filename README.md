@@ -18,6 +18,7 @@ Requires Node 22+ and pnpm (`npm i -g pnpm`).
 pnpm install
 pnpm dev          # web  → http://localhost:5173 (proxies /psc to the backend on :8080)
 pnpm dev:mobile   # Expo → press a / i / w, or scan the QR code with Expo Go
+pnpm dev:mobile:usb   # Android phone over USB (adb reverse) → press a
 ```
 
 The backend (`../client-ledger-backend`) should be running on `http://localhost:8080`. For the Android emulator, set `EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8080` in `apps/mobile/.env`.
