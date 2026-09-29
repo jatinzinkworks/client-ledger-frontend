@@ -1,0 +1,24 @@
+{
+  "name": "@cl/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zinkworks design tokens shared by the web (Tailwind v4) and mobile (NativeWind / Tailwind v3) apps",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./tailwind-preset": "./src/tailwind-preset.cjs",
+    "./theme.css": "./theme.css"
+  },
+  "scripts": {
+    "generate": "node scripts/build-css.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "catalog:"
+  }
+}

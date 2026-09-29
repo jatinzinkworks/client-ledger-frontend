@@ -1,0 +1,513 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Client Ledger API",
+    "description": "REST API for the PSC Client Ledger backend service.",
+    "contact": {
+      "name": "PSC Client Ledger Team"
+    },
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Default server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Global Settings",
+      "description": "Tenant-wide configuration for the Client Ledger, such as payment terms"
+    }
+  ],
+  "paths": {
+    "/psc/cl/v1/global-settings/payment-terms": {
+      "get": {
+        "tags": [
+          "Global Settings"
+        ],
+        "summary": "Fetch payment terms",
+        "description": "Returns the tenant-wide payment terms currently in force. Responds with 404 until they have been created.",
+        "operationId": "getPaymentTerms",
+        "responses": {
+          "200": {
+            "description": "Payment terms found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTermsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment terms have been configured yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Global Settings"
+        ],
+        "summary": "Create or update payment terms",
+        "description": "Stores the tenant-wide payment terms. Payment terms are a singleton setting, so this endpoint creates them on the first call (201) and overwrites them on every subsequent call (200) — there is no separate update endpoint. Any omitted field falls back to its default: payment due 15 days after completion, overdue 60 days after the due date, and reminders disabled. Note that an update replaces the record wholesale, so omitted fields are reset to their defaults rather than left untouched.",
+        "operationId": "savePaymentTerms",
+        "requestBody": {
+          "description": "Payment terms to store",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentTermsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Existing payment terms updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTermsResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Payment terms created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentTermsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A concurrent save conflicted; retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/psc/cl/v1/global-settings/firm-details": {
+      "get": {
+        "tags": [
+          "Global Settings"
+        ],
+        "summary": "Fetch firm details",
+        "description": "Returns the firm details currently in force. Responds with 404 until they have been created.",
+        "operationId": "getFirmDetails",
+        "responses": {
+          "200": {
+            "description": "Firm details found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmDetailsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No firm details have been configured yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Global Settings"
+        ],
+        "summary": "Create or update firm details",
+        "description": "Stores the firm details printed on invoices and Excel exports. Firm details are a singleton setting, so this endpoint creates them on the first call (201) and overwrites them on every subsequent call (200) - there is no separate update endpoint. firmName, gstin and address are mandatory; a save replaces the record wholesale, so omitted fields are cleared rather than left untouched.",
+        "operationId": "saveFirmDetails",
+        "requestBody": {
+          "description": "Firm details to store",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirmDetailsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Existing firm details updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmDetailsResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Firm details created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmDetailsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A concurrent save conflicted; retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PaymentTermsRequest": {
+        "type": "object",
+        "description": "Payment terms to store under Global Settings",
+        "properties": {
+          "paymentDueAfterDays": {
+            "type": "integer",
+            "format": "int32",
+            "default": 15,
+            "description": "Days after work completion before payment becomes due",
+            "example": 15,
+            "maximum": 365,
+            "minimum": 1
+          },
+          "markOverdueAfterDays": {
+            "type": "integer",
+            "format": "int32",
+            "default": 60,
+            "description": "Days after the payment due date before an unpaid invoice is marked overdue",
+            "example": 60,
+            "maximum": 365,
+            "minimum": 1
+          },
+          "paymentReminderEnabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether payment reminders are sent for outstanding invoices",
+            "example": true
+          },
+          "paymentReminderDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Days before the due date on which a reminder is sent. Required when paymentReminderEnabled is true, ignored otherwise",
+            "example": 7,
+            "maximum": 365,
+            "minimum": 1
+          }
+        }
+      },
+      "PaymentTermsResponse": {
+        "type": "object",
+        "description": "Payment terms currently held under Global Settings",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the payment terms record",
+            "example": "3f2a6c1e-8b4d-4a91-9f0c-2d5e7a1b3c4d"
+          },
+          "paymentDueAfterDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Days after work completion before payment becomes due",
+            "example": 15
+          },
+          "markOverdueAfterDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Days after the payment due date before an unpaid invoice is marked overdue",
+            "example": 60
+          },
+          "paymentReminderEnabled": {
+            "type": "boolean",
+            "description": "Whether payment reminders are sent for outstanding invoices",
+            "example": true
+          },
+          "paymentReminderDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Days before the due date on which a reminder is sent. Absent when reminders are disabled",
+            "example": 7
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the record was created",
+            "example": "2026-09-29T10:15:30Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the record was last updated",
+            "example": "2026-09-29T10:15:30Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error payload",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Moment the error was produced",
+            "example": "2026-09-29T10:15:30Z"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "code": {
+            "type": "string",
+            "description": "Short, machine-friendly error code",
+            "example": "VALIDATION_FAILED"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable summary of what went wrong",
+            "example": "One or more fields are invalid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path that produced the error",
+            "example": "/psc/cl/v1/global-settings/payment-terms"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Field level validation failures, present only for validation errors",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            }
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "description": "A single field level validation failure",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Name of the offending field",
+            "example": "markOverdueAfterDays"
+          },
+          "message": {
+            "type": "string",
+            "description": "Why the value was rejected",
+            "example": "must be greater than or equal to 1"
+          }
+        }
+      },
+      "FirmDetailsRequest": {
+        "type": "object",
+        "description": "Firm details to store under Global Settings",
+        "properties": {
+          "firmName": {
+            "type": "string",
+            "description": "Registered name of the firm, as printed on invoices",
+            "example": "Pranay Singhal & Company",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "gstin": {
+            "type": "string",
+            "description": "Goods and Services Tax Identification Number",
+            "example": "27AAKFP4471M1ZS",
+            "minLength": 1,
+            "pattern": "^[0-9]{2}[A-Za-z]{5}[0-9]{4}[A-Za-z][1-9A-Za-z][Zz][0-9A-Za-z]$"
+          },
+          "firmRegistrationNo": {
+            "type": "string",
+            "description": "Firm registration number issued by the regulating body",
+            "example": "FRN 0148290W",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email address printed on invoices",
+            "example": "accounts@pranaysinghal.in",
+            "maxLength": 254,
+            "minLength": 0
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number printed on invoices",
+            "example": "+91 22 4012 8890",
+            "maxLength": 30,
+            "minLength": 0,
+            "pattern": "^[+]?[0-9 ()-]{6,30}$"
+          },
+          "address": {
+            "type": "string",
+            "description": "Postal address printed on invoices",
+            "example": "302, Hubtown Solaris, N.S. Phadke Marg, Andheri East, Mumbai 400069",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "address",
+          "firmName",
+          "gstin"
+        ]
+      },
+      "FirmDetailsResponse": {
+        "type": "object",
+        "description": "Firm details currently held under Global Settings",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the firm details record",
+            "example": "7c1d9f42-5a3b-4e88-9b21-6f0e8d4a2c17"
+          },
+          "firmName": {
+            "type": "string",
+            "description": "Registered name of the firm",
+            "example": "Pranay Singhal & Company"
+          },
+          "gstin": {
+            "type": "string",
+            "description": "Goods and Services Tax Identification Number",
+            "example": "27AAKFP4471M1ZS"
+          },
+          "firmRegistrationNo": {
+            "type": "string",
+            "description": "Firm registration number",
+            "example": "FRN 0148290W"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "accounts@pranaysinghal.in"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+91 22 4012 8890"
+          },
+          "address": {
+            "type": "string",
+            "description": "Postal address",
+            "example": "302, Hubtown Solaris, N.S. Phadke Marg, Andheri East, Mumbai 400069"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the record was created",
+            "example": "2026-09-29T10:15:30Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the record was last updated",
+            "example": "2026-09-29T10:15:30Z"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "JWT bearer token. Supply the raw token — the 'Bearer ' prefix is added for you.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

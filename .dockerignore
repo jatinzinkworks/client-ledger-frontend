@@ -1,0 +1,23 @@
+# `COPY . .` runs after `npm ci`, so anything listed here would otherwise be
+# copied over the image's own install. node_modules is the dangerous one: the
+# host's copy holds platform-native binaries (rollup, esbuild) built for the
+# developer's OS, which then fail inside Alpine.
+node_modules
+dist
+coverage
+
+.git
+.gitignore
+.github
+
+# Local overrides are developer-specific and must never reach an image.
+# `.env` itself is kept: it supplies the VITE_* fallbacks when a build arg is
+# not passed.
+*.local
+
+.vscode
+.idea
+*.log
+
+Dockerfile
+.dockerignore

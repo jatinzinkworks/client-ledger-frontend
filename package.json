@@ -1,0 +1,23 @@
+{
+  "name": "client-ledger-frontend",
+  "private": true,
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev --filter=@cl/web",
+    "dev:web": "turbo run dev --filter=@cl/web",
+    "dev:mobile": "pnpm --filter @cl/mobile start",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "api:fetch-spec": "pnpm --filter @cl/api fetch-spec",
+    "api:generate": "pnpm --filter @cl/api generate"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.5",
+    "typescript": "catalog:"
+  }
+}

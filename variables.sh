@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+PROJECT="zinkworks-tools-poc"
+REGION="europe-west2"
+SERVICE="client-ledger-frontend"
+ARTIFACT_REPO="docker-release"
+REPO=${REGION}"-docker.pkg.dev/${PROJECT}/${ARTIFACT_REPO}/${SERVICE}"
+VERSION="test"
+IMAGE="${REPO}:${VERSION}"

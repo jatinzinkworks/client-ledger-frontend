@@ -1,0 +1,18 @@
+packages:
+  - apps/*
+  - packages/*
+
+# One version of each of these across every workspace. React in particular must be a
+# single copy: the shared packages (@cl/api hooks) run inside both apps, and two Reacts
+# mean "Invalid hook call". Expo pins React, so the web app follows Expo's version.
+catalog:
+  react: 19.2.3
+  react-dom: 19.2.3
+  '@types/react': ~19.2.2
+  typescript: ~6.0.3
+  zod: ^4.6.5
+  '@tanstack/react-query': ^5.104.0
+  vitest: ^5.0.2
+
+allowBuilds:
+  esbuild: true

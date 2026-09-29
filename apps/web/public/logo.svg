@@ -1,0 +1,8 @@
+<svg width="132" height="52" viewBox="0 0 132 52" xmlns="http://www.w3.org/2000/svg" font-family="Lato, 'Helvetica Neue', Arial, sans-serif">
+  <text x="0" y="34" font-size="36" font-weight="900" fill="#04224C" letter-spacing="-1">PSC</text>
+  <rect x="1" y="41" width="78" height="3" rx="1" fill="#18B389"/>
+  <rect x="1" y="47" width="78" height="3" rx="1" fill="#18B389"/>
+  <rect x="92" y="4" width="1.5" height="46" fill="#D5DCE4"/>
+  <text x="104" y="22" font-size="15" font-weight="900" fill="#006161">CA</text>
+  <path d="M104 34 l5 5 l10 -11" fill="none" stroke="#006161" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
