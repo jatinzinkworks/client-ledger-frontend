@@ -60,7 +60,8 @@ Tests use [Vitest](https://vitest.dev); the web app adds React Testing Library (
 ### Mobile app ([apps/mobile](apps/mobile))
 
 - Expo Router: every file in `src/app/` is a route; `_layout.tsx` files are navigators. [src/app/_layout.tsx](apps/mobile/src/app/_layout.tsx) — `configureApi`, `QueryClientProvider`, `ThemeRoot`; `(tabs)/` — bottom tabs driven by [utils/navigation.ts](apps/mobile/src/utils/navigation.ts). Keep non-route code out of `src/app/`.
-- `src/components/ui/` is the small native UI kit (Button, Card, DaysField) styled with NativeWind classes; `src/theme/` maps tokens onto CSS variables and the navigation theme; the app follows the OS appearance.
+- Settings on mobile is one [SettingsCard](apps/mobile/src/components/settings/SettingsCard.tsx) per section, each with its own form and Save button, fed by the same `@cl/api` hook and `@cl/schemas` schema as the web section.
+- `src/components/ui/` is the small native UI kit (Button, Card, DaysField, TextField) styled with NativeWind classes; `src/theme/` maps tokens onto CSS variables and the navigation theme; the app follows the OS appearance.
 - **Read [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md) before touching Expo APIs** — Expo changes every SDK; check the versioned docs, and add native packages with `npx expo install <pkg>` (run in `apps/mobile`), not `pnpm add`, so versions match the SDK. `ios/` and `android/` are generated (CNG) and git-ignored — configure native behaviour in `app.json`.
 - pnpm isolates dependencies, so anything injected into app code by a build tool must be a **direct** dependency of `@cl/mobile` (that's why `react-native-css-interop` and `babel-preset-expo` are listed explicitly). Metro's monorepo support is automatic — don't add `watchFolders` / `nodeModulesPaths`.
 

@@ -1,47 +1,41 @@
-import { errorMessage, usePaymentTerms } from '@cl/api';
-import { paymentTermsFormDefaults } from '@cl/schemas';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { useFirmDetails, usePaymentTerms } from '@cl/api';
+import {
+  FIRM_DETAILS_SECTION,
+  PAYMENT_TERMS_SECTION,
+  firmDetailsFormDefaults,
+  paymentTermsFormDefaults,
+} from '@cl/schemas';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
+import { FirmDetailsForm } from '@/components/settings/FirmDetailsForm';
 import { PaymentTermsForm } from '@/components/settings/PaymentTermsForm';
-import { Button } from '@/components/ui/Button';
-import { Card, CardDescription, CardTitle } from '@/components/ui/Card';
-import { useThemeColors } from '@/theme/useThemeColors';
+import { SettingsCard } from '@/components/settings/SettingsCard';
 
 export default function SettingsScreen() {
-  const terms = usePaymentTerms();
-  const colors = useThemeColors();
+  const paymentTerms = usePaymentTerms();
+  const firmDetails = useFirmDetails();
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
       <ScrollView contentContainerClassName="gap-4 p-4" keyboardShouldPersistTaps="handled">
-        <Card>
-          <View className="gap-1">
-            <CardTitle>Payment terms</CardTitle>
-            <CardDescription>
-              {terms.notConfigured
-                ? 'Not configured yet — the defaults below apply until you save.'
-                : 'Tenant-wide rules for invoicing, overdue marking and reminders.'}
-            </CardDescription>
-          </View>
+        <SettingsCard {...PAYMENT_TERMS_SECTION} setting={paymentTerms} savedMessage="Payment Terms Saved.">
+          <PaymentTermsForm
+            // Re-seed the form whenever a different stored version arrives (including after a save).
+            key={paymentTerms.stored?.updatedAt ?? 'defaults'}
+            defaultValues={paymentTermsFormDefaults(paymentTerms.stored)}
+            onSubmit={paymentTerms.save}
+            saving={paymentTerms.saving}
+          />
+        </SettingsCard>
 
-          {terms.isLoading && <ActivityIndicator color={colors.mutedForeground} />}
-          {terms.loadError && (
-            <View className="gap-3">
-              <Text className="text-sm text-destructive">{errorMessage(terms.loadError)}</Text>
-              <Button variant="outline" label="Retry" onPress={() => terms.refetch()} />
-            </View>
-          )}
-          {!terms.isLoading && !terms.loadError && (
-            <PaymentTermsForm
-              key={terms.stored?.updatedAt ?? 'defaults'}
-              defaultValues={paymentTermsFormDefaults(terms.stored)}
-              onSubmit={terms.save}
-              saving={terms.saving}
-            />
-          )}
-          {terms.saveError && <Text className="text-sm text-destructive">{errorMessage(terms.saveError)}</Text>}
-          {terms.saved && <Text className="text-sm text-success">Payment terms saved</Text>}
-        </Card>
+        <SettingsCard {...FIRM_DETAILS_SECTION} setting={firmDetails} savedMessage="Firm Details Saved.">
+          <FirmDetailsForm
+            key={firmDetails.stored?.updatedAt ?? 'blank'}
+            defaultValues={firmDetailsFormDefaults(firmDetails.stored)}
+            onSubmit={firmDetails.save}
+            saving={firmDetails.saving}
+          />
+        </SettingsCard>
       </ScrollView>
     </KeyboardAvoidingView>
   );

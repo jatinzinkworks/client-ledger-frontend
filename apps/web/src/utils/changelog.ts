@@ -9,6 +9,11 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '30 Sep 2026, 11:23:52',
+    highlights: ['Firm Details can now be viewed and edited in the mobile app, under Settings.'],
+  },
+  {
+    version: '0.1.0',
     date: '29 Sep 2026, 17:34:10',
     highlights: [
       'Added Firm Details to Settings — firm name, GSTIN, registration number, email, phone and address, as printed on invoices and exports. Save Settings now saves whichever sections you changed.',

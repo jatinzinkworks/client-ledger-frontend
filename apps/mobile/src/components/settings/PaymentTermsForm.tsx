@@ -1,4 +1,4 @@
-import { fieldErrors, type PaymentTermsRequest } from '@cl/api';
+import type { PaymentTermsRequest } from '@cl/api';
 import {
   PAYMENT_TERMS_DAY_FIELDS,
   paymentTermsFormSchema,
@@ -14,6 +14,7 @@ import { Switch, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { DaysField } from '@/components/ui/DaysField';
 import { useThemeColors } from '@/theme/useThemeColors';
+import { applyFieldErrors } from '@/utils/applyFieldErrors';
 
 interface PaymentTermsFormProps {
   defaultValues: PaymentTermsFormInput;
@@ -41,9 +42,7 @@ export function PaymentTermsForm({ defaultValues, onSubmit, saving }: PaymentTer
       await onSubmit(toPaymentTermsRequest(values));
       reset(values);
     } catch (error) {
-      for (const [field, message] of Object.entries(fieldErrors(error))) {
-        setError(field as keyof PaymentTermsFormInput, { message });
-      }
+      applyFieldErrors(error, setError);
     }
   });
 
@@ -70,15 +69,15 @@ export function PaymentTermsForm({ defaultValues, onSubmit, saving }: PaymentTer
 
       <View className="flex-row items-center justify-between gap-4 rounded-md border border-border p-4">
         <View className="flex-1 gap-1">
-          <Text className="text-sm font-bold text-foreground">Payment reminders</Text>
-          <Text className="text-sm text-muted-foreground">Remind clients about outstanding invoices</Text>
+          <Text className="text-sm font-bold text-foreground">Payment Reminders</Text>
+          <Text className="text-sm text-muted-foreground">Remind Clients About Outstanding Invoices</Text>
         </View>
         <Controller
           control={control}
           name="paymentReminderEnabled"
           render={({ field }) => (
             <Switch
-              accessibilityLabel="Payment reminders"
+              accessibilityLabel="Payment Reminders"
               value={field.value}
               onValueChange={field.onChange}
               trackColor={{ true: colors.primary, false: colors.muted }}
@@ -88,7 +87,7 @@ export function PaymentTermsForm({ defaultValues, onSubmit, saving }: PaymentTer
       </View>
       {remindersOn && dayField('paymentReminderDays')}
 
-      <Button label={saving ? 'Saving…' : 'Save payment terms'} disabled={saving || !isDirty} onPress={submit} />
+      <Button label={saving ? 'Saving…' : 'Save Payment Terms'} disabled={saving || !isDirty} onPress={submit} />
     </View>
   );
 }
