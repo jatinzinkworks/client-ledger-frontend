@@ -9,6 +9,18 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '01 Oct 2026, 18:52:49',
+    highlights: [
+      'Managers are now in the mobile app too, and in both apps they are listed by name from A to Z and sit right after Overview in the menu.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '01 Oct 2026, 18:23:37',
+    highlights: ['Added Managers: see your team with their roles and phone numbers, and add, edit or remove managers.'],
+  },
+  {
+    version: '0.1.0',
     date: '01 Oct 2026, 15:54:05',
     highlights: ['Services are now in the mobile app too: browse, search and filter the catalog, and add, edit or delete services.'],
   },

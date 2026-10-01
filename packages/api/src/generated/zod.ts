@@ -111,6 +111,81 @@ export const DeleteServiceResponse = zod.void()
 
 
 /**
+ * Returns one manager by identifier.
+ * @summary Fetch a manager
+ */
+export const GetManagerParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the manager')
+})
+
+export const GetManagerResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the manager'),
+  "firstName": zod.string().optional().describe('Given name of the manager'),
+  "lastName": zod.string().optional().describe('Family name of the manager'),
+  "email": zod.string().optional().describe('Work email address'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
+}).describe('A manager held in the catalog')
+
+
+/**
+ * Replaces a manager wholesale. Every field is mandatory, so nothing is left behind from the previous version.
+ * @summary Update a manager
+ */
+export const UpdateManagerParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the manager')
+})
+
+export const updateManagerBodyFirstNameMin = 0;
+export const updateManagerBodyFirstNameMax = 100;
+
+export const updateManagerBodyLastNameMin = 0;
+export const updateManagerBodyLastNameMax = 100;
+
+export const updateManagerBodyEmailMin = 0;
+export const updateManagerBodyEmailMax = 254;
+
+export const updateManagerBodyMobileNumberMin = 0;
+export const updateManagerBodyMobileNumberMax = 20;
+
+
+export const updateManagerBodyMobileNumberRegExp = new RegExp('^[+]?[0-9 ()-]{6,20}$');
+
+
+export const UpdateManagerBody = zod.object({
+  "firstName": zod.string().min(updateManagerBodyFirstNameMin).max(updateManagerBodyFirstNameMax).describe('Given name of the manager'),
+  "lastName": zod.string().min(updateManagerBodyLastNameMin).max(updateManagerBodyLastNameMax).describe('Family name of the manager'),
+  "email": zod.email().min(updateManagerBodyEmailMin).max(updateManagerBodyEmailMax).describe('Work email address, unique across the catalog'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().min(updateManagerBodyMobileNumberMin).max(updateManagerBodyMobileNumberMax).regex(updateManagerBodyMobileNumberRegExp).describe('Mobile contact number')
+}).describe('Manager to store in the catalog')
+
+export const UpdateManagerResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the manager'),
+  "firstName": zod.string().optional().describe('Given name of the manager'),
+  "lastName": zod.string().optional().describe('Family name of the manager'),
+  "email": zod.string().optional().describe('Work email address'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
+}).describe('A manager held in the catalog')
+
+
+/**
+ * Removes a manager from the catalog.
+ * @summary Delete a manager
+ */
+export const DeleteManagerParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the manager')
+})
+
+export const DeleteManagerResponse = zod.void()
+
+
+/**
  * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.
  * @summary List services
  */
@@ -193,6 +268,63 @@ export const CreateServiceResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
 }).describe('A service held in the catalog')
+
+
+/**
+ * Returns every manager, ordered by last name then first name. The list is returned whole; it is not paged.
+ * @summary List managers
+ */
+export const ListManagersResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the manager'),
+  "firstName": zod.string().optional().describe('Given name of the manager'),
+  "lastName": zod.string().optional().describe('Family name of the manager'),
+  "email": zod.string().optional().describe('Work email address'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
+}).describe('A manager held in the catalog')
+export const ListManagersResponse = zod.array(ListManagersResponseItem)
+
+
+/**
+ * Adds a manager to the catalog. Every field is mandatory, and the email address must be unique across the catalog, ignoring case.
+ * @summary Create a manager
+ */
+export const createManagerBodyFirstNameMin = 0;
+export const createManagerBodyFirstNameMax = 100;
+
+export const createManagerBodyLastNameMin = 0;
+export const createManagerBodyLastNameMax = 100;
+
+export const createManagerBodyEmailMin = 0;
+export const createManagerBodyEmailMax = 254;
+
+export const createManagerBodyMobileNumberMin = 0;
+export const createManagerBodyMobileNumberMax = 20;
+
+
+export const createManagerBodyMobileNumberRegExp = new RegExp('^[+]?[0-9 ()-]{6,20}$');
+
+
+export const CreateManagerBody = zod.object({
+  "firstName": zod.string().min(createManagerBodyFirstNameMin).max(createManagerBodyFirstNameMax).describe('Given name of the manager'),
+  "lastName": zod.string().min(createManagerBodyLastNameMin).max(createManagerBodyLastNameMax).describe('Family name of the manager'),
+  "email": zod.email().min(createManagerBodyEmailMin).max(createManagerBodyEmailMax).describe('Work email address, unique across the catalog'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().min(createManagerBodyMobileNumberMin).max(createManagerBodyMobileNumberMax).regex(createManagerBodyMobileNumberRegExp).describe('Mobile contact number')
+}).describe('Manager to store in the catalog')
+
+export const CreateManagerResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the manager'),
+  "firstName": zod.string().optional().describe('Given name of the manager'),
+  "lastName": zod.string().optional().describe('Family name of the manager'),
+  "email": zod.string().optional().describe('Work email address'),
+  "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
+  "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
+}).describe('A manager held in the catalog')
 
 
 /**

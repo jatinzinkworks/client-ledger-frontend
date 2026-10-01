@@ -14,19 +14,23 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
-interface DeleteServiceButtonProps {
-  serviceName: string
-  /** Companies subscribing to the service — the backend refuses to delete one that is in use. */
-  usedByCompanies: number
+interface DeleteButtonProps {
+  /** Button and confirm-action text, e.g. "Delete Service". */
+  label: string
+  /** Name of the record, used in the dialog title. */
+  itemName: string
+  /** Dialog body explaining what deleting does. */
+  description: string
+  /** Why deleting is not allowed right now; disables the button and shows as its tooltip. */
+  disabledReason?: string
   onDelete: () => Promise<unknown>
   deleting: boolean
 }
 
-/** "Delete Service", confirmed in a dialog. Disabled while companies still subscribe. */
-export function DeleteServiceButton({ serviceName, usedByCompanies, onDelete, deleting }: DeleteServiceButtonProps) {
+/** A destructive text button that asks for confirmation in a dialog before deleting. */
+export function DeleteButton({ label, itemName, description, disabledReason, onDelete, deleting }: DeleteButtonProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string>()
-  const inUse = usedByCompanies > 0
 
   const confirm = async (event: React.MouseEvent) => {
     event.preventDefault() // keep the dialog open until the request settles
@@ -46,19 +50,17 @@ export function DeleteServiceButton({ serviceName, usedByCompanies, onDelete, de
           type="button"
           variant="ghost"
           size="touch"
-          disabled={inUse}
-          title={inUse ? 'Companies Still Subscribe To This Service' : undefined}
+          disabled={!!disabledReason}
+          title={disabledReason}
           className="px-0 text-destructive hover:bg-transparent hover:text-destructive/80"
         >
-          Delete Service
+          {label}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {serviceName}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            The Service Is Removed From The Catalog. This Cannot Be Undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>Delete {itemName}?</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <AlertDialogFooter>
@@ -68,7 +70,7 @@ export function DeleteServiceButton({ serviceName, usedByCompanies, onDelete, de
             disabled={deleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {deleting ? 'Deleting…' : 'Delete Service'}
+            {deleting ? 'Deleting…' : label}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -19,12 +19,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
+import { DeleteButton } from '@/components/DeleteButton'
 import { SelectField } from '@/components/form/SelectField'
 import { TextField } from '@/components/form/TextField'
 import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
-import { DeleteServiceButton } from './DeleteServiceButton'
 import { InvoiceScheduleFields } from './InvoiceScheduleFields'
 
 interface ServiceEditorProps {
@@ -153,9 +153,11 @@ export function ServiceEditor({ service, defaultCategory, onSave, onDelete, savi
 
         <SheetFooter className="flex-row items-center gap-3 border-t border-border p-6">
           {!isNew && (
-            <DeleteServiceButton
-              serviceName={service.serviceName ?? 'this service'}
-              usedByCompanies={service.usedByCompanies ?? 0}
+            <DeleteButton
+              label="Delete Service"
+              itemName={service.serviceName ?? 'This Service'}
+              description="The Service Is Removed From The Catalog. This Cannot Be Undone."
+              disabledReason={service.usedByCompanies ? 'Companies Still Subscribe To This Service' : undefined}
               onDelete={async () => {
                 await onDelete()
                 onDone()

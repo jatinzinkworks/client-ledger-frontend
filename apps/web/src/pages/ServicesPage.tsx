@@ -1,14 +1,14 @@
-import { errorMessage, useServiceCatalog, type CatalogServiceResponse } from '@cl/api'
+import { useServiceCatalog, type CatalogServiceResponse } from '@cl/api'
 import { filterServices, type CategoryFilter } from '@cl/schemas'
-import { CircleAlert, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { LoadError } from '@/components/LoadError'
 import { PageHeader } from '@/components/PageHeader'
 import { ServiceCard } from '@/components/services/ServiceCard'
 import { ServiceEditor } from '@/components/services/ServiceEditor'
 import { ServiceFilters } from '@/components/services/ServiceFilters'
 import { Spinner } from '@/components/Spinner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 
@@ -41,17 +41,7 @@ export function ServicesPage() {
       <ServiceFilters query={query} onQueryChange={setQuery} category={category} onCategoryChange={setCategory} />
 
       {catalog.isLoading && <Spinner />}
-      {catalog.loadError && (
-        <Alert variant="destructive">
-          <CircleAlert />
-          <AlertDescription className="flex flex-wrap items-center gap-3">
-            {errorMessage(catalog.loadError)}
-            <Button variant="outline" size="sm" onClick={() => catalog.refetch()}>
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
+      {catalog.loadError && <LoadError error={catalog.loadError} onRetry={() => catalog.refetch()} />}
 
       {!catalog.isLoading && !catalog.loadError && (
         visible.length ? (

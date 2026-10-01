@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, LayoutDashboard, Settings, type LucideIcon } from 'lucide-react'
+import { BriefcaseBusiness, LayoutDashboard, Settings, UserCog, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -9,6 +9,7 @@ export interface NavItem {
 /** Sidebar entries, top to bottom. Add a screen here and in the route table in App.tsx. */
 export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/', label: 'Overview', icon: LayoutDashboard },
+  { to: '/managers', label: 'Managers', icon: UserCog },
   { to: '/services', label: 'Services', icon: BriefcaseBusiness },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
