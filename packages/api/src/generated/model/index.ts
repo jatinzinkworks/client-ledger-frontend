@@ -6,9 +6,18 @@
  * OpenAPI spec version: v1
  */
 
+export * from './catalogServiceRequest';
+export * from './catalogServiceRequestBillingFrequency';
+export * from './catalogServiceRequestCategory';
+export * from './catalogServiceResponse';
+export * from './catalogServiceResponseBillingFrequency';
+export * from './catalogServiceResponseCategory';
 export * from './errorResponse';
 export * from './fieldError';
 export * from './firmDetailsRequest';
 export * from './firmDetailsResponse';
+export * from './invoiceSchedule';
+export * from './invoiceScheduleMonth';
+export * from './invoiceScheduleMonthOfQuarter';
 export * from './paymentTermsRequest';
 export * from './paymentTermsResponse';

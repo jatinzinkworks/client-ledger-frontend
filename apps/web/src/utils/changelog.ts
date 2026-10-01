@@ -9,6 +9,23 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '01 Oct 2026, 15:54:05',
+    highlights: ['Services are now in the mobile app too: browse, search and filter the catalog, and add, edit or delete services.'],
+  },
+  {
+    version: '0.1.0',
+    date: '01 Oct 2026, 14:23:31',
+    highlights: ['Fixed the Services page failing to load when the catalog contains an annual service.'],
+  },
+  {
+    version: '0.1.0',
+    date: '01 Oct 2026, 14:09:48',
+    highlights: [
+      'Added Services: browse the service catalog by name and category, and add, edit or delete services with their fees, GST and invoice schedules.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '30 Sep 2026, 11:23:52',
     highlights: ['Firm Details can now be viewed and edited in the mobile app, under Settings.'],
   },

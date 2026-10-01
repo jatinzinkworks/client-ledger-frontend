@@ -8,6 +8,194 @@
 import * as zod from 'zod';
 
 /**
+ * Returns one service by its identifier.
+ * @summary Fetch a service
+ */
+export const GetServiceParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the service')
+})
+
+export const getServiceResponseInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const GetServiceResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the service'),
+  "serviceName": zod.string().optional().describe('Name of the service'),
+  "description": zod.string().optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How often the service is billed'),
+  "standardFee": zod.number().optional().describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(getServiceResponseInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
+  "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
+}).describe('A service held in the catalog')
+
+
+/**
+ * Replaces a service wholesale, so omitted fields are cleared rather than left untouched. The same invoice schedule rules as create apply. The subscriber count cannot be changed through this endpoint.
+ * @summary Update a service
+ */
+export const UpdateServiceParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the service')
+})
+
+export const updateServiceBodyServiceNameMin = 0;
+export const updateServiceBodyServiceNameMax = 150;
+
+export const updateServiceBodyDescriptionMin = 0;
+export const updateServiceBodyDescriptionMax = 1000;
+
+export const updateServiceBodyStandardFeeMin = 0;
+
+export const updateServiceBodyGstRatePercentDefault = 18;
+export const updateServiceBodyGstRatePercentMin = 0;
+export const updateServiceBodyGstRatePercentMax = 100;
+
+export const updateServiceBodyInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const UpdateServiceBody = zod.object({
+  "serviceName": zod.string().min(updateServiceBodyServiceNameMin).max(updateServiceBodyServiceNameMax).describe('Name of the service, unique across the catalog'),
+  "description": zod.string().min(updateServiceBodyDescriptionMin).max(updateServiceBodyDescriptionMax).optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).describe('How often the service is billed'),
+  "standardFee": zod.number().min(updateServiceBodyStandardFeeMin).describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().min(updateServiceBodyGstRatePercentMin).max(updateServiceBodyGstRatePercentMax).default(updateServiceBodyGstRatePercentDefault).describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(updateServiceBodyInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Omit entirely for ONE_OFF billing')
+}).describe('Service to add to the catalog')
+
+export const updateServiceResponseInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const UpdateServiceResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the service'),
+  "serviceName": zod.string().optional().describe('Name of the service'),
+  "description": zod.string().optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How often the service is billed'),
+  "standardFee": zod.number().optional().describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(updateServiceResponseInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
+  "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
+}).describe('A service held in the catalog')
+
+
+/**
+ * Removes a service from the catalog. A service that companies still subscribe to cannot be deleted and is rejected with 409.
+ * @summary Delete a service
+ */
+export const DeleteServiceParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the service')
+})
+
+export const DeleteServiceResponse = zod.void()
+
+
+/**
+ * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.
+ * @summary List services
+ */
+export const listServicesResponseInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const ListServicesResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the service'),
+  "serviceName": zod.string().optional().describe('Name of the service'),
+  "description": zod.string().optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How often the service is billed'),
+  "standardFee": zod.number().optional().describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(listServicesResponseInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
+  "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
+}).describe('A service held in the catalog')
+export const ListServicesResponse = zod.array(ListServicesResponseItem)
+
+
+/**
+ * Adds a service to the catalog. The invoice schedule must match the billing frequency: ONE_OFF carries no schedule, MONTHLY needs a day of month, QUARTERLY needs a month of quarter plus a day of month, and ANNUAL needs a month plus a day of month. The GST rate defaults to 18 percent when omitted. Service names are unique across the catalog, ignoring case.
+ * @summary Create a service
+ */
+export const createServiceBodyServiceNameMin = 0;
+export const createServiceBodyServiceNameMax = 150;
+
+export const createServiceBodyDescriptionMin = 0;
+export const createServiceBodyDescriptionMax = 1000;
+
+export const createServiceBodyStandardFeeMin = 0;
+
+export const createServiceBodyGstRatePercentDefault = 18;
+export const createServiceBodyGstRatePercentMin = 0;
+export const createServiceBodyGstRatePercentMax = 100;
+
+export const createServiceBodyInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const CreateServiceBody = zod.object({
+  "serviceName": zod.string().min(createServiceBodyServiceNameMin).max(createServiceBodyServiceNameMax).describe('Name of the service, unique across the catalog'),
+  "description": zod.string().min(createServiceBodyDescriptionMin).max(createServiceBodyDescriptionMax).optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).describe('How often the service is billed'),
+  "standardFee": zod.number().min(createServiceBodyStandardFeeMin).describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().min(createServiceBodyGstRatePercentMin).max(createServiceBodyGstRatePercentMax).default(createServiceBodyGstRatePercentDefault).describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(createServiceBodyInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Omit entirely for ONE_OFF billing')
+}).describe('Service to add to the catalog')
+
+export const createServiceResponseInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const CreateServiceResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the service'),
+  "serviceName": zod.string().optional().describe('Name of the service'),
+  "description": zod.string().optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How often the service is billed'),
+  "standardFee": zod.number().optional().describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(createServiceResponseInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
+  "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
+}).describe('A service held in the catalog')
+
+
+/**
  * Returns the tenant-wide payment terms currently in force. Responds with 404 until they have been created.
  * @summary Fetch payment terms
  */

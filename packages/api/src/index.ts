@@ -8,3 +8,4 @@ export { errorMessage, fieldErrors, isNotFound } from './errors';
 // Hand-written hooks composing the generated ones — shared screen logic for both apps.
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { usePaymentTerms } from './hooks/usePaymentTerms';
+export { useServiceCatalog } from './hooks/useServiceCatalog';

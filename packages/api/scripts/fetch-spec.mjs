@@ -27,5 +27,18 @@ for (const [name, scheme] of Object.entries(spec.components?.securitySchemes ?? 
   }
 }
 
+// springdoc emits `defaultValue = "18.00"` on BigDecimal fields as a *string* default on a
+// number schema, which orval turns into `.default(\`18.00\`)` on a zod number — a type error.
+// Coerce such defaults to numbers, loudly, until the backend declares them numerically.
+for (const [schemaName, schema] of Object.entries(spec.components?.schemas ?? {})) {
+  for (const [prop, def] of Object.entries(schema.properties ?? {})) {
+    const numeric = def.type === 'number' || def.type === 'integer';
+    if (numeric && typeof def.default === 'string' && def.default.trim() !== '' && !Number.isNaN(Number(def.default))) {
+      def.default = Number(def.default);
+      console.warn(`warning: coerced string default of ${schemaName}.${prop} to number ${def.default}`);
+    }
+  }
+}
+
 writeFileSync(out, `${JSON.stringify(spec, null, 2)}\n`);
 console.log(`wrote ${out} (${Object.keys(spec.paths ?? {}).length} paths) from ${url}`);

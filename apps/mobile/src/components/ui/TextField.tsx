@@ -3,7 +3,10 @@ import { Text, TextInput, View, type TextInputProps } from 'react-native';
 import { useThemeColors } from '@/theme/useThemeColors';
 import { cn } from '@/utils/cn';
 
-type PassThrough = Pick<TextInputProps, 'keyboardType' | 'autoCapitalize' | 'autoComplete' | 'textContentType' | 'multiline'>;
+type PassThrough = Pick<
+  TextInputProps,
+  'keyboardType' | 'autoCapitalize' | 'autoComplete' | 'textContentType' | 'multiline' | 'placeholder'
+>;
 
 interface TextFieldProps extends PassThrough {
   label: string;

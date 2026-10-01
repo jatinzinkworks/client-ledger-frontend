@@ -2,11 +2,12 @@ import { Pressable, Text, type PressableProps } from 'react-native';
 
 import { cn } from '@/utils/cn';
 
-type Variant = 'primary' | 'outline';
+type Variant = 'primary' | 'outline' | 'destructive';
 
 const VARIANTS: Record<Variant, { container: string; label: string }> = {
   primary: { container: 'bg-primary', label: 'text-primary-foreground' },
   outline: { container: 'border border-border bg-card', label: 'text-foreground' },
+  destructive: { container: 'border border-destructive bg-card', label: 'text-destructive' },
 };
 
 interface ButtonProps extends Omit<PressableProps, 'children'> {

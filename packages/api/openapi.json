@@ -18,9 +18,324 @@
     {
       "name": "Global Settings",
       "description": "Tenant-wide configuration for the Client Ledger, such as payment terms"
+    },
+    {
+      "name": "Service Catalog",
+      "description": "Billable services the firm offers, with their fees and billing schedules"
     }
   ],
   "paths": {
+    "/psc/cl/v1/services/{id}": {
+      "get": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "Fetch a service",
+        "description": "Returns one service by its identifier.",
+        "operationId": "getService",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the service",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "b41e7a52-9c3d-4f16-8ad0-5e2b9c7f1d38"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The identifier is not a valid UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No service carries this identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "Update a service",
+        "description": "Replaces a service wholesale, so omitted fields are cleared rather than left untouched. The same invoice schedule rules as create apply. The subscriber count cannot be changed through this endpoint.",
+        "operationId": "updateService",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the service",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "b41e7a52-9c3d-4f16-8ad0-5e2b9c7f1d38"
+          }
+        ],
+        "requestBody": {
+          "description": "New content for the service",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogServiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Service updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No service carries this identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another service already uses this name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "Delete a service",
+        "description": "Removes a service from the catalog. A service that companies still subscribe to cannot be deleted and is rejected with 409.",
+        "operationId": "deleteService",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Identifier of the service",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "b41e7a52-9c3d-4f16-8ad0-5e2b9c7f1d38"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Service deleted"
+          },
+          "400": {
+            "description": "The identifier is not a valid UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No service carries this identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Companies still subscribe to the service",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/psc/cl/v1/services": {
+      "get": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "List services",
+        "description": "Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.",
+        "operationId": "listServices",
+        "responses": {
+          "200": {
+            "description": "The catalog, empty when nothing has been added yet",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogServiceResponse"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "Create a service",
+        "description": "Adds a service to the catalog. The invoice schedule must match the billing frequency: ONE_OFF carries no schedule, MONTHLY needs a day of month, QUARTERLY needs a month of quarter plus a day of month, and ANNUAL needs a month plus a day of month. The GST rate defaults to 18 percent when omitted. Service names are unique across the catalog, ignoring case.",
+        "operationId": "createService",
+        "requestBody": {
+          "description": "Service to add to the catalog",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogServiceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Service created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogServiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A service with this name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/psc/cl/v1/global-settings/payment-terms": {
       "get": {
         "tags": [
@@ -250,6 +565,250 @@
   },
   "components": {
     "schemas": {
+      "CatalogServiceRequest": {
+        "type": "object",
+        "description": "Service to add to the catalog",
+        "properties": {
+          "serviceName": {
+            "type": "string",
+            "description": "Name of the service, unique across the catalog",
+            "example": "GST Monthly Return Filing",
+            "maxLength": 150,
+            "minLength": 0
+          },
+          "description": {
+            "type": "string",
+            "description": "What the service covers",
+            "example": "Preparation and filing of GSTR-1 and GSTR-3B each month",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "category": {
+            "type": "string",
+            "description": "Practice area the service belongs to",
+            "enum": [
+              "COMPLIANCE",
+              "TAX",
+              "AUDIT",
+              "ACCOUNTING",
+              "ADVISORY"
+            ],
+            "example": "COMPLIANCE"
+          },
+          "billingFrequency": {
+            "type": "string",
+            "description": "How often the service is billed",
+            "enum": [
+              "ONE_OFF",
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUAL"
+            ],
+            "example": "MONTHLY"
+          },
+          "standardFee": {
+            "type": "number",
+            "description": "Standard fee charged for the service, excluding GST",
+            "example": 5000,
+            "minimum": 0
+          },
+          "gstRatePercent": {
+            "type": "number",
+            "default": 18,
+            "description": "GST rate applied to the fee, as a percentage",
+            "example": 18,
+            "maximum": 100,
+            "minimum": 0
+          },
+          "invoiceSchedule": {
+            "$ref": "#/components/schemas/InvoiceSchedule",
+            "description": "When invoices are raised. Omit entirely for ONE_OFF billing"
+          }
+        },
+        "required": [
+          "billingFrequency",
+          "category",
+          "serviceName",
+          "standardFee"
+        ]
+      },
+      "InvoiceSchedule": {
+        "type": "object",
+        "description": "When invoices are raised for a recurring service",
+        "properties": {
+          "dayOfMonth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead",
+            "example": 7,
+            "maximum": 31,
+            "minimum": 1
+          },
+          "monthOfQuarter": {
+            "type": "string",
+            "description": "Quarterly billing only: which month after the quarter closes the invoice is raised in",
+            "enum": [
+              "FIRST_MONTH",
+              "SECOND_MONTH",
+              "THIRD_MONTH"
+            ],
+            "example": "FIRST_MONTH"
+          },
+          "month": {
+            "type": "string",
+            "description": "Annual billing only: the month the invoice is raised in, by name",
+            "enum": [
+              "JANUARY",
+              "FEBRUARY",
+              "MARCH",
+              "APRIL",
+              "MAY",
+              "JUNE",
+              "JULY",
+              "AUGUST",
+              "SEPTEMBER",
+              "OCTOBER",
+              "NOVEMBER",
+              "DECEMBER"
+            ],
+            "example": "APRIL"
+          }
+        }
+      },
+      "CatalogServiceResponse": {
+        "type": "object",
+        "description": "A service held in the catalog",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the service",
+            "example": "b41e7a52-9c3d-4f16-8ad0-5e2b9c7f1d38"
+          },
+          "serviceName": {
+            "type": "string",
+            "description": "Name of the service",
+            "example": "GST Monthly Return Filing"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the service covers",
+            "example": "Preparation and filing of GSTR-1 and GSTR-3B each month"
+          },
+          "category": {
+            "type": "string",
+            "description": "Practice area the service belongs to",
+            "enum": [
+              "COMPLIANCE",
+              "TAX",
+              "AUDIT",
+              "ACCOUNTING",
+              "ADVISORY"
+            ],
+            "example": "COMPLIANCE"
+          },
+          "billingFrequency": {
+            "type": "string",
+            "description": "How often the service is billed",
+            "enum": [
+              "ONE_OFF",
+              "MONTHLY",
+              "QUARTERLY",
+              "ANNUAL"
+            ],
+            "example": "MONTHLY"
+          },
+          "standardFee": {
+            "type": "number",
+            "description": "Standard fee charged for the service, excluding GST",
+            "example": 5000
+          },
+          "gstRatePercent": {
+            "type": "number",
+            "description": "GST rate applied to the fee, as a percentage",
+            "example": 18
+          },
+          "invoiceSchedule": {
+            "$ref": "#/components/schemas/InvoiceSchedule",
+            "description": "When invoices are raised. Absent for ONE_OFF billing"
+          },
+          "usedByCompanies": {
+            "type": "integer",
+            "format": "int32",
+            "description": "How many companies currently subscribe to this service. Read only",
+            "example": 12,
+            "readOnly": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the service was created",
+            "example": "2026-10-01T10:15:30Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the service was last updated",
+            "example": "2026-10-01T10:15:30Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "description": "Standard error payload",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Moment the error was produced",
+            "example": "2026-09-29T10:15:30Z"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "code": {
+            "type": "string",
+            "description": "Short, machine-friendly error code",
+            "example": "VALIDATION_FAILED"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable summary of what went wrong",
+            "example": "One or more fields are invalid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Request path that produced the error",
+            "example": "/psc/cl/v1/global-settings/payment-terms"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Field level validation failures, present only for validation errors",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            }
+          }
+        }
+      },
+      "FieldError": {
+        "type": "object",
+        "description": "A single field level validation failure",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Name of the offending field",
+            "example": "markOverdueAfterDays"
+          },
+          "message": {
+            "type": "string",
+            "description": "Why the value was rejected",
+            "example": "must be greater than or equal to 1"
+          }
+        }
+      },
       "PaymentTermsRequest": {
         "type": "object",
         "description": "Payment terms to store under Global Settings",
@@ -332,62 +891,6 @@
             "format": "date-time",
             "description": "When the record was last updated",
             "example": "2026-09-29T10:15:30Z"
-          }
-        }
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "description": "Standard error payload",
-        "properties": {
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Moment the error was produced",
-            "example": "2026-09-29T10:15:30Z"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32",
-            "description": "HTTP status code",
-            "example": 400
-          },
-          "code": {
-            "type": "string",
-            "description": "Short, machine-friendly error code",
-            "example": "VALIDATION_FAILED"
-          },
-          "message": {
-            "type": "string",
-            "description": "Human readable summary of what went wrong",
-            "example": "One or more fields are invalid"
-          },
-          "path": {
-            "type": "string",
-            "description": "Request path that produced the error",
-            "example": "/psc/cl/v1/global-settings/payment-terms"
-          },
-          "errors": {
-            "type": "array",
-            "description": "Field level validation failures, present only for validation errors",
-            "items": {
-              "$ref": "#/components/schemas/FieldError"
-            }
-          }
-        }
-      },
-      "FieldError": {
-        "type": "object",
-        "description": "A single field level validation failure",
-        "properties": {
-          "field": {
-            "type": "string",
-            "description": "Name of the offending field",
-            "example": "markOverdueAfterDays"
-          },
-          "message": {
-            "type": "string",
-            "description": "Why the value was rejected",
-            "example": "must be greater than or equal to 1"
           }
         }
       },
