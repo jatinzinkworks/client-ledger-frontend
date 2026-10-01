@@ -1,10 +1,17 @@
-# `COPY . .` runs after `npm ci`, so anything listed here would otherwise be
+# `COPY . .` runs after `pnpm install`, so anything listed here would otherwise be
 # copied over the image's own install. node_modules is the dangerous one: the
 # host's copy holds platform-native binaries (rollup, esbuild) built for the
-# developer's OS, which then fail inside Alpine.
-node_modules
-dist
-coverage
+# developer's OS, which then fail inside Alpine. Every workspace has its own, hence **.
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+**/*.tsbuildinfo
+
+# Mobile build state — the image only builds the web app.
+apps/mobile/.expo
+apps/mobile/android
+apps/mobile/ios
 
 .git
 .gitignore
@@ -13,11 +20,12 @@ coverage
 # Local overrides are developer-specific and must never reach an image.
 # `.env` itself is kept: it supplies the VITE_* fallbacks when a build arg is
 # not passed.
-*.local
+**/*.local
 
 .vscode
 .idea
-*.log
+.claude
+**/*.log
 
 Dockerfile
 .dockerignore

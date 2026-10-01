@@ -30,7 +30,10 @@ export const ROLE_LABELS: Readonly<Record<Role, string>> = {
 export const ROLE_OPTIONS = ROLES.map((value) => ({ value, label: ROLE_LABELS[value] }));
 
 const tooLong = (max: number) => `Must Not Exceed ${max} Characters.`;
-const required = (max: number, message: string) => z.string().trim().min(1, message).max(max, tooLong(max));
+// `abort` stops at "required" for a blank field, so the pattern / email checks after it
+// don't add a second, misleading message.
+const required = (max: number, message: string) =>
+  z.string().trim().min(1, { message, abort: true }).max(max, tooLong(max));
 
 export const managerFormSchema = z.object({
   firstName: required(FIRST_NAME_MAX, 'Enter The First Name.'),

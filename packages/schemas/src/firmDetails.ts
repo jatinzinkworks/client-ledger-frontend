@@ -27,7 +27,7 @@ export const firmDetailsFormSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .min(1, 'Enter The GSTIN.')
+    .min(1, { message: 'Enter The GSTIN.', abort: true }) // a blank GSTIN is missing, not malformed
     .regex(GSTIN_PATTERN, 'Enter A Valid 15-Character GSTIN.'),
   firmRegistrationNo: text(REGISTRATION_NO_MAX),
   email: optional(EMAIL_MAX, (v) => z.email().safeParse(v).success, 'Enter A Valid Email Address.'),

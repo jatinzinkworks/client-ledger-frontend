@@ -34,6 +34,8 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 echo "Working tree: clean"
+# Fail before the version bump if the backend cannot be found.
+resolve_api_upstream
 
 # ---------- Step 2: Read current version from version file ------------------
 echo ""
@@ -95,8 +97,9 @@ echo "=========================================="
 # which moves without the Dockerfile or the base image changing. Without it a
 # release can ship a months-old cached patch layer — which is how openssl
 # 3.5.7-r0 reached production while 3.5.8-r0 was already published. `--pull`
-# does the same job for the base image itself.
-docker build --build-arg VITE_API_BASE_URL=https://watchtower.apex.zinkworks.com \
+# does the same job for the base image itself. No VITE_API_BASE_URL: the bundle calls its
+# own origin and nginx proxies /psc to API_UPSTREAM, set on the Cloud Run service in step 8.
+docker build \
   --build-arg APK_PATCH_BUST="$(date +%s)" --pull -t "${IMAGE}" .
 echo "Build OK: ${IMAGE}"
 
@@ -129,7 +132,8 @@ echo "=========================================="
 gcloud run services update "${SERVICE}" \
   --region="${REGION}" \
   --project="${PROJECT}" \
-  --image="${IMAGE}"
+  --image="${IMAGE}" \
+  --update-env-vars="API_UPSTREAM=${API_UPSTREAM}"
 echo "Deploy OK: ${SERVICE}"
 
 # Build + deploy succeeded — disable the auto-revert trap before committing.
