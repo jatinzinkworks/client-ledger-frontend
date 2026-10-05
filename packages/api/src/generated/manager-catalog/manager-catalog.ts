@@ -252,7 +252,7 @@ export const useUpdateManager = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Removes a manager from the catalog.
+ * Removes a manager from the catalog. A manager who still has clients assigned cannot be deleted; reassign those clients first.
  * @summary Delete a manager
  */
 export const deleteManager = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {

@@ -175,7 +175,7 @@ export const UpdateManagerResponse = zod.object({
 
 
 /**
- * Removes a manager from the catalog.
+ * Removes a manager from the catalog. A manager who still has clients assigned cannot be deleted; reassign those clients first.
  * @summary Delete a manager
  */
 export const DeleteManagerParams = zod.object({
@@ -183,6 +183,202 @@ export const DeleteManagerParams = zod.object({
 })
 
 export const DeleteManagerResponse = zod.void()
+
+
+/**
+ * Returns one client by identifier, with their companies in full and the name of the manager who looks after them.
+ * @summary Fetch a client
+ */
+export const GetClientParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const GetClientResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companies": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+}).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
+}).describe('A client held in the ledger')
+
+
+/**
+ * Replaces a client wholesale, together with their full set of companies. A company carrying an id is updated in place and keeps that id, a company without an id is added, and any existing company left out is removed. An omitted client discount resets to zero, and companies without a discount of their own take the client's.
+ * @summary Update a client
+ */
+export const UpdateClientParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const updateClientBodyFirstNameMin = 0;
+export const updateClientBodyFirstNameMax = 100;
+
+export const updateClientBodyLastNameMin = 0;
+export const updateClientBodyLastNameMax = 100;
+
+export const updateClientBodyPhoneMin = 0;
+export const updateClientBodyPhoneMax = 20;
+
+
+export const updateClientBodyPhoneRegExp = new RegExp('^[+]?[0-9 ()-]{6,20}$');
+export const updateClientBodyEmailMin = 0;
+export const updateClientBodyEmailMax = 254;
+
+export const updateClientBodyDiscountPercentDefault = 0;
+export const updateClientBodyDiscountPercentMin = 0;
+export const updateClientBodyDiscountPercentMax = 100;
+
+export const updateClientBodyCompaniesItemCompanyNameMin = 0;
+export const updateClientBodyCompaniesItemCompanyNameMax = 200;
+
+export const updateClientBodyCompaniesItemAddressMin = 0;
+export const updateClientBodyCompaniesItemAddressMax = 500;
+
+export const updateClientBodyCompaniesItemDiscountPercentMin = 0;
+export const updateClientBodyCompaniesItemDiscountPercentMax = 100;
+
+export const updateClientBodyCompaniesMin = 0;
+export const updateClientBodyCompaniesMax = 50;
+
+
+
+export const UpdateClientBody = zod.object({
+  "firstName": zod.string().min(updateClientBodyFirstNameMin).max(updateClientBodyFirstNameMax).describe('Given name of the client'),
+  "lastName": zod.string().min(updateClientBodyLastNameMin).max(updateClientBodyLastNameMax).describe('Family name of the client'),
+  "phone": zod.string().min(updateClientBodyPhoneMin).max(updateClientBodyPhoneMax).regex(updateClientBodyPhoneRegExp).describe('Contact phone number'),
+  "email": zod.email().min(updateClientBodyEmailMin).max(updateClientBodyEmailMax).describe('Contact email address'),
+  "managerId": zod.uuid().describe('Identifier of the manager from the Manager Catalog who looks after the client'),
+  "discountPercent": zod.number().min(updateClientBodyDiscountPercentMin).max(updateClientBodyDiscountPercentMax).default(updateClientBodyDiscountPercentDefault).describe('Discount granted to the client, as a percentage. Also applied to every company that does not set its own'),
+  "companies": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of an existing company of this client to update. Omit to add a new company'),
+  "companyName": zod.string().min(updateClientBodyCompaniesItemCompanyNameMin).max(updateClientBodyCompaniesItemCompanyNameMax).describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).describe('Legal form of the company'),
+  "address": zod.string().min(updateClientBodyCompaniesItemAddressMin).max(updateClientBodyCompaniesItemAddressMax).describe('Registered address of the company'),
+  "discountPercent": zod.number().min(updateClientBodyCompaniesItemDiscountPercentMin).max(updateClientBodyCompaniesItemDiscountPercentMax).optional().describe('Discount granted on this company\'s work, as a percentage. When omitted, the company takes the client\'s discount')
+}).describe('Company of the client: an existing one when it carries an id, otherwise a new one')).min(updateClientBodyCompaniesMin).max(updateClientBodyCompaniesMax).describe('The client\'s complete set of companies. Existing companies left out are removed')
+}).describe('New content for a client and their full set of companies')
+
+export const UpdateClientResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companies": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+}).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
+}).describe('A client held in the ledger')
+
+
+/**
+ * Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first.
+ * @summary Delete a client
+ */
+export const DeleteClientParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const DeleteClientResponse = zod.void()
+
+
+/**
+ * Returns one service assigned to a company of the client.
+ * @summary Fetch a service of a company
+ */
+export const GetService1Params = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "assignmentId": zod.uuid().describe('Identifier of the assigned service')
+})
+
+export const GetService1Response = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of this assignment'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company the service is delivered to'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
+  "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
+  "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
+}).describe('A catalog service assigned to a company')
+
+
+/**
+ * Replaces the delivery date, discount and comment of a service assigned to a company of the client. The catalog service itself cannot change; remove this assignment and assign the other service instead. An omitted discount resets to the company's, and an omitted comment is cleared. The service type and next due date are worked out again from the catalog service's current schedule.
+ * @summary Update a service of a company
+ */
+export const UpdateService1Params = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "assignmentId": zod.uuid().describe('Identifier of the assigned service')
+})
+
+export const updateService1BodyDiscountPercentMin = 0;
+export const updateService1BodyDiscountPercentMax = 100;
+
+export const updateService1BodyCommentMin = 0;
+export const updateService1BodyCommentMax = 1000;
+
+
+
+export const UpdateService1Body = zod.object({
+  "deliveryDate": zod.iso.date().describe('Date the service is, or was, delivered'),
+  "discountPercent": zod.number().min(updateService1BodyDiscountPercentMin).max(updateService1BodyDiscountPercentMax).optional().describe('Discount granted on this service, as a percentage. When omitted, the service takes the company\'s discount'),
+  "comment": zod.string().min(updateService1BodyCommentMin).max(updateService1BodyCommentMax).optional().describe('Free-text note about this delivery. When omitted, any existing comment is cleared')
+}).describe('New details for a service assigned to a company')
+
+export const UpdateService1Response = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of this assignment'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company the service is delivered to'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
+  "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
+  "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
+}).describe('A catalog service assigned to a company')
+
+
+/**
+ * Removes one assigned service from a company of the client. When it was the company's last assignment of that service, the company no longer counts towards the catalog service's usedByCompanies.
+ * @summary Remove a service from a company
+ */
+export const RemoveServiceParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "assignmentId": zod.uuid().describe('Identifier of the assigned service')
+})
+
+export const RemoveServiceResponse = zod.void()
 
 
 /**
@@ -438,3 +634,207 @@ export const SaveFirmDetailsResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the record was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the record was last updated')
 }).describe('Firm details currently held under Global Settings')
+
+
+/**
+ * Returns every client, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.
+ * @summary List clients
+ */
+export const ListClientsResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name')
+}).describe('A client as shown in the client list')
+export const ListClientsResponse = zod.array(ListClientsResponseItem)
+
+
+/**
+ * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog.
+ * @summary Create a client
+ */
+export const createClientBodyFirstNameMin = 0;
+export const createClientBodyFirstNameMax = 100;
+
+export const createClientBodyLastNameMin = 0;
+export const createClientBodyLastNameMax = 100;
+
+export const createClientBodyPhoneMin = 0;
+export const createClientBodyPhoneMax = 20;
+
+
+export const createClientBodyPhoneRegExp = new RegExp('^[+]?[0-9 ()-]{6,20}$');
+export const createClientBodyEmailMin = 0;
+export const createClientBodyEmailMax = 254;
+
+export const createClientBodyDiscountPercentDefault = 0;
+export const createClientBodyDiscountPercentMin = 0;
+export const createClientBodyDiscountPercentMax = 100;
+
+export const createClientBodyCompaniesItemCompanyNameMin = 0;
+export const createClientBodyCompaniesItemCompanyNameMax = 200;
+
+export const createClientBodyCompaniesItemAddressMin = 0;
+export const createClientBodyCompaniesItemAddressMax = 500;
+
+export const createClientBodyCompaniesItemDiscountPercentMin = 0;
+export const createClientBodyCompaniesItemDiscountPercentMax = 100;
+
+export const createClientBodyCompaniesMin = 0;
+export const createClientBodyCompaniesMax = 50;
+
+
+
+export const CreateClientBody = zod.object({
+  "firstName": zod.string().min(createClientBodyFirstNameMin).max(createClientBodyFirstNameMax).describe('Given name of the client'),
+  "lastName": zod.string().min(createClientBodyLastNameMin).max(createClientBodyLastNameMax).describe('Family name of the client'),
+  "phone": zod.string().min(createClientBodyPhoneMin).max(createClientBodyPhoneMax).regex(createClientBodyPhoneRegExp).describe('Contact phone number'),
+  "email": zod.email().min(createClientBodyEmailMin).max(createClientBodyEmailMax).describe('Contact email address'),
+  "managerId": zod.uuid().describe('Identifier of the manager from the Manager Catalog who looks after the client'),
+  "discountPercent": zod.number().min(createClientBodyDiscountPercentMin).max(createClientBodyDiscountPercentMax).default(createClientBodyDiscountPercentDefault).describe('Discount granted to the client, as a percentage. Also applied to every company that does not set its own'),
+  "companies": zod.array(zod.object({
+  "companyName": zod.string().min(createClientBodyCompaniesItemCompanyNameMin).max(createClientBodyCompaniesItemCompanyNameMax).describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).describe('Legal form of the company'),
+  "address": zod.string().min(createClientBodyCompaniesItemAddressMin).max(createClientBodyCompaniesItemAddressMax).describe('Registered address of the company'),
+  "discountPercent": zod.number().min(createClientBodyCompaniesItemDiscountPercentMin).max(createClientBodyCompaniesItemDiscountPercentMax).optional().describe('Discount granted on this company\'s work, as a percentage. When omitted, the company takes the client\'s discount')
+}).describe('Company owned by, or acted for on behalf of, the client')).min(createClientBodyCompaniesMin).max(createClientBodyCompaniesMax).describe('Companies the client owns or acts for')
+}).describe('Client to add, with the companies they hold')
+
+export const CreateClientResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companies": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+}).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
+}).describe('A client held in the ledger')
+
+
+/**
+ * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged.
+ * @summary List the services of a company
+ */
+export const ListServices1Params = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const ListServices1ResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of this assignment'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company the service is delivered to'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
+  "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
+  "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
+}).describe('A catalog service assigned to a company')
+export const ListServices1Response = zod.array(ListServices1ResponseItem)
+
+
+/**
+ * Assigns a service from the Service Catalog to one company of the client. A company can take many services, and the same service more than once, for example on different delivery dates. When no discount is given, the service takes the company's discount. The service type (the catalog billing frequency) and the next due date (the first scheduled invoice date on or after the delivery date; the delivery date itself for ONE_OFF) are worked out from the catalog service.
+ * @summary Assign a service to a company
+ */
+export const AssignServiceParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company receiving the service')
+})
+
+export const assignServiceBodyDiscountPercentMin = 0;
+export const assignServiceBodyDiscountPercentMax = 100;
+
+export const assignServiceBodyCommentMin = 0;
+export const assignServiceBodyCommentMax = 1000;
+
+
+
+export const AssignServiceBody = zod.object({
+  "serviceId": zod.uuid().describe('Identifier of the service in the Service Catalog'),
+  "deliveryDate": zod.iso.date().describe('Date the service is, or was, delivered'),
+  "discountPercent": zod.number().min(assignServiceBodyDiscountPercentMin).max(assignServiceBodyDiscountPercentMax).optional().describe('Discount granted on this service, as a percentage. When omitted, the service takes the company\'s discount'),
+  "comment": zod.string().min(assignServiceBodyCommentMin).max(assignServiceBodyCommentMax).optional().describe('Free-text note about this delivery')
+}).describe('Catalog service to deliver to the company')
+
+export const AssignServiceResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of this assignment'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company the service is delivered to'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
+  "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
+  "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
+}).describe('A catalog service assigned to a company')
+
+
+/**
+ * Returns every company the client holds, in full, ordered by company name.
+ * @summary List the companies of a client
+ */
+export const ListCompaniesParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const ListCompaniesResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+}).describe('A company held against a client')
+export const ListCompaniesResponse = zod.array(ListCompaniesResponseItem)
+
+
+/**
+ * Returns one company of the client. A company that exists but belongs to a different client is reported as not found.
+ * @summary Fetch a company of a client
+ */
+export const GetCompanyParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const GetCompanyResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+}).describe('A company held against a client')
+
+
+/**
+ * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first.
+ * @summary Delete a company of a client
+ */
+export const DeleteCompanyParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const DeleteCompanyResponse = zod.void()

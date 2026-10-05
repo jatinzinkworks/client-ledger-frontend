@@ -9,6 +9,41 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '05 Oct 2026, 13:17:53',
+    highlights: [
+      "Clicking a company on a client's page now opens the company, showing its type, discount, address and the services recorded for it.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '05 Oct 2026, 13:12:55',
+    highlights: [
+      "Clicking a client now opens their page with contact details, manager, discount and companies, and the client list can be filtered by manager.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '05 Oct 2026, 12:24:54',
+    highlights: [
+      'Added a Refresh button to Clients, Managers, Services and Settings to reload the latest data. On Settings it waits until unsaved changes are saved or discarded.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '05 Oct 2026, 12:23:12',
+    highlights: [
+      'Onboarding a client can now record an optional discount, and Onboard Client stays disabled until every required field and at least one company are filled in.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '05 Oct 2026, 12:19:00',
+    highlights: [
+      'Added Clients: see every client with their companies and manager, search by client or company, and onboard a new client with one or more companies.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '05 Oct 2026, 11:42:43',
     highlights: [
       'Fixed Save Settings doing nothing when only one section (Payment Terms or Firm Details) had changes; the "Settings Saved" confirmation now appears straight away.',

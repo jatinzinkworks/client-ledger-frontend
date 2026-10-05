@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 
 import { LoadError } from '@/components/LoadError'
 import { PageHeader } from '@/components/PageHeader'
+import { RefreshButton } from '@/components/RefreshButton'
 import { ServiceCard } from '@/components/services/ServiceCard'
 import { ServiceEditor } from '@/components/services/ServiceEditor'
 import { ServiceFilters } from '@/components/services/ServiceFilters'
@@ -32,9 +33,12 @@ export function ServicesPage() {
         eyebrow={catalog.isLoading ? undefined : `${count} ${count === 1 ? 'Service' : 'Services'}`}
         title="Services"
         actions={
-          <Button size="touch" onClick={() => setEditing({ kind: 'new' })}>
-            <Plus /> New Service
-          </Button>
+          <>
+            <RefreshButton onRefresh={() => catalog.refetch()} refreshing={catalog.isRefreshing} />
+            <Button size="touch" onClick={() => setEditing({ kind: 'new' })}>
+              <Plus /> New Service
+            </Button>
+          </>
         }
       />
 

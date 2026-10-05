@@ -22,6 +22,8 @@ export function singletonSetting<TData, TRequest>(
     loadError: notConfigured ? null : (query.error as Error | null),
     notConfigured,
     refetch: query.refetch,
+    /** A background re-fetch is running (not the first load). */
+    isRefreshing: query.isFetching && !query.isPending,
     save: (data: TRequest) => mutation.mutateAsync({ data }),
     saving: mutation.isPending,
     saveError: mutation.error as Error | null,

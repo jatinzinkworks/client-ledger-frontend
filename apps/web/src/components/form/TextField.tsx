@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
-import { FIELD_CONTROL, FIELD_ERROR, FIELD_LABEL } from './fieldStyles'
+import { FIELD_CONTROL, FIELD_ERROR, FIELD_HINT, FIELD_LABEL } from './fieldStyles'
 
 interface TextFieldProps {
   id: string
@@ -16,17 +16,33 @@ interface TextFieldProps {
   multiline?: boolean
   type?: HTMLInputTypeAttribute
   autoComplete?: string
+  placeholder?: string
+  /** Help text under the control, replaced by the error when there is one. */
+  hint?: string
   className?: string
 }
 
 /** A labelled text input (or textarea) with its validation message underneath. */
-export function TextField({ id, label, error, registration, multiline, type = 'text', autoComplete, className }: TextFieldProps) {
+export function TextField({
+  id,
+  label,
+  error,
+  registration,
+  multiline,
+  type = 'text',
+  autoComplete,
+  placeholder,
+  hint,
+  className,
+}: TextFieldProps) {
   const errorId = `${id}-error`
+  const hintId = `${id}-hint`
   const shared = {
     id,
     autoComplete,
+    placeholder,
     'aria-invalid': !!error,
-    'aria-describedby': error ? errorId : undefined,
+    'aria-describedby': error ? errorId : hint ? hintId : undefined,
     ...registration,
   }
   return (
@@ -43,10 +59,16 @@ export function TextField({ id, label, error, registration, multiline, type = 't
       ) : (
         <Input type={type} className={cn(FIELD_CONTROL, className)} {...shared} />
       )}
-      {error && (
+      {error ? (
         <p id={errorId} className={FIELD_ERROR}>
           {error}
         </p>
+      ) : (
+        hint && (
+          <p id={hintId} className={FIELD_HINT}>
+            {hint}
+          </p>
+        )
       )}
     </div>
   )

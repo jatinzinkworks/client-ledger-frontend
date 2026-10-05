@@ -1,8 +1,6 @@
 import { CATEGORY_FILTERS, type CategoryFilter } from '@cl/schemas'
-import { Search } from 'lucide-react'
 
-import { FIELD_CONTROL } from '@/components/form/fieldStyles'
-import { Input } from '@/components/ui/input'
+import { SearchInput } from '@/components/SearchInput'
 import { cn } from '@/lib/utils'
 
 interface ServiceFiltersProps {
@@ -16,17 +14,7 @@ interface ServiceFiltersProps {
 export function ServiceFilters({ query, onQueryChange, category, onCategoryChange }: ServiceFiltersProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="relative w-full max-w-sm">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search Services By Name"
-          aria-label="Search services by name"
-          className={cn(FIELD_CONTROL, 'pl-9')}
-        />
-      </div>
+      <SearchInput value={query} onChange={onQueryChange} placeholder="Search Services By Name" />
       <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">
         {CATEGORY_FILTERS.map(({ value, label }) => {
           const active = value === category

@@ -17,6 +17,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 import { PageHeader } from '@/components/PageHeader'
+import { RefreshButton } from '@/components/RefreshButton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 
@@ -33,6 +34,8 @@ export interface SettingsResource<TStored, TRequest> {
 interface SettingsFormProps {
   paymentTerms: SettingsResource<PaymentTermsResponse, PaymentTermsRequest>
   firmDetails: SettingsResource<FirmDetailsResponse, FirmDetailsRequest>
+  /** Re-fetch every section; blocked while there are unsaved edits, which it would replace. */
+  refresh?: { onRefresh: () => void; refreshing: boolean }
 }
 
 /**
@@ -40,7 +43,7 @@ interface SettingsFormProps {
  * unconfigured section never blocks saving another. The header's Save validates every
  * changed section first and only then saves them; Discard resets them all.
  */
-export function SettingsForm({ paymentTerms, firmDetails }: SettingsFormProps) {
+export function SettingsForm({ paymentTerms, firmDetails, refresh }: SettingsFormProps) {
   // `values` re-seeds a section whenever its stored record changes (e.g. after a save).
   const paymentTermsValues = useMemo(() => paymentTermsFormDefaults(paymentTerms.stored), [paymentTerms.stored])
   const paymentTermsForm = useForm<PaymentTermsFormInput, unknown, PaymentTermsFormValues>({
@@ -93,6 +96,13 @@ export function SettingsForm({ paymentTerms, firmDetails }: SettingsFormProps) {
         actions={
           <>
             {isDirty && <span className="text-sm text-muted-foreground">Unsaved Changes</span>}
+            {refresh && (
+              <RefreshButton
+                onRefresh={refresh.onRefresh}
+                refreshing={refresh.refreshing}
+                disabledReason={isDirty ? 'Save Or Discard Your Changes First' : saving ? 'Saving…' : undefined}
+              />
+            )}
             <Button
               type="button"
               variant="outline"

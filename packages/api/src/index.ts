@@ -6,6 +6,9 @@ export { ApiError, apiFetch, configureApi, type ApiConfig } from './fetcher';
 export { errorMessage, fieldErrors, isNotFound } from './errors';
 
 // Hand-written hooks composing the generated ones — shared screen logic for both apps.
+export { useClient } from './hooks/useClient';
+export { useCompany } from './hooks/useCompany';
+export { useClients } from './hooks/useClients';
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { useManagerCatalog } from './hooks/useManagerCatalog';
 export { usePaymentTerms } from './hooks/usePaymentTerms';

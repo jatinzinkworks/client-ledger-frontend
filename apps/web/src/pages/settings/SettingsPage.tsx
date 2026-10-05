@@ -36,6 +36,10 @@ export function SettingsPage() {
         <SettingsForm
           paymentTerms={{ stored: paymentTerms.stored, save: paymentTerms.save }}
           firmDetails={{ stored: firmDetails.stored, save: firmDetails.save }}
+          refresh={{
+            onRefresh: () => resources.forEach((r) => r.refetch()),
+            refreshing: resources.some((r) => r.isRefreshing),
+          }}
         />
       )}
       {saveErrors.map((error, i) => (

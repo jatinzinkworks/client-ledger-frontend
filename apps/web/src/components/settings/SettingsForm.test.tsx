@@ -18,9 +18,16 @@ function setup({
   savePaymentTerms = vi.fn().mockResolvedValue(undefined),
   saveFirmDetails = vi.fn().mockResolvedValue(undefined),
   firm = undefined as FirmDetailsResponse | undefined,
+  onRefresh = vi.fn(),
 } = {}) {
-  render(<SettingsForm paymentTerms={{ save: savePaymentTerms }} firmDetails={{ stored: firm, save: saveFirmDetails }} />)
-  return { savePaymentTerms, saveFirmDetails, user: userEvent.setup() }
+  render(
+    <SettingsForm
+      paymentTerms={{ save: savePaymentTerms }}
+      firmDetails={{ stored: firm, save: saveFirmDetails }}
+      refresh={{ onRefresh, refreshing: false }}
+    />,
+  )
+  return { savePaymentTerms, saveFirmDetails, onRefresh, user: userEvent.setup() }
 }
 
 const save = () => screen.getByRole('button', { name: 'Save Settings' })
@@ -41,6 +48,15 @@ describe('SettingsForm', () => {
     await retype(user, 'Mark Overdue After', '45')
     expect(save()).toBeEnabled()
     expect(screen.getByText('Unsaved Changes')).toBeVisible()
+  })
+
+  it('refreshes on request, but not while there are unsaved changes', async () => {
+    const { onRefresh, user } = setup()
+    await user.click(screen.getByRole('button', { name: 'Refresh' }))
+    expect(onRefresh).toHaveBeenCalledTimes(1)
+
+    await retype(user, 'Mark Overdue After', '45')
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeDisabled()
   })
 
   it('shows the worked due-date example for the entered days', async () => {

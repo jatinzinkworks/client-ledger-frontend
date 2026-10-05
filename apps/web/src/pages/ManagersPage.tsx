@@ -7,6 +7,7 @@ import { LoadError } from '@/components/LoadError'
 import { ManagerEditor } from '@/components/managers/ManagerEditor'
 import { ManagersTable } from '@/components/managers/ManagersTable'
 import { PageHeader } from '@/components/PageHeader'
+import { RefreshButton } from '@/components/RefreshButton'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -29,9 +30,12 @@ export function ManagersPage() {
         eyebrow={catalog.isLoading ? undefined : managerCountLabel(count)}
         title="Managers"
         actions={
-          <Button size="touch" onClick={add}>
-            <Plus /> Add Manager
-          </Button>
+          <>
+            <RefreshButton onRefresh={() => catalog.refetch()} refreshing={catalog.isRefreshing} />
+            <Button size="touch" onClick={add}>
+              <Plus /> Add Manager
+            </Button>
+          </>
         }
       />
 

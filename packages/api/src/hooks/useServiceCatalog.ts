@@ -31,6 +31,8 @@ export function useServiceCatalog() {
     isLoading: query.isPending,
     loadError: query.error as Error | null,
     refetch: query.refetch,
+    /** A background re-fetch is running (not the first load). */
+    isRefreshing: query.isFetching && !query.isPending,
     // orval interpolates path params as-is, so encode ids here.
     create: (data: CatalogServiceRequest) => create.mutateAsync({ data }),
     update: (id: string, data: CatalogServiceRequest) => update.mutateAsync({ id: encodeURIComponent(id), data }),

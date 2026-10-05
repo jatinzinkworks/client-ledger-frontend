@@ -19,6 +19,8 @@ import {
 } from '@cl/api/zod';
 import { z } from 'zod';
 
+import { blankToUndefined, hasAtMostTwoDecimals } from './fields';
+
 // Lengths and bounds come from the generated OpenAPI schema. The schedule rules mirror the
 // backend's @AssertTrue checks on CatalogServiceRequest: a recurring service needs a day of
 // month, QUARTERLY also a month of quarter, ANNUAL also a month, and ONE_OFF no schedule.
@@ -102,9 +104,6 @@ export function gstRateOptions(current?: number): Option[] {
 
 // ── Form ────────────────────────────────────────────────────────────────────────────────
 
-/** Blank text fields mean "not set"; everything else must be a finite number. */
-const blankToUndefined = (v: unknown) => (v === '' || v == null ? undefined : typeof v === 'string' ? Number(v) : v);
-const hasAtMostTwoDecimals = (n: number) => Math.round(n * 100) === n * 100;
 const optionalEnum = <T extends string>(values: T[]) =>
   z.preprocess((v) => (v === '' ? undefined : v), z.enum(values as [T, ...T[]]).optional());
 

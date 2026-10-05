@@ -13,6 +13,8 @@ import {
 } from '@cl/api/zod';
 import { z } from 'zod';
 
+import { requiredEmail, requiredPhone, requiredText } from './fields';
+
 // Lengths and the mobile pattern come from the generated OpenAPI schema. Every field is
 // mandatory on the backend (@NotBlank / @NotNull), which OpenAPI cannot express as a minimum
 // length, so the required checks are added here. Copy is Title Case to match the mocks.
@@ -29,21 +31,12 @@ export const ROLE_LABELS: Readonly<Record<Role, string>> = {
 
 export const ROLE_OPTIONS = ROLES.map((value) => ({ value, label: ROLE_LABELS[value] }));
 
-const tooLong = (max: number) => `Must Not Exceed ${max} Characters.`;
-// `abort` stops at "required" for a blank field, so the pattern / email checks after it
-// don't add a second, misleading message.
-const required = (max: number, message: string) =>
-  z.string().trim().min(1, { message, abort: true }).max(max, tooLong(max));
-
 export const managerFormSchema = z.object({
-  firstName: required(FIRST_NAME_MAX, 'Enter The First Name.'),
-  lastName: required(LAST_NAME_MAX, 'Enter The Last Name.'),
-  email: required(EMAIL_MAX, 'Enter The Email Address.').pipe(z.email('Enter A Valid Email Address.')),
+  firstName: requiredText(FIRST_NAME_MAX, 'Enter The First Name.'),
+  lastName: requiredText(LAST_NAME_MAX, 'Enter The Last Name.'),
+  email: requiredEmail(EMAIL_MAX),
   role: z.enum(ROLES, 'Choose A Role.'),
-  mobileNumber: required(MOBILE_MAX, 'Enter The Mobile Number.').regex(
-    MOBILE_PATTERN,
-    'Use 6 To 20 Digits, Spaces, Brackets Or Hyphens, With An Optional Leading +.',
-  ),
+  mobileNumber: requiredPhone(MOBILE_MAX, MOBILE_PATTERN, 'Enter The Mobile Number.'),
 });
 
 export type ManagerFormInput = z.input<typeof managerFormSchema>;

@@ -1,24 +1,18 @@
 import type { ManagerResponse } from '@cl/api'
 import { managerInitials, managerName, roleLabel } from '@cl/schemas'
-import type { ReactNode } from 'react'
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DataTable, type DataColumn } from '@/components/DataTable'
 
 interface ManagersTableProps {
   managers: readonly ManagerResponse[]
   onSelect: (manager: ManagerResponse) => void
 }
 
-interface Column {
-  header: string
-  render: (manager: ManagerResponse, onSelect: (manager: ManagerResponse) => void) => ReactNode
-}
-
 // Monthly Salary, Clients and Pending from the mock join here once the API carries them.
-const COLUMNS: readonly Column[] = [
+const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataColumn<ManagerResponse>[] => [
   {
     header: 'Manager',
-    render: (manager, onSelect) => (
+    render: (manager) => (
       <div className="flex items-center gap-3.5">
         <span
           aria-hidden
@@ -51,31 +45,7 @@ const COLUMNS: readonly Column[] = [
 export function ManagersTable({ managers, onSelect }: ManagersTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <Table>
-        <TableHeader className="bg-muted/60">
-          <TableRow className="hover:bg-transparent">
-            {COLUMNS.map((column) => (
-              <TableHead
-                key={column.header}
-                className="h-12 px-6 text-xs font-bold tracking-[0.04em] text-muted-foreground uppercase"
-              >
-                {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {managers.map((manager) => (
-            <TableRow key={manager.id} onClick={() => onSelect(manager)} className="cursor-pointer">
-              {COLUMNS.map((column) => (
-                <TableCell key={column.header} className="px-6 py-4 text-[15px] text-foreground">
-                  {column.render(manager, onSelect)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DataTable columns={columns(onSelect)} rows={managers} rowKey={(m) => m.id ?? m.email ?? ''} onRowClick={onSelect} />
     </div>
   )
 }
