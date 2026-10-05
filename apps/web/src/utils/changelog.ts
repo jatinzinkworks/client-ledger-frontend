@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '05 Oct 2026, 11:42:43',
+    highlights: [
+      'Fixed Save Settings doing nothing when only one section (Payment Terms or Firm Details) had changes; the "Settings Saved" confirmation now appears straight away.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '01 Oct 2026, 18:52:49',
     highlights: [
       'Managers are now in the mobile app too, and in both apps they are listed by name from A to Z and sit right after Overview in the menu.',

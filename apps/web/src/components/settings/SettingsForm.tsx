@@ -63,17 +63,21 @@ export function SettingsForm({ paymentTerms, firmDetails }: SettingsFormProps) {
   const saveAll = async (event: FormEvent) => {
     event.preventDefault()
     setSaved(false)
-    // Validate every changed section before saving any, so nothing is half-saved.
-    const checks = [paymentTermsDirty && paymentTermsForm.trigger(), firmDetailsDirty && firmDetailsForm.trigger()]
-    if (!(await Promise.all(checks)).every((ok) => ok !== false)) return
+    // Validate every changed section before saving any, so nothing is half-saved. An
+    // unchanged section counts as passing — it is neither validated nor saved.
+    const checks = [
+      paymentTermsDirty ? paymentTermsForm.trigger() : true,
+      firmDetailsDirty ? firmDetailsForm.trigger() : true,
+    ]
+    if (!(await Promise.all(checks)).every(Boolean)) return
 
     setSaving(true)
     const results = await Promise.all([
-      paymentTermsDirty && saveSection(paymentTermsForm, (v) => paymentTerms.save(toPaymentTermsRequest(v))),
-      firmDetailsDirty && saveSection(firmDetailsForm, (v) => firmDetails.save(toFirmDetailsRequest(v))),
+      paymentTermsDirty ? saveSection(paymentTermsForm, (v) => paymentTerms.save(toPaymentTermsRequest(v))) : true,
+      firmDetailsDirty ? saveSection(firmDetailsForm, (v) => firmDetails.save(toFirmDetailsRequest(v))) : true,
     ])
     setSaving(false)
-    setSaved(results.every((ok) => ok !== false))
+    setSaved(results.every(Boolean))
   }
 
   const discardAll = () => {

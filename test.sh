@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -euo pipefail
+
 source variables.sh
 VERSION="test"
 echo "Version: ${VERSION}"
