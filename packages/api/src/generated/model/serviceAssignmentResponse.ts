@@ -23,6 +23,8 @@ export interface ServiceAssignmentResponse {
   serviceName?: string;
   /** How the service is billed, taken from the Service Catalog */
   serviceType?: ServiceAssignmentResponseServiceType;
+  /** Standard fee of the service, excluding GST and before this assignment's discount, taken from the Service Catalog */
+  serviceFee?: number;
   /** Date the service is, or was, delivered */
   deliveryDate?: string;
   /** First date the service's invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date */

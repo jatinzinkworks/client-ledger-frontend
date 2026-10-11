@@ -21,4 +21,6 @@ export interface CompanyResponse {
   address?: string;
   /** Discount granted on this company's work, as a percentage */
   discountPercent?: number;
+  /** Number of services assigned to the company. Only returned when listing a client's companies */
+  serviceCount?: number;
 }

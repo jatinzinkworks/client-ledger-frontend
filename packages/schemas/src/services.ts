@@ -281,19 +281,36 @@ export function nextInvoiceDate(
   schedule: InvoiceSchedule | undefined,
   from: Date = new Date(),
 ): Date | undefined {
+  return upcomingInvoiceDates(billing, schedule, from, 1)[0];
+}
+
+/**
+ * The next `count` dates an invoice is raised on or after `from`, matching the backend's
+ * NextDueDates: a day past the month's end falls on its last day. Empty for one-off billing
+ * or an incomplete schedule.
+ */
+export function upcomingInvoiceDates(
+  billing: BillingFrequency | undefined,
+  schedule: InvoiceSchedule | undefined,
+  from: Date,
+  count: number,
+): Date[] {
   const day = schedule?.dayOfMonth;
-  if (!billing || !schedule || day == null) return undefined;
+  if (!billing || !schedule || day == null) return [];
   const months = new Set(invoiceMonths(billing, schedule));
+  if (!months.size) return [];
   const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  for (let i = 0; i < 24; i++) {
+  const dates: Date[] = [];
+  // An annual schedule recurs every 12 months, so this always finds `count` dates.
+  for (let i = 0; dates.length < count && i <= 12 * count; i++) {
     const year = start.getFullYear() + Math.floor((start.getMonth() + i) / 12);
     const month = (start.getMonth() + i) % 12;
     if (!months.has(month)) continue;
     const lastDay = new Date(year, month + 1, 0).getDate();
     const date = new Date(year, month, Math.min(day, lastDay));
-    if (date >= start) return date;
+    if (date >= start) dates.push(date);
   }
-  return undefined;
+  return dates;
 }
 
 const longDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });

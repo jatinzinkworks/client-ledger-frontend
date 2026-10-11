@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assignmentSummary, companyDetails, companyDiscountDetail, formatApiDate, servicesCountLabel } from './companies';
+import { companyDetails, companyDiscountDetail, formatApiDate, servicesCountLabel } from './companies';
 
 describe('company page helpers', () => {
   it('describes the company under its name', () => {
@@ -14,11 +14,6 @@ describe('company page helpers', () => {
     expect(formatApiDate('2026-12-31')).toBe('31 Dec 2026');
     expect(formatApiDate(undefined)).toBe('');
     expect(formatApiDate('not a date')).toBe('');
-  });
-
-  it('summarises an assigned service', () => {
-    expect(assignmentSummary({ serviceType: 'MONTHLY', nextDueDate: '2026-11-07' })).toBe('Monthly · Due 7 Nov 2026');
-    expect(assignmentSummary({ serviceType: 'ONE_OFF' })).toBe('One-Off');
   });
 
   it('counts services', () => {

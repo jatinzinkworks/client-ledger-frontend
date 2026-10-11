@@ -68,7 +68,7 @@ export function ClientDetailPage() {
                 <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('edit')}>
                   <Pencil /> Edit Client
                 </Button>
-                <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('add-company')}>
+                <Button size="touch" onClick={() => setSheet('add-company')}>
                   <Plus /> Add Company
                 </Button>
               </>
@@ -76,7 +76,7 @@ export function ClientDetailPage() {
           />
           <CompaniesTable
             clientId={id}
-            companies={client.companies ?? []}
+            companies={page.companies}
             onDeleteCompany={page.deleteCompany}
             deletingCompany={page.deletingCompany}
           />

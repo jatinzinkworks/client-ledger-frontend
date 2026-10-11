@@ -1,6 +1,8 @@
 import type { CompanyResponse } from '@cl/api'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ApiError } from '@cl/api'
+import { DELETE_COMPANY_IN_USE } from '@cl/schemas'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -15,17 +17,33 @@ const company: CompanyResponse = {
   discountPercent: 0,
 }
 
-function setup(onSave = vi.fn().mockResolvedValue(undefined)) {
+function setup({
+  onSave = vi.fn().mockResolvedValue(undefined),
+  onDelete = vi.fn().mockResolvedValue(undefined),
+  onlyCompany = false,
+  hasServices = false,
+} = {}) {
   const onDone = vi.fn()
+  const onDeleted = vi.fn()
   // The form uses Sheet parts (title, close), so render it inside an open sheet.
   render(
     <Sheet open>
       <SheetContent>
-        <EditCompanyForm company={company} onSave={onSave} saving={false} onDone={onDone} />
+        <EditCompanyForm
+          company={company}
+          onSave={onSave}
+          saving={false}
+          onDone={onDone}
+          onDelete={onDelete}
+          deleting={false}
+          onDeleted={onDeleted}
+          onlyCompany={onlyCompany}
+          hasServices={hasServices}
+        />
       </SheetContent>
     </Sheet>,
   )
-  return { onSave, onDone, user: userEvent.setup() }
+  return { onSave, onDone, onDelete, onDeleted, user: userEvent.setup() }
 }
 
 const save = () => screen.getByRole('button', { name: 'Save Changes' })
@@ -62,5 +80,37 @@ describe('EditCompanyForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(onSave.mock.calls[0][0]).not.toHaveProperty('discountPercent')
+  })
+
+  it('deletes the company after confirmation', async () => {
+    const { onDelete, onDeleted, user } = setup()
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Delete Mehta Textiles Pvt Ltd?')
+    expect(onDelete).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled())
+    expect(onDelete).toHaveBeenCalledTimes(1)
+  })
+
+  it('explains a 409 when the company still has services', async () => {
+    const onDelete = vi.fn().mockRejectedValue(new ApiError(409, { status: 409, code: 'BUSINESS_RULE_VIOLATION' }))
+    const { onDeleted, user } = setup({ onDelete })
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+
+    expect(await screen.findByText(DELETE_COMPANY_IN_USE)).toBeVisible()
+    expect(onDeleted).not.toHaveBeenCalled()
+  })
+
+  it("won't delete a company that still has services", () => {
+    setup({ hasServices: true })
+    expect(screen.getByRole('button', { name: 'Delete Company' })).toBeDisabled()
+    expect(screen.getByTitle(DELETE_COMPANY_IN_USE)).toBeInTheDocument()
+  })
+
+  it("won't delete the client's only company", () => {
+    setup({ onlyCompany: true })
+    expect(screen.getByRole('button', { name: 'Delete Company' })).toBeDisabled()
   })
 })

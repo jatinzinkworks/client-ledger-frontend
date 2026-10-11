@@ -29,7 +29,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick }: DataTablePro
           {columns.map((column) => (
             <TableHead
               key={column.header}
-              className={cn('h-12 px-6 text-xs font-bold tracking-[0.04em] text-muted-foreground uppercase', alignClass(column))}
+              className={cn('h-12 px-4 text-xs first:pl-6 last:pr-6 font-bold tracking-[0.04em] text-muted-foreground uppercase', alignClass(column))}
             >
               {column.hideHeader ? <span className="sr-only">{column.header}</span> : column.header}
             </TableHead>
@@ -44,7 +44,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick }: DataTablePro
             className={cn(onRowClick && 'cursor-pointer')}
           >
             {columns.map((column) => (
-              <TableCell key={column.header} className={cn('px-6 py-4 text-[15px] text-foreground', alignClass(column))}>
+              <TableCell key={column.header} className={cn('px-4 py-4 text-[15px] text-foreground first:pl-6 last:pr-6', alignClass(column))}>
                 {column.render(row)}
               </TableCell>
             ))}

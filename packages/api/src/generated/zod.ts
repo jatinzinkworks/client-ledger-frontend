@@ -207,7 +207,8 @@ export const GetClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -265,7 +266,8 @@ export const UpdateClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -297,7 +299,8 @@ export const GetCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
 
@@ -333,7 +336,8 @@ export const UpdateCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
 
@@ -366,6 +370,7 @@ export const GetService1Response = zod.object({
   "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -406,6 +411,7 @@ export const UpdateService1Response = zod.object({
   "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -770,7 +776,8 @@ export const CreateClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -778,7 +785,7 @@ export const CreateClientResponse = zod.object({
 
 
 /**
- * Returns every company the client holds, in full, ordered by company name.
+ * Returns every company the client holds, in full, ordered by company name, each with the number of services assigned to it.
  * @summary List the companies of a client
  */
 export const ListCompaniesParams = zod.object({
@@ -790,7 +797,8 @@ export const ListCompaniesResponseItem = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 export const ListCompaniesResponse = zod.array(ListCompaniesResponseItem)
 
@@ -826,7 +834,8 @@ export const AddCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage')
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
 
@@ -846,6 +855,7 @@ export const ListServices1ResponseItem = zod.object({
   "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -887,6 +897,7 @@ export const AssignServiceResponse = zod.object({
   "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),

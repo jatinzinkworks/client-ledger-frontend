@@ -1,20 +1,28 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { isNotFound } from '../errors';
-import { useListServices1 } from '../generated/client-services/client-services';
 import {
-  getGetClientQueryKey,
   getGetCompanyQueryKey,
-  getListClientsQueryKey,
+  getListCompaniesQueryKey,
   useGetCompany,
   useUpdateCompany,
-} from '../generated/clients/clients';
-import type { CompanyRequest } from '../generated/model';
+} from '../generated/client-companies/client-companies';
+import {
+  getListServices1QueryKey,
+  useAssignService,
+  useListServices1,
+  useRemoveService,
+  useUpdateService1,
+} from '../generated/client-services/client-services';
+import { getGetClientQueryKey, getListClientsQueryKey } from '../generated/clients/clients';
+import type { CompanyRequest, ServiceAssignmentRequest, ServiceAssignmentUpdateRequest } from '../generated/model';
+import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /**
  * One company of a client for the company page: its details plus the services assigned to
- * it (most recent delivery first, as the backend returns them), and editing the company.
+ * it (most recent delivery first, as the backend returns them), editing the company, and
+ * adding, editing and deleting its services.
  */
 export function useCompany(clientId: string, companyId: string) {
   // orval interpolates path params as-is, so encode the ids here.
@@ -30,10 +38,24 @@ export function useCompany(clientId: string, companyId: string) {
         queryClient.setQueryData(getGetCompanyQueryKey(...ids), saved);
         return Promise.all([
           queryClient.invalidateQueries({ queryKey: getGetClientQueryKey(ids[0]) }),
+          queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey(ids[0]) }),
           queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }),
         ]);
       },
     },
+  });
+  // Adding or removing a service changes the company's services, the client page's service
+  // counts and the catalog's "used by" counts.
+  const refreshServiceCounts = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: getListServices1QueryKey(...ids) }),
+      queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey(ids[0]) }),
+      queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() }),
+    ]);
+  const assign = useAssignService({ mutation: { onSuccess: refreshServiceCounts } });
+  const removeAssignment = useRemoveService({ mutation: { onSuccess: refreshServiceCounts } });
+  const updateAssignment = useUpdateService1({
+    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListServices1QueryKey(...ids) }) },
   });
 
   const notFound = isNotFound(company.error);
@@ -51,5 +73,22 @@ export function useCompany(clientId: string, companyId: string) {
     /** Replaces the company wholesale; an omitted discount becomes the client's. */
     update: (data: CompanyRequest) => update.mutateAsync({ id: ids[0], companyId: ids[1], data }),
     saving: update.isPending,
+    /** Assigns a catalog service; an omitted discount becomes the company's. */
+    addService: (data: ServiceAssignmentRequest) =>
+      assign.mutateAsync({ clientId: ids[0], companyId: ids[1], data }),
+    addingService: assign.isPending,
+    /** Changes a delivered service's date, discount and note; the next due date is recalculated. */
+    updateService: (assignmentId: string, data: ServiceAssignmentUpdateRequest) =>
+      updateAssignment.mutateAsync({
+        clientId: ids[0],
+        companyId: ids[1],
+        assignmentId: encodeURIComponent(assignmentId),
+        data,
+      }),
+    updatingService: updateAssignment.isPending,
+    /** Removes a delivered service from the company. */
+    deleteService: (assignmentId: string) =>
+      removeAssignment.mutateAsync({ clientId: ids[0], companyId: ids[1], assignmentId: encodeURIComponent(assignmentId) }),
+    deletingService: removeAssignment.isPending,
   };
 }

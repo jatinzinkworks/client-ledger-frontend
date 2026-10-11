@@ -20,6 +20,7 @@ import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 import { DeleteButton } from '@/components/DeleteButton'
+import { FIELD_HINT } from '@/components/form/fieldStyles'
 import { SelectField } from '@/components/form/SelectField'
 import { TextField } from '@/components/form/TextField'
 import { Button } from '@/components/ui/button'
@@ -144,7 +145,7 @@ export function ServiceEditor({ service, defaultCategory, onSave, onDelete, savi
           </div>
           <InvoiceScheduleFields />
           {!isNew && (
-            <p className="text-xs text-muted-foreground">
+            <p className={FIELD_HINT}>
               Fee Changes Apply To New Charges Only. Past Charges Keep Their Original Amount.
             </p>
           )}

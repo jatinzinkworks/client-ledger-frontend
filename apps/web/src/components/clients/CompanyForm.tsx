@@ -33,6 +33,8 @@ interface CompanyFormProps {
   conflictMessage?: string
   /** Replaces the fields, e.g. when the client can hold no more companies. */
   unavailable?: ReactNode
+  /** Left of Cancel in the footer, e.g. Edit Company's Delete Company. */
+  footerStart?: ReactNode
 }
 
 /**
@@ -50,6 +52,7 @@ export function CompanyForm({
   requireChange = false,
   conflictMessage,
   unavailable,
+  footerStart,
 }: CompanyFormProps) {
   const form = useForm<AddCompanyFormInput, unknown, AddCompanyFormValues>({
     resolver: zodResolver(addCompanyFormSchema),
@@ -95,15 +98,18 @@ export function CompanyForm({
           {formError && <p className="text-sm text-destructive">{formError}</p>}
         </div>
 
-        <SheetFooter className="flex-row justify-end gap-3 border-t border-border p-6">
-          <SheetClose asChild>
-            <Button type="button" variant="outline" size="touch" className="border-primary/50 bg-card">
-              Cancel
+        <SheetFooter className="flex-row items-center gap-3 border-t border-border p-6">
+          {footerStart}
+          <div className="ml-auto flex gap-3">
+            <SheetClose asChild>
+              <Button type="button" variant="outline" size="touch" className="border-primary/50 bg-card">
+                Cancel
+              </Button>
+            </SheetClose>
+            <Button type="submit" size="touch" disabled={blocked}>
+              {saving ? 'Saving…' : submitLabel}
             </Button>
-          </SheetClose>
-          <Button type="submit" size="touch" disabled={blocked}>
-            {saving ? 'Saving…' : submitLabel}
-          </Button>
+          </div>
         </SheetFooter>
       </form>
     </FormProvider>

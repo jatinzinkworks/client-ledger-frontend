@@ -9,6 +9,68 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '11 Oct 2026, 18:36:56',
+    highlights: ["A client's companies list now shows how many services each company has; a company with services can't be deleted until they are removed."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 18:18:35',
+    highlights: ["A company's services can now be deleted, from the services list or the Edit Service panel, after confirming."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 18:16:43',
+    highlights: ['The upcoming due dates in the service panels now look like read-only information rather than input fields.'],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 18:10:57',
+    highlights: ["A company's services can now be edited from its page: change the delivery date, discount or note of a service."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:59:28',
+    highlights: ["A company's services list now shows each service's net charge after its discount."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:53:23',
+    highlights: ["A company's services list now shows each service's fee."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:49:34',
+    highlights: ["A company's services list now shows the billing cycle, delivery date and next due date in their own columns."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:43:46',
+    highlights: ["Add Service now previews the service's next 5 due dates from the delivery date, each with its net charge."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:34:28',
+    highlights: ["Add Service now shows the chosen service's billing cycle as a label beside its standard fee."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:32:19',
+    highlights: ['Help and error text under form fields is larger and easier to read.'],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:29:12',
+    highlights: ["Add Company on a client's page is now a primary button, matching Onboard Client and Add Service."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:25:26',
+    highlights: [
+      "Services from the catalog can now be added to a company, with the delivery date, an optional discount and a note, showing the net charge before saving. Companies can also be deleted from the Edit Company panel.",
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '11 Oct 2026, 17:13:39',
     highlights: ["A company's name, type, address and discount can now be edited from its page."],
   },

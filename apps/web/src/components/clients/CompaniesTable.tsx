@@ -21,6 +21,10 @@ interface CompaniesTableProps {
 
 // Services, Billed, Received, Pending and Status from the mock join here once the API
 // carries billing figures.
+/** Why a company cannot be deleted right now: the backend refuses both (409). */
+const deleteCompanyBlocker = (company: CompanyResponse, onlyCompany: boolean) =>
+  onlyCompany ? LAST_COMPANY_REASON : company.serviceCount ? DELETE_COMPANY_IN_USE : undefined
+
 function columns({ clientId, companies, onDeleteCompany, deletingCompany }: CompaniesTableProps): DataColumn<CompanyResponse>[] {
   const onlyCompany = companies.length <= 1
   return [
@@ -41,6 +45,7 @@ function columns({ clientId, companies, onDeleteCompany, deletingCompany }: Comp
       ),
     },
     { header: 'Type', render: (company) => companyTypeLabel(company.companyType) },
+    { header: 'Services', align: 'right', render: (company) => company.serviceCount ?? '—' },
     { header: 'Discount', align: 'right', render: (company) => companyDiscountLabel(company.discountPercent) },
     {
       header: 'Delete',
@@ -55,7 +60,7 @@ function columns({ clientId, companies, onDeleteCompany, deletingCompany }: Comp
             label="Delete Company"
             itemName={company.companyName ?? 'This Company'}
             description={DELETE_COMPANY_WARNING}
-            disabledReason={onlyCompany ? LAST_COMPANY_REASON : undefined}
+            disabledReason={deleteCompanyBlocker(company, onlyCompany)}
             conflictMessage={DELETE_COMPANY_IN_USE}
             onDelete={() => onDeleteCompany(company.id ?? '')}
             deleting={deletingCompany}

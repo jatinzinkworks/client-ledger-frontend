@@ -1,23 +1,7 @@
 import type { CatalogServiceResponse } from '@cl/api'
-import {
-  BILLING_LABELS,
-  CATEGORY_LABELS,
-  formatGst,
-  formatInr,
-  scheduleSummary,
-  usageLabel,
-  type BillingFrequency,
-} from '@cl/schemas'
+import { CATEGORY_LABELS, formatGst, formatInr, scheduleSummary, usageLabel } from '@cl/schemas'
 
-import { cn } from '@/lib/utils'
-
-// Billing pill styles from the mock; semantic tokens, so each works in both themes.
-const BILLING_BADGE: Readonly<Record<BillingFrequency, string>> = {
-  MONTHLY: 'bg-brand/10 text-brand',
-  QUARTERLY: 'bg-primary text-primary-foreground',
-  ANNUAL: 'bg-muted text-foreground',
-  ONE_OFF: 'border border-border text-muted-foreground',
-}
+import { BillingBadge } from './BillingBadge'
 
 interface ServiceCardProps {
   service: CatalogServiceResponse
@@ -38,11 +22,7 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
         <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">
           {service.category ? CATEGORY_LABELS[service.category] : ''}
         </span>
-        {billing && (
-          <span className={cn('rounded-full px-2.5 py-1 text-[11px] font-black tracking-wide uppercase', BILLING_BADGE[billing])}>
-            {BILLING_LABELS[billing]}
-          </span>
-        )}
+        {billing && <BillingBadge billing={billing} />}
       </div>
 
       <div className="flex flex-col gap-1">

@@ -3,6 +3,6 @@ export const FIELD_CONTROL = 'h-11 bg-card text-[15px] md:text-[15px] dark:bg-in
 
 export const FIELD_LABEL = 'text-sm font-bold text-foreground'
 
-export const FIELD_HINT = 'text-xs text-muted-foreground'
+export const FIELD_HINT = 'text-sm text-muted-foreground'
 
-export const FIELD_ERROR = 'text-xs text-destructive'
+export const FIELD_ERROR = 'text-sm text-destructive'

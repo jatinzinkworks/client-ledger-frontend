@@ -1,7 +1,7 @@
-import type { CompanyResponse, ServiceAssignmentResponse } from '@cl/api';
+import type { CompanyResponse } from '@cl/api';
 
 import { companyTypeLabel } from './clients';
-import { BILLING_LABELS, formatDate } from './services';
+import { formatDate } from './services';
 
 // Display helpers for the company page: its details line and the services assigned to it.
 
@@ -18,16 +18,16 @@ export const companyDetails = (company: CompanyResponse) =>
  * shifts a day the way `new Date("2026-10-15")` (UTC midnight) can. Empty when missing.
  */
 export function formatApiDate(value: string | undefined): string {
-  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return '';
-  const [, y, m, d] = match.map(Number);
-  return formatDate(new Date(y, m - 1, d));
+  const date = parseApiDate(value);
+  return date ? formatDate(date) : '';
 }
 
-/** "Monthly · Due 7 Nov 2026" under an assigned service's name. */
-export const assignmentSummary = (a: Pick<ServiceAssignmentResponse, 'serviceType' | 'nextDueDate'>) =>
-  [a.serviceType && BILLING_LABELS[a.serviceType], a.nextDueDate && `Due ${formatApiDate(a.nextDueDate)}`]
-    .filter(Boolean)
-    .join(' · ');
+/** An API date ("2026-10-15") as a local calendar date; undefined when missing or malformed. */
+export function parseApiDate(value: string | undefined): Date | undefined {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return undefined;
+  const [, y, m, d] = match.map(Number);
+  return new Date(y, m - 1, d);
+}
 
 export const servicesCountLabel = (count: number) => `${count} ${count === 1 ? 'Service' : 'Services'}`;
