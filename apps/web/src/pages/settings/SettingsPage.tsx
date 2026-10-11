@@ -18,7 +18,7 @@ export function SettingsPage() {
   const ready = !isLoading && !loadError
 
   return (
-    <div className="flex max-w-[1080px] flex-col gap-6">
+    <div className="flex flex-col gap-6">
       {!ready && <PageHeader eyebrow="Applies To All Clients" title="Settings" />}
       {isLoading && <Spinner />}
       {loadError && (

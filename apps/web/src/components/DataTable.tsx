@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils'
 export interface DataColumn<T> {
   header: string
   align?: 'right'
+  /** Keep the header for screen readers only (e.g. an actions column). */
+  hideHeader?: boolean
   render: (row: T) => ReactNode
 }
 
@@ -29,7 +31,7 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick }: DataTablePro
               key={column.header}
               className={cn('h-12 px-6 text-xs font-bold tracking-[0.04em] text-muted-foreground uppercase', alignClass(column))}
             >
-              {column.header}
+              {column.hideHeader ? <span className="sr-only">{column.header}</span> : column.header}
             </TableHead>
           ))}
         </TableRow>

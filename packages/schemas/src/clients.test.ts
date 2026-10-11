@@ -2,7 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   ALL_MANAGERS,
+  addCompanyTitle,
+  areCompaniesComplete,
   clientCountLabel,
+  companiesLeft,
+  companyFormDefaults,
+  companyFormSchema,
+  toCompanyRequest,
+  clientDetailsDefaults,
+  deleteClientWarning,
+  isClientDetailsComplete,
+  toClientUpdateRequest,
   clientSinceLabel,
   companyDiscountLabel,
   discountLabel,
@@ -77,7 +87,7 @@ describe('clientFormSchema', () => {
 
 describe('clientFormDefaults', () => {
   it('starts with one blank Private Limited company', () => {
-    expect(clientFormDefaults().companies).toEqual([{ companyName: '', companyType: 'PRIVATE_LIMITED', address: '' }]);
+    expect(clientFormDefaults().companies).toEqual([{ companyName: '', companyType: 'PRIVATE_LIMITED', address: '', discountPercent: '' }]);
   });
 });
 
@@ -100,7 +110,8 @@ describe('clientFieldFromApi', () => {
   it('maps backend paths onto form paths', () => {
     expect(clientFieldFromApi('email')).toBe('email');
     expect(clientFieldFromApi('companies[1].address')).toBe('companies.1.address');
-    expect(clientFieldFromApi('companies[0].discountPercent')).toBeUndefined();
+    expect(clientFieldFromApi('companies[0].discountPercent')).toBe('companies.0.discountPercent');
+    expect(clientFieldFromApi('companies[0].cin')).toBeUndefined();
     expect(clientFieldFromApi('discountPercent')).toBe('discountPercent');
   });
 });
@@ -146,5 +157,126 @@ describe('display helpers', () => {
     expect(managerOptions([{ id: 'm-1', firstName: 'Neha', lastName: 'Kulkarni' }, { firstName: 'No', lastName: 'Id' }])).toEqual([
       { value: 'm-1', label: 'Neha Kulkarni' },
     ]);
+  });
+});
+
+describe('Edit Client', () => {
+  const stored = {
+    id: 'c-1',
+    firstName: 'Rajesh',
+    lastName: 'Mehta',
+    phone: '+91 98200 41177',
+    email: 'rajesh@mehtatextiles.in',
+    managerId: 'm-1',
+    discountPercent: 0,
+    companies: [
+      { id: 'co-1', companyName: 'Mehta Textiles Pvt Ltd', companyType: 'PRIVATE_LIMITED' as const, address: 'Plot 14, Mumbai', discountPercent: 5 },
+      { id: 'co-2', companyName: 'Mehta Exports LLP', companyType: 'LLP' as const, address: 'Andheri, Mumbai', discountPercent: 0 },
+    ],
+  };
+
+  it('starts from the stored client, showing a zero discount as blank', () => {
+    expect(clientDetailsDefaults(stored)).toEqual({
+      firstName: 'Rajesh',
+      lastName: 'Mehta',
+      phone: '+91 98200 41177',
+      email: 'rajesh@mehtatextiles.in',
+      managerId: 'm-1',
+      discountPercent: '',
+    });
+    expect(clientDetailsDefaults({ ...stored, discountPercent: 7.5 }).discountPercent).toBe('7.5');
+  });
+
+  it("sends only the client's own fields", () => {
+    const request = toClientUpdateRequest({
+      firstName: 'Rajesh',
+      lastName: 'Mehta',
+      phone: '+91 98200 41177',
+      email: 'r@mehta.in',
+      managerId: 'm-2',
+      discountPercent: 10,
+    });
+    expect(request).toStrictEqual({
+      firstName: 'Rajesh',
+      lastName: 'Mehta',
+      phone: '+91 98200 41177',
+      email: 'r@mehta.in',
+      managerId: 'm-2',
+      discountPercent: 10,
+    });
+  });
+
+  it('omits a blank client discount', () => {
+    const { discountPercent: _blank, ...details } = clientDetailsDefaults(stored);
+    expect(toClientUpdateRequest({ ...details })).not.toHaveProperty('discountPercent');
+  });
+
+  it('needs every detail but the discount', () => {
+    expect(isClientDetailsComplete(clientDetailsDefaults(stored))).toBe(true);
+    expect(isClientDetailsComplete({ ...clientDetailsDefaults(stored), phone: ' ' })).toBe(false);
+  });
+
+  it('can label managers with their role', () => {
+    expect(managerOptions([{ id: 'm-1', firstName: 'Neha', lastName: 'Kulkarni', role: 'SENIOR_MANAGER' }], { withRole: true })).toEqual([
+      { value: 'm-1', label: 'Neha Kulkarni · Senior Manager' },
+    ]);
+  });
+
+  it('warns that companies go with the client', () => {
+    expect(deleteClientWarning(stored)).toBe('All 2 Of Their Companies Are Deleted Too. This Cannot Be Undone.');
+    expect(deleteClientWarning({ companies: stored.companies.slice(0, 1) })).toBe('Their Company Is Deleted Too. This Cannot Be Undone.');
+  });
+});
+
+describe('Add Company', () => {
+  it('checks each company is filled in', () => {
+    expect(areCompaniesComplete([{ companyName: 'Mehta Exports', companyType: 'LLP', address: '14 MG Road' }])).toBe(true);
+    expect(areCompaniesComplete([{ companyName: 'Mehta Exports', companyType: 'LLP', address: ' ' }])).toBe(false);
+    expect(areCompaniesComplete([])).toBe(false);
+  });
+
+  it('titles the sheet with the client', () => {
+    expect(addCompanyTitle({ firstName: 'Rajesh', lastName: 'Mehta' })).toBe('Add Company For Rajesh Mehta');
+  });
+
+  it('caps companies at the backend limit', () => {
+    expect(companiesLeft(1)).toBe(49);
+    expect(companiesLeft(50)).toBe(0);
+    expect(companiesLeft(60)).toBe(0);
+  });
+
+  it("sends a company's own discount, and omits a blank one so it takes the client's", () => {
+    const company = { companyName: 'Mehta Exports', companyType: 'LLP' as const, address: '14 MG Road' };
+    expect(toCompanyRequest(companyFormSchema.parse({ ...company, discountPercent: '5' }))).toEqual({ ...company, discountPercent: 5 });
+    expect(toCompanyRequest(companyFormSchema.parse({ ...company, discountPercent: '' }))).toStrictEqual(company);
+    expect(
+      toClientRequest(clientFormSchema.parse({ ...valid, companies: [{ ...company, discountPercent: '7.5' }] })).companies,
+    ).toEqual([{ ...company, discountPercent: 7.5 }]);
+  });
+
+  it('keeps a company discount between 0 and 100', () => {
+    const issues = issuesFor({ ...valid, companies: [{ ...valid.companies[0], discountPercent: '120' }] });
+    expect(issues).toEqual({ 'companies.0.discountPercent': 'Enter A Discount From 0 To 100%.' });
+  });
+
+  it('maps a company to its request', () => {
+    expect(toCompanyRequest({ companyName: 'Mehta Exports', companyType: 'LLP', address: '14 MG Road' })).toEqual({
+      companyName: 'Mehta Exports',
+      companyType: 'LLP',
+      address: '14 MG Road',
+    });
+  });
+});
+
+describe('Edit Company', () => {
+  it('starts from the stored company, showing even a zero discount', () => {
+    const stored = { id: 'co-1', companyName: 'Mehta Exports LLP', companyType: 'LLP' as const, address: 'Andheri', discountPercent: 0 };
+    expect(companyFormDefaults(stored)).toEqual({
+      companyName: 'Mehta Exports LLP',
+      companyType: 'LLP',
+      address: 'Andheri',
+      discountPercent: '0',
+    });
+    expect(companyFormDefaults({ ...stored, discountPercent: undefined }).discountPercent).toBe('');
   });
 });

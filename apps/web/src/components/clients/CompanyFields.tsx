@@ -1,4 +1,4 @@
-import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, type ClientFormInput } from '@cl/schemas'
+import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, type AddCompanyFormInput } from '@cl/schemas'
 import { X } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
@@ -12,12 +12,15 @@ interface CompanyFieldsProps {
   onRemove?: () => void
 }
 
-/** One company block of the onboarding form; must render inside the client form's FormProvider. */
+/**
+ * One company block. Must render inside a FormProvider whose values hold a `companies` array —
+ * Onboard Client and Add Company both do.
+ */
 export function CompanyFields({ index, onRemove }: CompanyFieldsProps) {
   const {
     register,
     formState: { errors },
-  } = useFormContext<ClientFormInput>()
+  } = useFormContext<AddCompanyFormInput>()
   const fieldErrors = errors.companies?.[index]
   const id = (field: string) => `company-${index}-${field}`
 
@@ -58,6 +61,14 @@ export function CompanyFields({ index, onRemove }: CompanyFieldsProps) {
         multiline
         error={fieldErrors?.address?.message}
         registration={register(`companies.${index}.address`)}
+      />
+      <TextField
+        id={id('discountPercent')}
+        label={COMPANY_FIELDS.discountPercent.label}
+        hint={COMPANY_FIELDS.discountPercent.hint}
+        type="number"
+        error={fieldErrors?.discountPercent?.message}
+        registration={register(`companies.${index}.discountPercent`)}
       />
     </fieldset>
   )

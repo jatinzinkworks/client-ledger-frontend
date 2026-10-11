@@ -9,6 +9,40 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '11 Oct 2026, 17:13:39',
+    highlights: ["A company's name, type, address and discount can now be edited from its page."],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:11:09',
+    highlights: [
+      "Companies can now have their own discount when onboarding a client or adding a company; left blank, a company takes the client's discount.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 17:04:37',
+    highlights: [
+      "Companies can now be added to an existing client and deleted from the client's page, after confirming.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 16:56:18',
+    highlights: [
+      'Clients can now be deleted from Edit Client, after confirming a warning that their companies go too.',
+      'Every page now uses the full width of the window instead of a narrow centred column, and delete confirmations show a red button.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '11 Oct 2026, 16:51:22',
+    highlights: [
+      "Clients can now be edited from their page: name, phone, email, assigned manager and discount. Their companies are left as they are.",
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '05 Oct 2026, 13:17:53',
     highlights: [
       "Clicking a company on a client's page now opens the company, showing its type, discount, address and the services recorded for it.",

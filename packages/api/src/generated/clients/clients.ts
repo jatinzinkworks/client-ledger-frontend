@@ -29,8 +29,10 @@ import type {
   ClientResponse,
   ClientSummaryResponse,
   ClientUpdateRequest,
+  CompanyRequest,
   CompanyResponse,
-  ErrorResponse
+  ErrorResponse,
+  ListClientsParams
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -166,7 +168,7 @@ export const getUpdateClientUrl = (id: string,) => {
 }
 
 /**
- * Replaces a client wholesale, together with their full set of companies. A company carrying an id is updated in place and keeps that id, a company without an id is added, and any existing company left out is removed. An omitted client discount resets to zero, and companies without a discount of their own take the client's.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero, and companies already held keep their discount.
  * @summary Update a client
  */
 export const updateClient = async (id: string,
@@ -320,21 +322,23 @@ export const useDeleteClient = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteClientMutationOptions(options), queryClient);
     }
-    export const getListClientsUrl = () => {
+    export const getGetCompanyUrl = (id: string,
+    companyId: string,) => {
 
 
 
 
-  return `/psc/cl/v1/clients`
+  return `/psc/cl/v1/clients/${id}/companies/${companyId}`
 }
 
 /**
- * Returns every client, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.
- * @summary List clients
+ * Returns one company of the client. A company that exists but belongs to a different client is reported as not found.
+ * @summary Fetch a company of a client
  */
-export const listClients = async ( options?: Parameters<typeof apiFetch>[1]): Promise<ClientSummaryResponse[]> => {
+export const getCompany = async (id: string,
+    companyId: string, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse> => {
 
-  return apiFetch<ClientSummaryResponse[]>(getListClientsUrl(),
+  return apiFetch<CompanyResponse>(getGetCompanyUrl(id,companyId),
   {
     ...options,
     method: 'GET'
@@ -347,23 +351,304 @@ export const listClients = async ( options?: Parameters<typeof apiFetch>[1]): Pr
 
 
 
-export const getListClientsQueryKey = () => {
+export const getGetCompanyQueryKey = (id: string,
+    companyId: string,) => {
     return [
-    `/psc/cl/v1/clients`
+    `/psc/cl/v1/clients/${id}/companies/${companyId}`
     ] as const;
     }
 
 
-export const getListClientsQueryOptions = <TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+export const getGetCompanyQueryOptions = <TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(id: string,
+    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListClientsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetCompanyQueryKey(id,companyId);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClients>>> = ({ signal }) => listClients({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompany>>> = ({ signal }) => getCompany(id,companyId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCompanyQueryResult = NonNullable<Awaited<ReturnType<typeof getCompany>>>
+export type GetCompanyQueryError = ErrorType<ErrorResponse>
+
+
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
+ id: string,
+    companyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompany>>,
+          TError,
+          Awaited<ReturnType<typeof getCompany>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
+ id: string,
+    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCompany>>,
+          TError,
+          Awaited<ReturnType<typeof getCompany>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
+ id: string,
+    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Fetch a company of a client
+ */
+
+export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
+ id: string,
+    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCompanyQueryOptions(id,companyId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getUpdateCompanyUrl = (id: string,
+    companyId: string,) => {
+
+
+
+
+  return `/psc/cl/v1/clients/${id}/companies/${companyId}`
+}
+
+/**
+ * Replaces one company of the client wholesale; it keeps its identifier. Every field except the discount is mandatory, and an omitted discount gives the company the client's. A company that exists but belongs to a different client is reported as not found.
+ * @summary Update a company of a client
+ */
+export const updateCompany = async (id: string,
+    companyId: string,
+    companyRequest: CompanyRequest, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<CompanyResponse>(getUpdateCompanyUrl(id,companyId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateCompanyMutationKey = () => ['updateCompany'] as const;
+
+export const getUpdateCompanyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCompany>>, TError,UpdateCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCompany>>, TError,UpdateCompanyMutationVariables, TContext> => {
+
+const mutationKey = getUpdateCompanyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCompany>>, UpdateCompanyMutationVariables> = (props) => {
+          const {id,companyId,data} = props ?? {};
+
+          return  updateCompany(id,companyId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof updateCompany>>>
+    export type UpdateCompanyMutationBody = CompanyRequest
+    export type UpdateCompanyMutationError = ErrorType<ErrorResponse>
+    export type UpdateCompanyMutationVariables = {id: string;companyId: string;data: CompanyRequest}
+
+    /**
+ * @summary Update a company of a client
+ */
+export const useUpdateCompany = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCompany>>, TError,UpdateCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCompany>>,
+        TError,
+        UpdateCompanyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateCompanyMutationOptions(options), queryClient);
+    }
+    export const getDeleteCompanyUrl = (id: string,
+    companyId: string,) => {
+
+
+
+
+  return `/psc/cl/v1/clients/${id}/companies/${companyId}`
+}
+
+/**
+ * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first.
+ * @summary Delete a company of a client
+ */
+export const deleteCompany = async (id: string,
+    companyId: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
+
+  return apiFetch<void>(getDeleteCompanyUrl(id,companyId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCompanyMutationKey = () => ['deleteCompany'] as const;
+
+export const getDeleteCompanyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext> => {
+
+const mutationKey = getDeleteCompanyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCompany>>, DeleteCompanyMutationVariables> = (props) => {
+          const {id,companyId} = props ?? {};
+
+          return  deleteCompany(id,companyId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCompany>>>
+
+    export type DeleteCompanyMutationError = ErrorType<ErrorResponse>
+    export type DeleteCompanyMutationVariables = {id: string;companyId: string}
+
+    /**
+ * @summary Delete a company of a client
+ */
+export const useDeleteCompany = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCompany>>,
+        TError,
+        DeleteCompanyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteCompanyMutationOptions(options), queryClient);
+    }
+    export const getListClientsUrl = (params?: ListClientsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients?${stringifiedParams}` : `/psc/cl/v1/clients`
+}
+
+/**
+ * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.
+ * @summary List clients
+ */
+export const listClients = async (params?: ListClientsParams, options?: Parameters<typeof apiFetch>[1]): Promise<ClientSummaryResponse[]> => {
+
+  return apiFetch<ClientSummaryResponse[]>(getListClientsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListClientsQueryKey = (params?: ListClientsParams,) => {
+    return [
+    `/psc/cl/v1/clients`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListClientsQueryOptions = <TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>(params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListClientsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClients>>> = ({ signal }) => listClients(params, { signal, ...requestOptions });
 
 
 
@@ -377,7 +662,7 @@ export type ListClientsQueryError = ErrorType<ErrorResponse>
 
 
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+ params: undefined |  ListClientsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listClients>>,
           TError,
@@ -387,7 +672,7 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listClients>>,
           TError,
@@ -397,7 +682,7 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -405,11 +690,11 @@ export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, 
  */
 
 export function useListClients<TData = Awaited<ReturnType<typeof listClients>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ params?: ListClientsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listClients>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListClientsQueryOptions(options)
+  const queryOptions = getListClientsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -610,137 +895,41 @@ export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies
 
 
 
-export const getGetCompanyUrl = (id: string,
-    companyId: string,) => {
+export const getAddCompanyUrl = (id: string,) => {
 
 
 
 
-  return `/psc/cl/v1/clients/${id}/companies/${companyId}`
+  return `/psc/cl/v1/clients/${id}/companies`
 }
 
 /**
- * Returns one company of the client. A company that exists but belongs to a different client is reported as not found.
- * @summary Fetch a company of a client
+ * Adds one company to an existing client. Every field except the discount is mandatory, and a company without a discount of its own takes the client's. A client holds at most 50 companies.
+ * @summary Add a company to a client
  */
-export const getCompany = async (id: string,
-    companyId: string, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse> => {
+export const addCompany = async (id: string,
+    companyRequest: CompanyRequest, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse> => {
 
-  return apiFetch<CompanyResponse>(getGetCompanyUrl(id,companyId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetCompanyQueryKey = (id: string,
-    companyId: string,) => {
-    return [
-    `/psc/cl/v1/clients/${id}/companies/${companyId}`
-    ] as const;
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
     }
-
-
-export const getGetCompanyQueryOptions = <TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(id: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetCompanyQueryKey(id,companyId);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCompany>>> = ({ signal }) => getCompany(id,companyId, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetCompanyQueryResult = NonNullable<Awaited<ReturnType<typeof getCompany>>>
-export type GetCompanyQueryError = ErrorType<ErrorResponse>
-
-
-export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
- id: string,
-    companyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCompany>>,
-          TError,
-          Awaited<ReturnType<typeof getCompany>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
- id: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getCompany>>,
-          TError,
-          Awaited<ReturnType<typeof getCompany>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
- id: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Fetch a company of a client
- */
-
-export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TError = ErrorType<ErrorResponse>>(
- id: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetCompanyQueryOptions(id,companyId,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-export const getDeleteCompanyUrl = (id: string,
-    companyId: string,) => {
-
-
-
-
-  return `/psc/cl/v1/clients/${id}/companies/${companyId}`
-}
-
-/**
- * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first.
- * @summary Delete a company of a client
- */
-export const deleteCompany = async (id: string,
-    companyId: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
-
-  return apiFetch<void>(getDeleteCompanyUrl(id,companyId),
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<CompanyResponse>(getAddCompanyUrl(id),
   {
     ...options,
-    method: 'DELETE'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(companyRequest)
   }
 );}
 
@@ -748,13 +937,13 @@ export const deleteCompany = async (id: string,
 
 
 
-export const getDeleteCompanyMutationKey = () => ['deleteCompany'] as const;
+export const getAddCompanyMutationKey = () => ['addCompany'] as const;
 
-export const getDeleteCompanyMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext> => {
+export const getAddCompanyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompany>>, TError,AddCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCompany>>, TError,AddCompanyMutationVariables, TContext> => {
 
-const mutationKey = getDeleteCompanyMutationKey();
+const mutationKey = getAddCompanyMutationKey();
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -764,10 +953,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCompany>>, DeleteCompanyMutationVariables> = (props) => {
-          const {id,companyId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCompany>>, AddCompanyMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  deleteCompany(id,companyId,requestOptions)
+          return  addCompany(id,data,requestOptions)
         }
 
 
@@ -777,21 +966,21 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type DeleteCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCompany>>>
-
-    export type DeleteCompanyMutationError = ErrorType<ErrorResponse>
-    export type DeleteCompanyMutationVariables = {id: string;companyId: string}
+    export type AddCompanyMutationResult = NonNullable<Awaited<ReturnType<typeof addCompany>>>
+    export type AddCompanyMutationBody = CompanyRequest
+    export type AddCompanyMutationError = ErrorType<ErrorResponse>
+    export type AddCompanyMutationVariables = {id: string;data: CompanyRequest}
 
     /**
- * @summary Delete a company of a client
+ * @summary Add a company to a client
  */
-export const useDeleteCompany = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompany>>, TError,DeleteCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+export const useAddCompany = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompany>>, TError,AddCompanyMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof deleteCompany>>,
+        Awaited<ReturnType<typeof addCompany>>,
         TError,
-        DeleteCompanyMutationVariables,
+        AddCompanyMutationVariables,
         TContext
       > => {
-      return useMutation(getDeleteCompanyMutationOptions(options), queryClient);
+      return useMutation(getAddCompanyMutationOptions(options), queryClient);
     }

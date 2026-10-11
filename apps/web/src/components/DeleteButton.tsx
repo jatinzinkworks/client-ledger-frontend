@@ -1,4 +1,5 @@
-import { errorMessage } from '@cl/api'
+import { ApiError, errorMessage } from '@cl/api'
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import {
@@ -23,12 +24,25 @@ interface DeleteButtonProps {
   description: string
   /** Why deleting is not allowed right now; disables the button and shows as its tooltip. */
   disabledReason?: string
+  /** Shown instead of the backend's message when it refuses with 409 (the record is in use). */
+  conflictMessage?: string
   onDelete: () => Promise<unknown>
   deleting: boolean
+  /** A compact trash-can icon (e.g. in a table row) instead of the text button. */
+  iconOnly?: boolean
 }
 
 /** A destructive text button that asks for confirmation in a dialog before deleting. */
-export function DeleteButton({ label, itemName, description, disabledReason, onDelete, deleting }: DeleteButtonProps) {
+export function DeleteButton({
+  label,
+  itemName,
+  description,
+  disabledReason,
+  conflictMessage,
+  onDelete,
+  deleting,
+  iconOnly = false,
+}: DeleteButtonProps) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string>()
 
@@ -39,24 +53,40 @@ export function DeleteButton({ label, itemName, description, disabledReason, onD
       await onDelete()
       setOpen(false)
     } catch (e) {
-      setError(errorMessage(e))
+      setError(conflictMessage && e instanceof ApiError && e.status === 409 ? conflictMessage : errorMessage(e))
     }
   }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="touch"
-          disabled={!!disabledReason}
-          title={disabledReason}
-          className="px-0 text-destructive hover:bg-transparent hover:text-destructive/80"
-        >
-          {label}
-        </Button>
-      </AlertDialogTrigger>
+      {/* The tooltip sits on a wrapper: a disabled button takes no pointer events, so its own
+          title would never show. */}
+      <span title={disabledReason} className="inline-flex">
+        <AlertDialogTrigger asChild>
+          {iconOnly ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`${label}: ${itemName}`}
+              disabled={!!disabledReason}
+              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            >
+              <Trash2 />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="touch"
+              disabled={!!disabledReason}
+              className="px-0 text-destructive hover:bg-transparent hover:text-destructive/80"
+            >
+              {label}
+            </Button>
+          )}
+        </AlertDialogTrigger>
+      </span>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete {itemName}?</AlertDialogTitle>
@@ -65,11 +95,9 @@ export function DeleteButton({ label, itemName, description, disabledReason, onD
         {error && <p className="text-sm text-destructive">{error}</p>}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirm}
-            disabled={deleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
+          {/* The variant, not a className: AlertDialogAction renders through Slot, which would
+              not merge a background class over the default variant's. */}
+          <AlertDialogAction onClick={confirm} disabled={deleting} variant="destructive">
             {deleting ? 'Deleting…' : label}
           </AlertDialogAction>
         </AlertDialogFooter>

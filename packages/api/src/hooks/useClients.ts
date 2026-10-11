@@ -17,7 +17,8 @@ const sortByName = (clients: ClientSummaryResponse[]) =>
  */
 export function useClients() {
   const queryClient = useQueryClient();
-  const query = useListClients({ query: { select: sortByName } });
+  // Every client; the screens filter by manager in memory (the endpoint's managerId param is unused).
+  const query = useListClients(undefined, { query: { select: sortByName } });
   const create = useCreateClient({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }) },
   });

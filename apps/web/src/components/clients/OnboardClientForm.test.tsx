@@ -47,6 +47,7 @@ describe('OnboardClientForm', () => {
     await user.type(screen.getAllByLabelText('Company Name')[1], 'Mehta Exports')
     await user.selectOptions(screen.getAllByLabelText('Company Type')[1], 'LLP')
     await user.type(screen.getAllByLabelText('Address')[1], '14 MG Road')
+    await user.type(screen.getAllByLabelText('Company Discount % (Optional)')[1], '5')
     await user.click(submit())
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
@@ -58,7 +59,7 @@ describe('OnboardClientForm', () => {
       managerId: 'm-1',
       companies: [
         { companyName: 'Mehta Textiles Pvt Ltd', companyType: 'PRIVATE_LIMITED', address: '12 MG Road' },
-        { companyName: 'Mehta Exports', companyType: 'LLP', address: '14 MG Road' },
+        { companyName: 'Mehta Exports', companyType: 'LLP', address: '14 MG Road', discountPercent: 5 },
       ],
     })
   })

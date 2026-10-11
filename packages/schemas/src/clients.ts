@@ -1,13 +1,18 @@
 import {
   CompanyRequestCompanyType as COMPANY_TYPE,
   type ClientRequest,
+  type ClientResponse,
   type ClientSummaryResponse,
+  type ClientUpdateRequest,
+  type CompanyRequest,
+  type CompanyResponse,
   type CompanyRequestCompanyType as CompanyType,
   type ManagerResponse,
 } from '@cl/api';
 import {
   createClientBodyCompaniesItemAddressMax as ADDRESS_MAX,
   createClientBodyCompaniesItemCompanyNameMax as COMPANY_NAME_MAX,
+  createClientBodyCompaniesItemDiscountPercentMax as COMPANY_DISCOUNT_MAX,
   createClientBodyCompaniesMax as COMPANIES_MAX,
   createClientBodyDiscountPercentMax as DISCOUNT_MAX,
   createClientBodyEmailMax as EMAIL_MAX,
@@ -19,7 +24,7 @@ import {
 import { z } from 'zod';
 
 import { optionalPercent, requiredEmail, requiredPhone, requiredText } from './fields';
-import { managerName } from './managers';
+import { managerName, roleLabel } from './managers';
 
 // Lengths, the phone pattern and the company limit come from the generated OpenAPI schema.
 // Every field is mandatory on the backend and a client needs at least one company — rules
@@ -51,24 +56,44 @@ export const companyFormSchema = z.object({
   companyName: requiredText(COMPANY_NAME_MAX, 'Enter The Company Name.'),
   companyType: z.enum(COMPANY_TYPES, 'Choose A Company Type.'),
   address: requiredText(ADDRESS_MAX, 'Enter The Registered Address.'),
+  /** Optional: left blank, the company takes the client's discount. */
+  discountPercent: optionalPercent(COMPANY_DISCOUNT_MAX, `Enter A Discount From 0 To ${COMPANY_DISCOUNT_MAX}%.`),
 });
 
-export const clientFormSchema = z.object({
+/** The client's own details — what Edit Client changes. */
+export const clientDetailsSchema = z.object({
   firstName: requiredText(FIRST_NAME_MAX, 'Enter The First Name.'),
   lastName: requiredText(LAST_NAME_MAX, 'Enter The Last Name.'),
   phone: requiredPhone(PHONE_MAX, PHONE_PATTERN),
   email: requiredEmail(EMAIL_MAX),
   managerId: z.string().min(1, 'Choose A Manager.'),
   discountPercent: optionalPercent(DISCOUNT_MAX, `Enter A Discount From 0 To ${DISCOUNT_MAX}%.`),
+});
+
+/** Onboarding: the client's details plus at least one company. */
+export const clientFormSchema = clientDetailsSchema.extend({
   companies: z
     .array(companyFormSchema)
     .min(1, 'Add At Least One Company.')
     .max(COMPANIES_MAX, `A Client Can Hold Up To ${COMPANIES_MAX} Companies.`),
 });
 
+/**
+ * Add Company: one company for an existing client. Held as a one-item `companies` array so the
+ * form reuses the onboarding company block.
+ */
+export const addCompanyFormSchema = z.object({
+  companies: z.array(companyFormSchema).length(1),
+});
+
 export type CompanyFormInput = z.input<typeof companyFormSchema>;
+export type CompanyFormValues = z.output<typeof companyFormSchema>;
+export type AddCompanyFormInput = z.input<typeof addCompanyFormSchema>;
+export type AddCompanyFormValues = z.output<typeof addCompanyFormSchema>;
 export type ClientFormInput = z.input<typeof clientFormSchema>;
 export type ClientFormValues = z.output<typeof clientFormSchema>;
+export type ClientDetailsInput = z.input<typeof clientDetailsSchema>;
+export type ClientDetailsValues = z.output<typeof clientDetailsSchema>;
 export type ClientField = Exclude<keyof ClientFormInput, 'companies'>;
 export type CompanyField = keyof CompanyFormInput;
 
@@ -95,13 +120,36 @@ export const CLIENT_FIELDS: Readonly<Record<ClientField, FieldCopy>> = {
   },
 };
 
+/**
+ * The discount hint when editing. Companies already held keep their own discount; only
+ * companies added later without one take the client's.
+ */
+export const EDIT_DISCOUNT_HINT = 'Companies Added From Now On Start With This Discount. Existing Companies Keep Theirs.';
+
 export const COMPANY_FIELDS: Readonly<Record<CompanyField, FieldCopy>> = {
   companyName: { label: 'Company Name', placeholder: 'Registered Name' },
   companyType: { label: 'Company Type' },
   address: { label: 'Address', placeholder: 'Registered Office Address' },
+  discountPercent: { label: 'Company Discount % (Optional)', hint: "Leave Blank To Use The Client's Discount." },
 };
 
-export const emptyCompany = (): CompanyFormInput => ({ companyName: '', companyType: COMPANY_TYPE.PRIVATE_LIMITED, address: '' });
+export const emptyCompany = (): CompanyFormInput => ({
+  companyName: '',
+  companyType: COMPANY_TYPE.PRIVATE_LIMITED,
+  address: '',
+  discountPercent: '',
+});
+
+/**
+ * Edit Company's starting values: the company as stored. The discount is shown even when it is
+ * zero, because clearing it means "take the client's discount" rather than "no discount".
+ */
+export const companyFormDefaults = (company: CompanyResponse): CompanyFormInput => ({
+  companyName: company.companyName ?? '',
+  companyType: company.companyType ?? COMPANY_TYPE.PRIVATE_LIMITED,
+  address: company.address ?? '',
+  discountPercent: company.discountPercent != null ? String(company.discountPercent) : '',
+});
 
 /** A blank onboarding form: one company, since every client needs at least one. */
 export const clientFormDefaults = (): ClientFormInput => ({
@@ -116,31 +164,88 @@ export const clientFormDefaults = (): ClientFormInput => ({
 
 const filled = (v: unknown) => typeof v === 'string' && v.trim() !== '';
 
-/**
- * Whether every mandatory field has something in it — the client's details, a manager and at
- * least one company with all of its fields. The discount is optional and ignored. This only
- * gates the Onboard button; format checks (email, phone) still run on submit.
- */
+const DETAIL_FIELDS = ['firstName', 'lastName', 'phone', 'email', 'managerId'] as const;
+
+/** Whether a company block has its name, type and address filled in. */
+export const isCompanyComplete = (c: Partial<CompanyFormInput> | undefined) =>
+  [c?.companyName, c?.companyType, c?.address].every(filled);
+
+/** Whether every company block is filled in (and there is at least one). */
+export const areCompaniesComplete = (companies: readonly (Partial<CompanyFormInput> | undefined)[] = []) =>
+  companies.length > 0 && companies.every(isCompanyComplete);
+
+/** Whether every mandatory client detail has something in it (the discount is optional). */
+export const isClientDetailsComplete = (values: Partial<ClientDetailsInput>) =>
+  DETAIL_FIELDS.every((field) => filled(values[field]));
+
 /** Form values as a watcher sees them mid-edit: any field, including any company's, may be unset. */
 type PartialClientForm = Partial<Omit<ClientFormInput, 'companies'>> & {
   companies?: readonly (Partial<CompanyFormInput> | undefined)[];
 };
 
+/**
+ * Whether every mandatory field has something in it — the client's details, a manager and at
+ * least one company with all of its fields. The discount is optional and ignored. This only
+ * gates the Onboard button; format checks (email, phone) still run on submit.
+ */
 export function isClientFormComplete(values: PartialClientForm): boolean {
-  const { firstName, lastName, phone, email, managerId, companies = [] } = values;
-  return (
-    [firstName, lastName, phone, email, managerId].every(filled) &&
-    companies.length > 0 &&
-    companies.every((c) => [c?.companyName, c?.companyType, c?.address].every(filled))
-  );
+  return isClientDetailsComplete(values) && areCompaniesComplete(values.companies);
 }
 
 /** The request body for a parsed form; a blank discount is omitted rather than sent. */
 export const toClientRequest = ({ companies, discountPercent, ...client }: ClientFormValues): ClientRequest => ({
   ...client,
   ...(discountPercent !== undefined && { discountPercent }),
-  companies: companies.map((company) => ({ ...company })),
+  companies: companies.map(toCompanyRequest),
 });
+
+/** Edit Client's starting values: the client as stored. A zero discount shows as blank. */
+export const clientDetailsDefaults = (client: ClientResponse): ClientDetailsInput => ({
+  firstName: client.firstName ?? '',
+  lastName: client.lastName ?? '',
+  phone: client.phone ?? '',
+  email: client.email ?? '',
+  managerId: client.managerId ?? '',
+  discountPercent: client.discountPercent ? String(client.discountPercent) : '',
+});
+
+/**
+ * The PUT body for Edit Client: the client's own fields. The endpoint leaves companies as they
+ * are (they have their own add / delete endpoints). A blank discount is omitted, which the
+ * backend stores as zero.
+ */
+export const toClientUpdateRequest = ({ discountPercent, ...details }: ClientDetailsValues): ClientUpdateRequest => ({
+  ...details,
+  ...(discountPercent !== undefined && { discountPercent }),
+});
+
+/**
+ * The request body for one company. A blank discount is omitted, so the backend gives the
+ * company the client's discount.
+ */
+export const toCompanyRequest = ({ discountPercent, ...company }: CompanyFormValues): CompanyRequest => ({
+  ...company,
+  ...(discountPercent !== undefined && { discountPercent }),
+});
+
+/** How many more companies a client may hold (the backend allows at most MAX_COMPANIES). */
+export const companiesLeft = (held: number) => Math.max(0, MAX_COMPANIES - held);
+
+/** The Add Company sheet title. */
+export const addCompanyTitle = (client: Pick<ClientResponse, 'firstName' | 'lastName'>) =>
+  `Add Company For ${clientName(client)}`;
+
+/** Refused with 409 when the client already holds MAX_COMPANIES. */
+export const TOO_MANY_COMPANIES = `A Client Can Hold Up To ${COMPANIES_MAX} Companies.`;
+
+/** Why a company's delete is unavailable: a client must keep at least one. */
+export const LAST_COMPANY_REASON = "A Client Must Keep At Least One Company. Delete The Client Instead.";
+
+/** Why the backend refuses (409) to delete a company: services are still assigned to it. */
+export const DELETE_COMPANY_IN_USE = 'This Company Still Has Services. Remove Those Services First.';
+
+/** The Delete Company warning. */
+export const DELETE_COMPANY_WARNING = 'The Company Is Removed From This Client. This Cannot Be Undone.';
 
 /**
  * The form field a backend validation error refers to, as a react-hook-form path:
@@ -153,9 +258,14 @@ export function clientFieldFromApi(path: string): string | undefined {
   return head in CLIENT_FIELDS && index === undefined ? head : undefined;
 }
 
-/** Select options for the managers a client can be assigned to. */
-export const managerOptions = (managers: readonly ManagerResponse[]) =>
-  managers.filter((m) => m.id).map((m) => ({ value: m.id!, label: managerName(m) }));
+/**
+ * Select options for the managers a client can be assigned to: "Neha Kulkarni", or with
+ * `withRole` "Neha Kulkarni · Senior Manager" (the assignment forms).
+ */
+export const managerOptions = (managers: readonly ManagerResponse[], { withRole = false } = {}) =>
+  managers
+    .filter((m) => m.id)
+    .map((m) => ({ value: m.id!, label: [managerName(m), withRole && roleLabel(m.role)].filter(Boolean).join(' · ') }));
 
 // ── Display ─────────────────────────────────────────────────────────────────────────────
 
@@ -169,6 +279,16 @@ export function clientCountLabel(clients: readonly Pick<ClientSummaryResponse, '
   const companies = clients.reduce((sum, c) => sum + (c.companyNames?.length ?? 0), 0);
   return `${plural(clients.length, 'Client', 'Clients')} · ${plural(companies, 'Company', 'Companies')}`;
 }
+
+/** The Delete Client warning: the client goes, and every company with them. */
+export function deleteClientWarning(client: Pick<ClientResponse, 'companies'>): string {
+  const count = client.companies?.length ?? 0;
+  const companies = count === 1 ? 'Their Company Is' : `All ${count} Of Their Companies Are`;
+  return `${companies} Deleted Too. This Cannot Be Undone.`;
+}
+
+/** Why the backend refuses (409): services are still assigned to one of the companies. */
+export const DELETE_CLIENT_IN_USE = "This Client's Companies Still Have Services. Remove Those Services First.";
 
 /** The manager filter's "everyone" value. */
 export const ALL_MANAGERS = 'ALL';

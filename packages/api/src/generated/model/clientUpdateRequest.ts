@@ -5,10 +5,9 @@
  * REST API for the PSC Client Ledger backend service.
  * OpenAPI spec version: v1
  */
-import type { CompanyUpdateRequest } from './companyUpdateRequest';
 
 /**
- * New content for a client and their full set of companies
+ * New content for a client, excluding their companies
  */
 export interface ClientUpdateRequest {
   /**
@@ -39,15 +38,9 @@ export interface ClientUpdateRequest {
   /** Identifier of the manager from the Manager Catalog who looks after the client */
   managerId: string;
   /**
-     * Discount granted to the client, as a percentage. Also applied to every company that does not set its own
+     * Discount granted to the client, as a percentage. Companies already held keep their discount; companies added later without one of their own take this
      * @minimum 0
      * @maximum 100
      */
   discountPercent?: number;
-  /**
-     * The client's complete set of companies. Existing companies left out are removed
-     * @minItems 0
-     * @maxItems 50
-     */
-  companies: CompanyUpdateRequest[];
 }

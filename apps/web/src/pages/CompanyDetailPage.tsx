@@ -1,19 +1,25 @@
 import { useClient, useCompany } from '@cl/api'
 import { clientName, companyDetails } from '@cl/schemas'
+import { Pencil } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import { CompanyServicesTable } from '@/components/clients/CompanyServicesTable'
+import { EditCompanyForm } from '@/components/clients/EditCompanyForm'
 import { DetailHeader } from '@/components/DetailHeader'
 import { LoadError } from '@/components/LoadError'
 import { PageBreadcrumb } from '@/components/PageBreadcrumb'
 import { RefreshButton } from '@/components/RefreshButton'
 import { Spinner } from '@/components/Spinner'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { clientPath } from '@/utils/routes'
 
 /** One company of a client: its details and the services assigned to it. */
 export function CompanyDetailPage() {
   const { id = '', companyId = '' } = useParams()
   const page = useCompany(id, companyId)
+  const [editing, setEditing] = useState(false)
   // For the breadcrumb only — usually already cached from the client page.
   const owner = useClient(id).client
   const ownerName = owner ? clientName(owner) : 'Client'
@@ -32,7 +38,7 @@ export function CompanyDetailPage() {
 
   const { company } = page
   // The status badge, CIN / GSTIN, the Billed / Received / Pending / Last Payment cards and
-  // Edit Company, Record Service, Record Payment and Export To Excel from the mock come once
+  // Record Service, Record Payment and Export To Excel from the mock come once
   // the API supports them.
   return (
     <div className="flex flex-col gap-6">
@@ -52,7 +58,14 @@ export function CompanyDetailPage() {
             title={company.companyName ?? ''}
             details={companyDetails(company)}
             note={company.address}
-            actions={<RefreshButton onRefresh={() => page.refetch()} refreshing={page.isRefreshing} />}
+            actions={
+              <>
+                <RefreshButton onRefresh={() => page.refetch()} refreshing={page.isRefreshing} />
+                <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setEditing(true)}>
+                  <Pencil /> Edit Company
+                </Button>
+              </>
+            }
           />
           <CompanyServicesTable
             services={page.services}
@@ -60,6 +73,14 @@ export function CompanyDetailPage() {
             error={page.servicesError}
             onRetry={() => page.refetch()}
           />
+
+          <Sheet open={editing} onOpenChange={setEditing}>
+            <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
+              {editing && (
+                <EditCompanyForm company={company} onSave={page.update} saving={page.saving} onDone={() => setEditing(false)} />
+              )}
+            </SheetContent>
+          </Sheet>
         </>
       )}
     </div>

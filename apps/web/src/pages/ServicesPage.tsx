@@ -49,7 +49,7 @@ export function ServicesPage() {
 
       {!catalog.isLoading && !catalog.loadError && (
         visible.length ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4">
             {visible.map((service) => (
               <ServiceCard key={service.id} service={service} onSelect={(s) => setEditing({ kind: 'edit', service: s })} />
             ))}
