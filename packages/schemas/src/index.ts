@@ -9,4 +9,5 @@ export * from './managers';
 export * from './payments';
 export * from './paymentTerms';
 export * from './services';
+export * from './yearBalances';
 export * from './priceAdjustments';

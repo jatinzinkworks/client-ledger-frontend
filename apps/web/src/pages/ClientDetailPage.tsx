@@ -1,4 +1,11 @@
-import { useClient, useClientLedgerExport, useClientLedgerSummary, useClientPayments, useManagerCatalog } from '@cl/api'
+import {
+  useClient,
+  useClientLedgerExport,
+  useClientLedgerSummary,
+  useClientPayments,
+  useClientYearBalances,
+  useManagerCatalog,
+} from '@cl/api'
 import {
   clientName,
   clientSinceLabel,
@@ -16,6 +23,7 @@ import { EditClientForm } from '@/components/clients/EditClientForm'
 import { ExportLedgerButton } from '@/components/clients/ExportLedgerButton'
 import { RecordPaymentForm } from '@/components/clients/RecordPaymentForm'
 import { SummaryCards } from '@/components/clients/SummaryCards'
+import { YearBalances } from '@/components/clients/YearBalances'
 import { DetailHeader } from '@/components/DetailHeader'
 import { LoadError } from '@/components/LoadError'
 import { PageBreadcrumb } from '@/components/PageBreadcrumb'
@@ -38,6 +46,7 @@ export function ClientDetailPage() {
   const payments = useClientPayments(id)
   const yearSummary = useClientLedgerSummary(id, financialYear)
   const ledgerExport = useClientLedgerExport(id)
+  const yearBalances = useClientYearBalances(id)
   // Which side sheet is open: none, Edit Client, Add Company or Record Payment.
   const [sheet, setSheet] = useState<'edit' | 'add-company' | 'record-payment' | null>(null)
   const closeSheet = () => setSheet(null)
@@ -85,8 +94,8 @@ export function ClientDetailPage() {
             actions={
               <>
                 <RefreshButton
-                  onRefresh={() => Promise.all([refetch(), yearSummary.refetch()])}
-                  refreshing={isRefreshing || yearSummary.isRefreshing}
+                  onRefresh={() => Promise.all([refetch(), yearSummary.refetch(), yearBalances.refetch()])}
+                  refreshing={isRefreshing || yearSummary.isRefreshing || yearBalances.isRefreshing}
                 />
                 <ExportLedgerButton onExport={exportLedger} exporting={ledgerExport.exporting} />
                 <Button size="touch" onClick={() => setSheet('record-payment')}>
@@ -111,6 +120,12 @@ export function ClientDetailPage() {
             companies={page.companies}
             onDeleteCompany={page.deleteCompany}
             deletingCompany={page.deletingCompany}
+          />
+          <YearBalances
+            status={yearBalances.status}
+            isLoading={yearBalances.isLoading}
+            error={yearBalances.error}
+            onRetry={yearBalances.refetch}
           />
 
           <Sheet open={sheet !== null} onOpenChange={(open) => !open && closeSheet()}>

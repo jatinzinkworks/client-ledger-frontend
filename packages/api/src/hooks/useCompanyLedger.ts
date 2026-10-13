@@ -5,6 +5,7 @@ import { getListCompaniesQueryKey } from '../generated/client-companies/client-c
 import { getListClientsQueryKey } from '../generated/clients/clients';
 import { getListServices1QueryKey } from '../generated/client-services/client-services';
 import {
+  getClientLedgerStatusQueryKey,
   getListClientEntriesQueryKey,
   getListCompanyEntriesQueryKey,
   getSummarizeClientQueryKey,
@@ -38,6 +39,7 @@ export const refreshLedgers = (queryClient: QueryClient, clientId: string, compa
       getSummarizeCompanyQueryKey(clientId, companyId),
       getListClientEntriesQueryKey(clientId),
       getSummarizeClientQueryKey(clientId),
+      getClientLedgerStatusQueryKey(clientId),
       getListCompaniesQueryKey(clientId),
       // All-time figures: each client's and manager's pending, each service's billed.
       getListClientsQueryKey(),

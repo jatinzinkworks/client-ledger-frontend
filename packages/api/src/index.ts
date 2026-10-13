@@ -10,6 +10,7 @@ export { useClient } from './hooks/useClient';
 export { useClientLedgerExport, useCompanyLedgerExport } from './hooks/useLedgerExport';
 export { useClientLedgerSummary } from './hooks/useClientLedgerSummary';
 export { useClientPayments } from './hooks/useClientPayments';
+export { useClientYearBalances } from './hooks/useClientYearBalances';
 export { useCompany } from './hooks/useCompany';
 export { LEDGER_PAGE_SIZE, useCompanyLedger } from './hooks/useCompanyLedger';
 export { useClients } from './hooks/useClients';

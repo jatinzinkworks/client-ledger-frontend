@@ -1518,6 +1518,44 @@ export const SummarizeClientResponse = zod.object({
 
 
 /**
+ * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. Each year also carries the same figures for each company with entries in it.
+ * @summary Show a client's balance for every financial year
+ */
+export const ClientLedgerStatusParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const ClientLedgerStatusResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Full name of the client'),
+  "clientSince": zod.iso.date().optional().describe('First day of the first financial year listed: that of the client\'s earliest ledger entry, or of the day they were added if earlier'),
+  "yearCount": zod.int().optional().describe('Number of financial years listed, from clientSince to the current year'),
+  "years": zod.array(zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March)'),
+  "fromDate": zod.iso.date().optional().describe('First day of the financial year'),
+  "toDate": zod.iso.date().optional().describe('Last day of the financial year'),
+  "current": zod.boolean().optional().describe('Whether this is the current financial year, whose figures run to date'),
+  "closedOn": zod.iso.date().optional().describe('Day the year closed: its last day. Absent for the current year'),
+  "companyCount": zod.int().optional().describe('Number of the client\'s companies with ledger entries in the year'),
+  "billed": zod.number().optional().describe('Service charges falling due in the year before their discount: what was charged plus the discount given, GST included'),
+  "discount": zod.number().optional().describe('Discount given on those charges'),
+  "received": zod.number().optional().describe('Payments received in the year'),
+  "closingBalance": zod.number().optional().describe('Billed less discount less received: what the year\'s activity left owing; negative when more was received. Each year stands alone; an earlier year\'s balance is not brought forward into it'),
+  "status": zod.enum(['PENDING', 'CARRIED', 'SETTLED']).optional().describe('Where the year stands'),
+  "companies": zod.array(zod.object({
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "billed": zod.number().optional().describe('Service charges falling due in the year before their discount: what was charged plus the discount given, GST included'),
+  "discount": zod.number().optional().describe('Discount given on those charges'),
+  "received": zod.number().optional().describe('Payments received in the year'),
+  "closingBalance": zod.number().optional().describe('Billed less discount less received: what the year\'s activity left owing; negative when more was received'),
+  "status": zod.enum(['PENDING', 'CARRIED', 'SETTLED']).optional().describe('Where the company\'s year stands')
+}).describe('One company\'s balance in one financial year')).optional().describe('The same figures for each company with ledger entries in the year, ordered by company name; they add up to the year\'s')
+}).describe('A client\'s balance in one financial year')).optional().describe('Every financial year from clientSince to the current one, latest first, including years with no entries')
+}).describe('A client\'s ledger balance for every financial year since they became a client')
+
+
+/**
  * Downloads an .xlsx workbook for the client and one Indian financial year (1 April to 31 March), named after both, such as Rohan_Mehta_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the client's ledger summary for the year; its Ledger sheet lists every service charge and payment of the year across all of the client's companies, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. One sheet per company follows, by company name, listing only that company's entries with its own running balance and totals; a company with no entries in the year gets headings and zero totals. As in the summary, charges count in the year they fell due and payments in the year they were received, and each balance starts from zero.
  * @summary Export a client's ledger for a financial year as an Excel workbook
  */

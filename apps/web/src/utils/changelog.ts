@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 17:36:44',
+    highlights: [
+      'A client page shows Balance By Financial Year: billed, discount, received, closing balance and status (Pending, Carried or Settled) for every year since they became a client. Click a year to see its companies.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 17:21:30',
     highlights: ["Edit Manager lists the manager's clients, with what each still owes and their status; a name opens the client."],
   },
