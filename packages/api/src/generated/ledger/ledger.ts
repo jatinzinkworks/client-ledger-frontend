@@ -28,6 +28,8 @@ import type {
   ClientLedgerSummaryResponse,
   CompanyLedgerSummaryResponse,
   ErrorResponse,
+  ExportClientParams,
+  ExportCompanyParams,
   LedgerEntryResponse,
   LedgerEntryUpdateRequest,
   LedgerListResponse,
@@ -975,6 +977,122 @@ export function useSummarizeClient<TData = Awaited<ReturnType<typeof summarizeCl
 
 
 
+export const getExportClientUrl = (clientId: string,
+    params: ExportClientParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/ledger-export?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/ledger-export`
+}
+
+/**
+ * Downloads an .xlsx workbook for the client and one Indian financial year (1 April to 31 March), named after both, such as Rohan_Mehta_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the client's ledger summary for the year; its Ledger sheet lists every service charge and payment of the year across all of the client's companies, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. One sheet per company follows, by company name, listing only that company's entries with its own running balance and totals; a company with no entries in the year gets headings and zero totals. As in the summary, charges count in the year they fell due and payments in the year they were received, and each balance starts from zero.
+ * @summary Export a client's ledger for a financial year as an Excel workbook
+ */
+export const exportClient = async (clientId: string,
+    params: ExportClientParams, options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getExportClientUrl(clientId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportClientQueryKey = (clientId: string,
+    params?: ExportClientParams,) => {
+    return [
+    `/psc/cl/v1/clients/${clientId}/ledger-export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportClientQueryOptions = <TData = Awaited<ReturnType<typeof exportClient>>, TError = ErrorType<ErrorResponse>>(clientId: string,
+    params: ExportClientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportClientQueryKey(clientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportClient>>> = ({ signal }) => exportClient(clientId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientId !== null && clientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportClientQueryResult = NonNullable<Awaited<ReturnType<typeof exportClient>>>
+export type ExportClientQueryError = ErrorType<ErrorResponse>
+
+
+export function useExportClient<TData = Awaited<ReturnType<typeof exportClient>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params: ExportClientParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportClient>>,
+          TError,
+          Awaited<ReturnType<typeof exportClient>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportClient<TData = Awaited<ReturnType<typeof exportClient>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params: ExportClientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportClient>>,
+          TError,
+          Awaited<ReturnType<typeof exportClient>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportClient<TData = Awaited<ReturnType<typeof exportClient>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params: ExportClientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export a client's ledger for a financial year as an Excel workbook
+ */
+
+export function useExportClient<TData = Awaited<ReturnType<typeof exportClient>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params: ExportClientParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportClient>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportClientQueryOptions(clientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 export const getListClientEntriesUrl = (clientId: string,
     params?: ListClientEntriesParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -1204,6 +1322,130 @@ export function useSummarizeCompany<TData = Awaited<ReturnType<typeof summarizeC
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getSummarizeCompanyQueryOptions(clientId,companyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getExportCompanyUrl = (clientId: string,
+    companyId: string,
+    params: ExportCompanyParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-export?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-export`
+}
+
+/**
+ * Downloads an .xlsx workbook for one company of the client and one Indian financial year (1 April to 31 March), named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the company's ledger summary for the year; its Ledger sheet lists every service charge and payment of the company in the year, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. As in the summary, charges count in the year they fell due and payments in the year they were received, and the balance starts from zero.
+ * @summary Export a company's ledger for a financial year as an Excel workbook
+ */
+export const exportCompany = async (clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getExportCompanyUrl(clientId,companyId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportCompanyQueryKey = (clientId: string,
+    companyId: string,
+    params?: ExportCompanyParams,) => {
+    return [
+    `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportCompanyQueryOptions = <TData = Awaited<ReturnType<typeof exportCompany>>, TError = ErrorType<ErrorResponse>>(clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportCompanyQueryKey(clientId,companyId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCompany>>> = ({ signal }) => exportCompany(clientId,companyId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientId !== null && clientId !== undefined && companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportCompanyQueryResult = NonNullable<Awaited<ReturnType<typeof exportCompany>>>
+export type ExportCompanyQueryError = ErrorType<ErrorResponse>
+
+
+export function useExportCompany<TData = Awaited<ReturnType<typeof exportCompany>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCompany>>,
+          TError,
+          Awaited<ReturnType<typeof exportCompany>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCompany<TData = Awaited<ReturnType<typeof exportCompany>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCompany>>,
+          TError,
+          Awaited<ReturnType<typeof exportCompany>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCompany<TData = Awaited<ReturnType<typeof exportCompany>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export a company's ledger for a financial year as an Excel workbook
+ */
+
+export function useExportCompany<TData = Awaited<ReturnType<typeof exportCompany>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params: ExportCompanyParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCompany>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportCompanyQueryOptions(clientId,companyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -186,3 +186,12 @@ export function accountStatus(pending: number | undefined): AccountStatus | unde
   if (pending == null) return undefined;
   return pending > 0 ? 'OVERDUE' : pending < 0 ? 'IN_CREDIT' : 'SETTLED';
 }
+
+// ── Export ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The workbook's name when the backend does not send one, matching its own pattern:
+ * Rohan_Mehta_Ledger_FY2026-27.xlsx.
+ */
+export const ledgerExportFileName = (clientName: string, financialYear: string) =>
+  `${clientName.trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '') || 'Client'}_Ledger_FY${financialYear}.xlsx`;

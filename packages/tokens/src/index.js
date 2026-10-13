@@ -69,6 +69,9 @@ export const themes = {
     sidebarMuted: palette.inkSubtle,
     sidebarAccent: palette.surface2,
     sidebarBorder: palette.hairlineStrong,
+    // A setting that must stand out on the navy sidebar (the selected financial year).
+    sidebarHighlight: palette.white,
+    sidebarHighlightForeground: palette.navy,
   },
   dark: {
     background: palette.navy,
@@ -98,6 +101,8 @@ export const themes = {
     sidebarMuted: palette.inkSubtle,
     sidebarAccent: palette.surface2,
     sidebarBorder: palette.hairline,
+    sidebarHighlight: palette.white,
+    sidebarHighlightForeground: palette.navy,
   },
 };
 

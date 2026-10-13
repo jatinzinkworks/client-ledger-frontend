@@ -5,6 +5,11 @@ import { companyDetails, companyDiscountDetail, formatApiDate, servicesCountLabe
 describe('company page helpers', () => {
   it('describes the company under its name', () => {
     expect(companyDetails({ companyType: 'PRIVATE_LIMITED', discountPercent: 5 })).toEqual(['Private Limited', 'Discount 5%']);
+    expect(companyDetails({ address: '12 MG Road, Pune', companyType: 'PRIVATE_LIMITED', discountPercent: 5 })).toEqual([
+      '12 MG Road, Pune',
+      'Private Limited',
+      'Discount 5%',
+    ]);
     expect(companyDiscountDetail(undefined)).toBe('No Discount');
     expect(companyDiscountDetail(0)).toBe('No Discount');
   });

@@ -12,10 +12,12 @@ export interface SelectOption {
 
 interface NativeSelectProps extends Omit<ComponentProps<'select'>, 'children'> {
   options: readonly SelectOption[]
+  /** Extra classes for the chevron, e.g. to match a coloured field. */
+  iconClassName?: string
 }
 
 /** A styled native `<select>` — keeps the platform picker (and its accessibility) on every device. */
-export function NativeSelect({ options, className, ...props }: NativeSelectProps) {
+export function NativeSelect({ options, className, iconClassName, ...props }: NativeSelectProps) {
   return (
     <div className="relative">
       <select
@@ -33,7 +35,12 @@ export function NativeSelect({ options, className, ...props }: NativeSelectProps
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <ChevronDown
+        className={cn(
+          'pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground',
+          iconClassName,
+        )}
+      />
     </div>
   )
 }

@@ -19,7 +19,10 @@ export function FinancialYearPicker({ className }: { className?: string }) {
         options={financialYearOptions()}
         value={financialYear}
         onChange={(event) => setFinancialYear(event.target.value)}
-        className="h-10 border-sidebar-border bg-sidebar-accent text-sm font-bold text-sidebar-foreground md:text-sm dark:bg-sidebar-accent"
+        // Filled in white so the year every figure is for stands out on the navy sidebar; the open
+        // list keeps the ordinary popover colours.
+        className="h-10 border-sidebar-highlight bg-sidebar-highlight text-sm font-bold text-sidebar-highlight-foreground md:text-sm dark:bg-sidebar-highlight [&>option]:bg-popover [&>option]:font-normal [&>option]:text-popover-foreground"
+        iconClassName="text-sidebar-highlight-foreground"
       />
     </div>
   )

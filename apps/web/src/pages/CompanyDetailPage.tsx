@@ -3,6 +3,7 @@ import {
   useClient,
   useCompany,
   useCompanyLedger,
+  useCompanyLedgerExport,
   useServiceCatalog,
   type LedgerEntryResponse,
   type ServiceAssignmentResponse,
@@ -16,7 +17,7 @@ import {
   ledgerEntryName,
   ledgerSummaryCards,
 } from '@cl/schemas'
-import { IndianRupee, Pencil, Plus } from 'lucide-react'
+import { IndianRupee, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
@@ -27,6 +28,7 @@ import { CompanyServicesTable } from '@/components/clients/CompanyServicesTable'
 import { EditCompanyForm } from '@/components/clients/EditCompanyForm'
 import { EditLedgerEntryForm } from '@/components/clients/EditLedgerEntryForm'
 import { EditServiceForm } from '@/components/clients/EditServiceForm'
+import { ExportLedgerButton } from '@/components/clients/ExportLedgerButton'
 import { SummaryCards } from '@/components/clients/SummaryCards'
 import { RecordPaymentForm } from '@/components/clients/RecordPaymentForm'
 import { DetailHeader } from '@/components/DetailHeader'
@@ -37,6 +39,7 @@ import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { useFinancialYear } from '@/financialYear/useFinancialYear'
+import { saveLedgerExport } from '@/utils/download'
 import { clientPath } from '@/utils/routes'
 
 type SheetState =
@@ -60,6 +63,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   const page = useCompany(id, companyId)
   const { financialYear } = useFinancialYear()
   const ledger = useCompanyLedger(id, companyId, financialYear)
+  const ledgerExport = useCompanyLedgerExport(id, companyId)
   const navigate = useNavigate()
   const catalog = useServiceCatalog()
   // Which side sheet is open: none, Edit Company, Add Service, Record Payment, or editing one
@@ -104,16 +108,18 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
           <DetailHeader
             title={company.companyName ?? ''}
             details={companyDetails(company)}
-            note={company.address}
+            onEdit={() => setSheet('edit')}
+            editLabel="Edit Company"
             actions={
               <>
                 <RefreshButton
                   onRefresh={() => Promise.all([page.refetch(), ledger.refetch()])}
                   refreshing={page.isRefreshing || ledger.isRefreshing}
                 />
-                <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('edit')}>
-                  <Pencil /> Edit Company
-                </Button>
+                <ExportLedgerButton
+                  onExport={saveLedgerExport(ledgerExport.exportLedger, company.companyName ?? '', financialYear)}
+                  exporting={ledgerExport.exporting}
+                />
                 <Button size="touch" onClick={() => setSheet('record-payment')}>
                   <IndianRupee /> Record Payment
                 </Button>
@@ -123,6 +129,12 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
               </>
             }
           />
+          {ledgerExport.error && (
+            <LoadError
+              error={ledgerExport.error}
+              onRetry={saveLedgerExport(ledgerExport.exportLedger, company.companyName ?? '', financialYear)}
+            />
+          )}
           <SummaryCards
             label={`Summary For ${financialYearLabel(financialYear)}`}
             cards={ledger.yearSummary && ledgerSummaryCards(ledger.yearSummary, financialYear)}

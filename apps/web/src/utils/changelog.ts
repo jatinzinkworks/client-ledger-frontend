@@ -9,6 +9,24 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 15:31:09',
+    highlights: ["Export Ledger is on company pages too: it downloads that company's ledger for the selected financial year as an Excel workbook."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 15:14:37',
+    highlights: ["Client and company pages are edited with the pencil icon beside the name, in place of the Edit Client and Edit Company buttons. A company's address now leads the line with its type and discount.", 'Ledger descriptions and payment details are in a larger font.'],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 15:06:18',
+    highlights: [
+      "Export Ledger on a client page downloads the selected financial year's ledger as an Excel workbook, with a Summary sheet and every charge and payment of the year.",
+      'The selected financial year in the sidebar is highlighted so it is easy to spot.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 14:52:51',
     highlights: ["On a company page the Services section starts collapsed, showing its count; click its heading to open it. The Services and Ledger headings are more compact."],
   },

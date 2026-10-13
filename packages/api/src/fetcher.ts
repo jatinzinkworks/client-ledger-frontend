@@ -41,24 +41,64 @@ function parseBody(text: string): unknown {
   }
 }
 
-/** The orval mutator: every generated request goes through here. */
-export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
+async function send(url: string, init: RequestInit, accept: string): Promise<Response> {
   const headers = new Headers(init.headers);
-  headers.set('Accept', 'application/json');
+  headers.set('Accept', accept);
   for (const [name, value] of Object.entries((await config.getHeaders?.()) ?? {})) {
     headers.set(name, value);
   }
-
-  const res = await fetch(`${config.baseUrl}${url}`, {
+  return fetch(`${config.baseUrl}${url}`, {
     ...init,
     headers,
     credentials: config.credentials ?? init.credentials,
   });
-  const body = parseBody(await res.text());
+}
 
-  if (!res.ok) {
-    const error = body as ErrorResponse | undefined;
-    throw new ApiError(res.status, error, error?.message);
-  }
+function toApiError(status: number, body: unknown): ApiError {
+  const error = body as ErrorResponse | undefined;
+  return new ApiError(status, error, error?.message);
+}
+
+/** The orval mutator: every generated request goes through here. */
+export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const res = await send(url, init, 'application/json');
+  const body = parseBody(await res.text());
+  if (!res.ok) throw toApiError(res.status, body);
   return body as T;
+}
+
+/**
+ * The file name in a `Content-Disposition` header: the RFC 5987 `filename*=UTF-8''…` form when
+ * present, else the plain `filename="…"`; undefined when there is none.
+ */
+export function fileNameFrom(contentDisposition: string | null): string | undefined {
+  if (!contentDisposition) return undefined;
+  const encoded = /filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/.exec(contentDisposition)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim());
+    } catch {
+      // Malformed escapes: fall back to the plain form.
+    }
+  }
+  const plain = /filename\s*=\s*(?:"([^"]*)"|([^;]+))/.exec(contentDisposition);
+  return (plain?.[1] ?? plain?.[2])?.trim() || undefined;
+}
+
+/** A file the backend sent as an attachment. */
+export interface DownloadedFile {
+  blob: Blob;
+  /** From `Content-Disposition`; undefined when the backend did not name it. */
+  fileName?: string;
+}
+
+/**
+ * Downloads a binary response (an export) — `apiFetch` parses JSON, so generated hooks for file
+ * endpoints cannot be used; build the URL with the generated `get…Url` and fetch it here.
+ * Errors still arrive as the backend's JSON and throw `ApiError`.
+ */
+export async function apiDownload(url: string, accept = '*/*'): Promise<DownloadedFile> {
+  const res = await send(url, { method: 'GET' }, `${accept}, application/json`);
+  if (!res.ok) throw toApiError(res.status, parseBody(await res.text()));
+  return { blob: await res.blob(), fileName: fileNameFrom(res.headers.get('Content-Disposition')) };
 }

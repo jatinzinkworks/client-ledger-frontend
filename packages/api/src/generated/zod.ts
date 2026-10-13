@@ -1394,6 +1394,21 @@ export const SummarizeClientResponse = zod.object({
 
 
 /**
+ * Downloads an .xlsx workbook for the client and one Indian financial year (1 April to 31 March), named after both, such as Rohan_Mehta_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the client's ledger summary for the year; its Ledger sheet lists every service charge and payment of the year across all of the client's companies, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. One sheet per company follows, by company name, listing only that company's entries with its own running balance and totals; a company with no entries in the year gets headings and zero totals. As in the summary, charges count in the year they fell due and payments in the year they were received, and each balance starts from zero.
+ * @summary Export a client's ledger for a financial year as an Excel workbook
+ */
+export const ExportClientParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const ExportClientQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to export, written as yyyy-yy')
+})
+
+export const ExportClientResponse = zod.unknown()
+
+
+/**
  * Returns the ledger entries posted for any company of the client, earliest due first unless sortBy and sortDirection choose another order. Each entry carries the companyId it was billed to. Narrow them to a range of due dates with fromDate and toDate, either of which may be left open, and to an Indian financial year with financialYear; given together, only entries matching both are returned. Entries are returned a page at a time; the summary totals every matching entry across all pages, not just the page returned.
  * @summary List the ledger entries of a client
  */
@@ -1517,3 +1532,19 @@ export const SummarizeCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Name of the company that made the payment; given only in a client\'s summary')
 }).optional().describe('The most recent payment received in the year; absent when none was received')
 }).describe('A company\'s billing and payments for one Indian financial year')
+
+
+/**
+ * Downloads an .xlsx workbook for one company of the client and one Indian financial year (1 April to 31 March), named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the company's ledger summary for the year; its Ledger sheet lists every service charge and payment of the company in the year, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. As in the summary, charges count in the year they fell due and payments in the year they were received, and the balance starts from zero.
+ * @summary Export a company's ledger for a financial year as an Excel workbook
+ */
+export const ExportCompanyParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company of the client')
+})
+
+export const ExportCompanyQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to export, written as yyyy-yy')
+})
+
+export const ExportCompanyResponse = zod.unknown()

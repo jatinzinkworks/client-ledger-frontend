@@ -9,9 +9,11 @@ import { formatDate } from './services';
 export const companyDiscountDetail = (rate: number | undefined) =>
   rate ? `Discount ${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(rate)}%` : 'No Discount';
 
-/** The line under the company name: legal form and discount. */
+/** The line under the company name: address, legal form and discount. */
 export const companyDetails = (company: CompanyResponse) =>
-  [companyTypeLabel(company.companyType), companyDiscountDetail(company.discountPercent)].filter(Boolean);
+  [company.address, companyTypeLabel(company.companyType), companyDiscountDetail(company.discountPercent)].filter(
+    (detail): detail is string => !!detail,
+  );
 
 /**
  * "15 Oct 2026" for an API date ("2026-10-15"). Parsed as a local calendar date, so it never

@@ -24,6 +24,8 @@ export * from './companyResponse';
 export * from './companyResponseCompanyType';
 export * from './companyTotals';
 export * from './errorResponse';
+export * from './exportClientParams';
+export * from './exportCompanyParams';
 export * from './fieldError';
 export * from './financialYearTotals';
 export * from './firmDetailsRequest';

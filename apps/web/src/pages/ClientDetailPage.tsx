@@ -1,12 +1,19 @@
-import { useClient, useClientLedgerSummary, useClientPayments, useManagerCatalog } from '@cl/api'
-import { clientName, clientSinceLabel, clientSummaryCards, discountLabel, financialYearLabel } from '@cl/schemas'
-import { IndianRupee, Pencil, Plus } from 'lucide-react'
+import { useClient, useClientLedgerExport, useClientLedgerSummary, useClientPayments, useManagerCatalog } from '@cl/api'
+import {
+  clientName,
+  clientSinceLabel,
+  clientSummaryCards,
+  discountLabel,
+  financialYearLabel,
+} from '@cl/schemas'
+import { IndianRupee, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { AddCompanyForm } from '@/components/clients/AddCompanyForm'
 import { CompaniesTable } from '@/components/clients/CompaniesTable'
 import { EditClientForm } from '@/components/clients/EditClientForm'
+import { ExportLedgerButton } from '@/components/clients/ExportLedgerButton'
 import { RecordPaymentForm } from '@/components/clients/RecordPaymentForm'
 import { SummaryCards } from '@/components/clients/SummaryCards'
 import { DetailHeader } from '@/components/DetailHeader'
@@ -17,6 +24,7 @@ import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { useFinancialYear } from '@/financialYear/useFinancialYear'
+import { saveLedgerExport } from '@/utils/download'
 
 /** One client: their details, manager and discount, and the companies they hold. */
 export function ClientDetailPage() {
@@ -29,6 +37,7 @@ export function ClientDetailPage() {
   const managers = useManagerCatalog()
   const payments = useClientPayments(id)
   const yearSummary = useClientLedgerSummary(id, financialYear)
+  const ledgerExport = useClientLedgerExport(id)
   // Which side sheet is open: none, Edit Client, Add Company or Record Payment.
   const [sheet, setSheet] = useState<'edit' | 'add-company' | 'record-payment' | null>(null)
   const closeSheet = () => setSheet(null)
@@ -46,7 +55,8 @@ export function ClientDetailPage() {
   }
 
   const name = client ? clientName(client) : ''
-  // Export Client Ledger from the mock comes once the API supports it.
+  // Downloads the selected year's ledger; a failure shows below the header with a Retry.
+  const exportLedger = saveLedgerExport(ledgerExport.exportLedger, name, financialYear)
   // The client's services, for the Billed card's note: a sum over their companies' counts.
   const serviceCount = page.companies.reduce((total, c) => total + (c.serviceCount ?? 0), 0)
   const details = client
@@ -70,15 +80,15 @@ export function ClientDetailPage() {
           <DetailHeader
             title={name}
             details={details}
+            onEdit={() => setSheet('edit')}
+            editLabel="Edit Client"
             actions={
               <>
                 <RefreshButton
                   onRefresh={() => Promise.all([refetch(), yearSummary.refetch()])}
                   refreshing={isRefreshing || yearSummary.isRefreshing}
                 />
-                <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('edit')}>
-                  <Pencil /> Edit Client
-                </Button>
+                <ExportLedgerButton onExport={exportLedger} exporting={ledgerExport.exporting} />
                 <Button size="touch" onClick={() => setSheet('record-payment')}>
                   <IndianRupee /> Record Payment
                 </Button>
@@ -88,6 +98,7 @@ export function ClientDetailPage() {
               </>
             }
           />
+          {ledgerExport.error && <LoadError error={ledgerExport.error} onRetry={exportLedger} />}
           <SummaryCards
             label={`Summary For ${financialYearLabel(financialYear)}`}
             cards={yearSummary.summary && clientSummaryCards(yearSummary.summary, financialYear, serviceCount)}

@@ -85,14 +85,14 @@ const columns = ({
             onEdit(e)
           }}
           aria-label={`Edit ${ledgerEntryName(e)}`}
-          className="text-left font-bold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+          className="text-left text-base font-bold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
         >
           {isPayment(e) ? 'Payment' : e.serviceName}
         </button>
         {isPayment(e) && (
           <>
-            <span className="text-xs text-muted-foreground">{paymentDetails(e)}</span>
-            {e.comment && <span className="text-xs whitespace-normal text-muted-foreground">{e.comment}</span>}
+            <span className="text-sm text-muted-foreground">{paymentDetails(e)}</span>
+            {e.comment && <span className="text-sm whitespace-normal text-muted-foreground">{e.comment}</span>}
           </>
         )}
       </div>
