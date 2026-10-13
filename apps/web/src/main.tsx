@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 
 import App from './App'
+import { FinancialYearProvider } from './financialYear/FinancialYearProvider'
 import './index.css'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { API_BASE_URL } from './utils/config'
@@ -18,9 +19,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <FinancialYearProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </FinancialYearProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

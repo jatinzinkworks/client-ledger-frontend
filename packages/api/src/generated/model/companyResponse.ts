@@ -25,4 +25,12 @@ export interface CompanyResponse {
   discountInherited?: boolean;
   /** Number of services assigned to the company. Only returned when listing a client's companies */
   serviceCount?: number;
+  /** Financial year the billing figures below cover. Only returned when listing a client's companies for a financial year */
+  financialYear?: string;
+  /** Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year */
+  totalBilled?: number;
+  /** Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year */
+  totalPaymentReceived?: number;
+  /** Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year */
+  pending?: number;
 }

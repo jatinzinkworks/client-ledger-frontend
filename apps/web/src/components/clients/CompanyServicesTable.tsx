@@ -56,14 +56,17 @@ function columns({
     },
     {
       header: 'Billing',
+      align: 'center',
       render: (s) => s.serviceType && <BillingBadge billing={s.serviceType} />,
     },
     {
       header: 'Delivery Date',
+      align: 'center',
       render: (s) => <span className="whitespace-nowrap">{formatApiDate(s.deliveryDate)}</span>,
     },
     {
       header: 'Next Due Date',
+      align: 'center',
       render: (s) => <span className="whitespace-nowrap">{formatApiDate(s.nextDueDate) || '—'}</span>,
     },
     {
@@ -78,7 +81,7 @@ function columns({
     },
     {
       header: 'Discount',
-      align: 'right',
+      align: 'center',
       render: (s) => companyDiscountLabel(s.discountPercent),
     },
     {
@@ -90,7 +93,7 @@ function columns({
     // The rate added on the invoice, on top of the net charge.
     {
       header: 'GST',
-      align: 'right',
+      align: 'center',
       render: (s) => gstRateLabel(s.gstRatePercent),
     },
     {

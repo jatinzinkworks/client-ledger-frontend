@@ -1,6 +1,6 @@
 import { formatInr, gstRateLabel, type ChargeBreakdown } from '@cl/schemas'
 
-/** Fee, discount, net charge, GST and the total with GST for the service being added or edited. */
+/** Fee, discount, net charge, GST and the total with GST for a service or ledger entry being edited. */
 export function ChargeSummary({ fee, discount, net, gstRatePercent, gst, total }: ChargeBreakdown) {
   return (
     <dl className="flex flex-col gap-2 rounded-md bg-muted p-5 text-[15px]" aria-label="Charge Summary">

@@ -7,7 +7,10 @@ export { errorMessage, fieldErrors, isNotFound } from './errors';
 
 // Hand-written hooks composing the generated ones — shared screen logic for both apps.
 export { useClient } from './hooks/useClient';
+export { useClientLedgerSummary } from './hooks/useClientLedgerSummary';
+export { useClientPayments } from './hooks/useClientPayments';
 export { useCompany } from './hooks/useCompany';
+export { LEDGER_PAGE_SIZE, useCompanyLedger } from './hooks/useCompanyLedger';
 export { useClients } from './hooks/useClients';
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { useManagerCatalog } from './hooks/useManagerCatalog';

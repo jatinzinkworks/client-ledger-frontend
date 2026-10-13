@@ -3,13 +3,18 @@ import {
   DELETE_COMPANY_IN_USE,
   DELETE_COMPANY_WARNING,
   LAST_COMPANY_REASON,
+  accountStatus,
   companyDiscountLabel,
   companyTypeLabel,
+  formatInr,
 } from '@cl/schemas'
 import { Link, useNavigate } from 'react-router'
 
 import { DataTable, type DataColumn } from '@/components/DataTable'
 import { DeleteButton } from '@/components/DeleteButton'
+
+import { AccountStatusBadge } from './AccountStatusBadge'
+import { cn } from '@/lib/utils'
 import { companyPath } from '@/utils/routes'
 
 interface CompaniesTableProps {
@@ -19,11 +24,11 @@ interface CompaniesTableProps {
   deletingCompany: boolean
 }
 
-// Services, Billed, Received, Pending and Status from the mock join here once the API
-// carries billing figures.
 /** Why a company cannot be deleted right now: the backend refuses both (409). */
 const deleteCompanyBlocker = (company: CompanyResponse, onlyCompany: boolean) =>
   onlyCompany ? LAST_COMPANY_REASON : company.serviceCount ? DELETE_COMPANY_IN_USE : undefined
+
+const amount = (value: number | undefined) => (value != null ? formatInr(value) : '—')
 
 function columns({ clientId, companies, onDeleteCompany, deletingCompany }: CompaniesTableProps): DataColumn<CompanyResponse>[] {
   const onlyCompany = companies.length <= 1
@@ -44,9 +49,31 @@ function columns({ clientId, companies, onDeleteCompany, deletingCompany }: Comp
         </div>
       ),
     },
-    { header: 'Type', render: (company) => companyTypeLabel(company.companyType) },
-    { header: 'Services', align: 'right', render: (company) => company.serviceCount ?? '—' },
-    { header: 'Discount', align: 'right', render: (company) => companyDiscountLabel(company.discountPercent) },
+    { header: 'Type', align: 'center', render: (company) => companyTypeLabel(company.companyType) },
+    { header: 'Services', align: 'center', render: (company) => company.serviceCount ?? '—' },
+    { header: 'Discount', align: 'center', render: (company) => companyDiscountLabel(company.discountPercent) },
+    // The financial year's figures; absent until the list is fetched for a year.
+    { header: 'Billed', align: 'right', render: (company) => amount(company.totalBilled) },
+    {
+      header: 'Received',
+      align: 'right',
+      render: (company) => <span className="text-success">{amount(company.totalPaymentReceived)}</span>,
+    },
+    {
+      header: 'Pending',
+      align: 'right',
+      render: (company) => (
+        <span className={cn('font-bold', (company.pending ?? 0) > 0 && 'text-destructive')}>{amount(company.pending)}</span>
+      ),
+    },
+    {
+      header: 'Status',
+      align: 'center',
+      render: (company) => {
+        const status = accountStatus(company.pending)
+        return status ? <AccountStatusBadge status={status} /> : '—'
+      },
+    },
     {
       header: 'Delete',
       hideHeader: true,
@@ -71,7 +98,10 @@ function columns({ clientId, companies, onDeleteCompany, deletingCompany }: Comp
   ]
 }
 
-/** A client's companies: name and address, legal form, discount and delete. Rows open the company page. */
+/**
+ * A client's companies: name and address, legal form, services, discount, the financial year's
+ * billed / received / pending and status, and delete. Rows open the company page.
+ */
 export function CompaniesTable(props: CompaniesTableProps) {
   const { clientId, companies } = props
   const navigate = useNavigate()

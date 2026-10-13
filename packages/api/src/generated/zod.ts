@@ -211,7 +211,11 @@ export const GetClientResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -271,7 +275,11 @@ export const UpdateClientResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -305,7 +313,11 @@ export const GetCompanyResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')
 
 
@@ -343,7 +355,11 @@ export const UpdateCompanyResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')
 
 
@@ -440,6 +456,164 @@ export const RemoveServiceParams = zod.object({
 })
 
 export const RemoveServiceResponse = zod.void()
+
+
+/**
+ * Replaces every detail of a payment recorded for one company of the client: the amount, the date received, the method, the reference and the comment. An omitted reference or comment is cleared. The amount is given as a positive number and stored as negative; the financial year follows the new date received, which cannot be after today. When the payment was recorded (entryDate) does not change. paymentId is the ledger entry id the payment was recorded under.
+ * @summary Update a payment received from a company
+ */
+export const UpdatePaymentParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company that paid'),
+  "paymentId": zod.uuid().describe('Identifier of the payment\'s ledger entry')
+})
+
+export const updatePaymentBodyAmountReceivedMin = 0.01;
+
+export const updatePaymentBodyReferenceMin = 0;
+export const updatePaymentBodyReferenceMax = 100;
+
+export const updatePaymentBodyCommentMin = 0;
+export const updatePaymentBodyCommentMax = 1000;
+
+
+
+export const UpdatePaymentBody = zod.object({
+  "amountReceived": zod.number().min(updatePaymentBodyAmountReceivedMin).describe('Amount received, as a positive number. The ledger stores it as negative, against the charges it settles'),
+  "dateReceived": zod.iso.date().describe('Date the payment was received; not after today'),
+  "method": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).describe('How the payment was received'),
+  "reference": zod.string().min(updatePaymentBodyReferenceMin).max(updatePaymentBodyReferenceMax).optional().describe('The payer\'s reference, such as a UTR, UPI transaction id or cheque number'),
+  "comment": zod.string().min(updatePaymentBodyCommentMin).max(updatePaymentBodyCommentMax).optional().describe('Free-text note about the payment')
+}).describe('A payment received from a company')
+
+export const UpdatePaymentResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+
+
+/**
+ * Returns one ledger entry billed to a company of the client, with every financial figure stored for it.
+ * @summary Fetch a ledger entry of a company
+ */
+export const GetEntryParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "entryId": zod.uuid().describe('Identifier of the ledger entry')
+})
+
+export const GetEntryResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+
+
+/**
+ * Replaces the service fee, discount and GST rate of one ledger entry billed to a company of the client. The discount, taxable, GST and total amounts are worked out again from them, rounded the same way as when entries are posted, so the figures always add up. What the entry bills, its due date, financial year and entry date cannot change. Only service charges have rates; update a payment through its payment endpoint instead.
+ * @summary Correct the rates of a ledger entry
+ */
+export const UpdateEntryParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "entryId": zod.uuid().describe('Identifier of the ledger entry')
+})
+
+export const updateEntryBodyServiceFeeMin = 0;
+
+export const updateEntryBodyDiscountPercentMin = 0;
+export const updateEntryBodyDiscountPercentMax = 100;
+
+export const updateEntryBodyGstRatePercentMin = 0;
+export const updateEntryBodyGstRatePercentMax = 100;
+
+
+
+export const UpdateEntryBody = zod.object({
+  "serviceFee": zod.number().min(updateEntryBodyServiceFeeMin).describe('Fee for the service, before discount and excluding GST'),
+  "discountPercent": zod.number().min(updateEntryBodyDiscountPercentMin).max(updateEntryBodyDiscountPercentMax).describe('Discount granted on the service, as a percentage'),
+  "gstRatePercent": zod.number().min(updateEntryBodyGstRatePercentMin).max(updateEntryBodyGstRatePercentMax).describe('GST rate to charge, as a percentage')
+}).describe('Corrected rates for a ledger entry')
+
+export const UpdateEntryResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+
+
+/**
+ * Deletes one ledger entry of a company of the client: a payment recorded in error, or a service charge. For a service charge, the service it billed is left as it is: a ONE_OFF service stays marked as posted, and a recurring service keeps its next due date, so posting again does not bill the deleted date a second time.
+ * @summary Delete a ledger entry
+ */
+export const DeleteEntryParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company'),
+  "entryId": zod.uuid().describe('Identifier of the ledger entry')
+})
+
+export const DeleteEntryResponse = zod.void()
 
 
 /**
@@ -788,7 +962,11 @@ export const CreateClientResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
@@ -796,11 +974,15 @@ export const CreateClientResponse = zod.object({
 
 
 /**
- * Returns every company the client holds, in full, ordered by company name, each with the number of services assigned to it.
+ * Returns every company the client holds, in full, ordered by company name, each with the number of services assigned to it. Given a financialYear, each company also carries what it was billed (totalBilled), what it paid (totalPaymentReceived) and what is pending in that year, from the ledger: charges count in the year they fell due and payments in the year they were received, and a company with no activity in the year shows zeros. Without one, those fields are left out.
  * @summary List the companies of a client
  */
 export const ListCompaniesParams = zod.object({
   "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const ListCompaniesQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March), written as yyyy-yy, to add each company\'s billed, received and pending amounts for. Omit to leave them out')
 })
 
 export const ListCompaniesResponseItem = zod.object({
@@ -810,7 +992,11 @@ export const ListCompaniesResponseItem = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')
 export const ListCompaniesResponse = zod.array(ListCompaniesResponseItem)
 
@@ -848,7 +1034,11 @@ export const AddCompanyResponse = zod.object({
   "address": zod.string().optional().describe('Registered address of the company'),
   "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
   "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
-  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')
 
 
@@ -920,3 +1110,410 @@ export const AssignServiceResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
 }).describe('A catalog service assigned to a company')
+
+
+/**
+ * Returns the payments recorded for one company of the client, a page at a time, earliest received first unless sortBy and sortDirection choose another order. Each is the ledger entry it was recorded as: entryType PAYMENT, totalAmount negative, and dueDate the date received. fromDate, toDate and financialYear filter on the date received, either end of the range may be left open, and given together only payments matching both are returned. Sorting by totalAmount ascending puts the largest payment first, as amounts are stored as negative. The summary counts and totals every matching payment across all pages.
+ * @summary List the payments received from a company
+ */
+export const ListPaymentsParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const listPaymentsQueryPageDefault = 0;
+export const listPaymentsQuerySizeDefault = 50;
+export const listPaymentsQuerySortByDefault = `dueDate`;
+export const listPaymentsQuerySortDirectionDefault = `asc`;
+
+export const ListPaymentsQueryParams = zod.object({
+  "fromDate": zod.iso.date().optional().describe('Only return entries due on or after this date (ISO yyyy-MM-dd). Omit to leave the range open at the start'),
+  "toDate": zod.iso.date().optional().describe('Only return entries due on or before this date (ISO yyyy-MM-dd). Omit to leave the range open at the end'),
+  "financialYear": zod.string().optional().describe('Only return entries whose due date falls in this Indian financial year (1 April to 31 March), written as yyyy-yy. Omit to return entries of every year'),
+  "page": zod.int().default(listPaymentsQueryPageDefault).describe('Page to return, counting from 0. A page past the last returns no entries'),
+  "size": zod.int().default(listPaymentsQuerySizeDefault).describe('Largest number of entries a page holds, from 1 to 200'),
+  "sortBy": zod.enum(['dueDate', 'entryDate', 'serviceName', 'totalAmount']).default(listPaymentsQuerySortByDefault).describe('Field to sort entries by: dueDate, entryDate, serviceName or totalAmount. Entries alike in that field follow in due date, then service name, order, which keeps pages stable'),
+  "sortDirection": zod.enum(['asc', 'desc']).default(listPaymentsQuerySortDirectionDefault).describe('Whether sortBy ascends (asc) or descends (desc); either case is accepted')
+})
+
+export const ListPaymentsResponse = zod.object({
+  "payments": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')).optional().describe('The payments on this page, each the ledger entry it was recorded as, with entryType PAYMENT and a negative totalAmount; empty when none matches or the page is past the last'),
+  "page": zod.object({
+  "number": zod.int().optional().describe('Number of this page, counting from 0'),
+  "size": zod.int().optional().describe('Largest number of entries a page holds'),
+  "numberOfElements": zod.int().optional().describe('Number of entries on this page'),
+  "totalElements": zod.int().optional().describe('Number of entries across every page'),
+  "totalPages": zod.int().optional().describe('Number of pages; 0 when there are no entries'),
+  "hasNext": zod.boolean().optional().describe('Whether a page follows this one')
+}).optional().describe('Position of this page within every payment matching the filters'),
+  "summary": zod.object({
+  "paymentCount": zod.int().optional().describe('Number of payments matching the filters'),
+  "totalReceived": zod.number().optional().describe('Sum of the payments received, as a positive number')
+}).optional().describe('Totals of every payment matching the filters, across all pages')
+}).describe('One page of a company\'s payments, with the totals of every payment matching the filters')
+
+
+/**
+ * Records a payment received from one company of the client as an entry in its ledger, with entryType PAYMENT. The amount is given as a positive number and stored as negative, so the ledger's totals add up to what is still owed. The date received places the payment in the ledger: it is the entry's dueDate, decides its financial year, and cannot be after today. The payment is not matched to particular service charges; it reduces the company's balance as a whole.
+ * @summary Record a payment received from a company
+ */
+export const RecordPaymentParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company that paid')
+})
+
+export const recordPaymentBodyAmountReceivedMin = 0.01;
+
+export const recordPaymentBodyReferenceMin = 0;
+export const recordPaymentBodyReferenceMax = 100;
+
+export const recordPaymentBodyCommentMin = 0;
+export const recordPaymentBodyCommentMax = 1000;
+
+
+
+export const RecordPaymentBody = zod.object({
+  "amountReceived": zod.number().min(recordPaymentBodyAmountReceivedMin).describe('Amount received, as a positive number. The ledger stores it as negative, against the charges it settles'),
+  "dateReceived": zod.iso.date().describe('Date the payment was received; not after today'),
+  "method": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).describe('How the payment was received'),
+  "reference": zod.string().min(recordPaymentBodyReferenceMin).max(recordPaymentBodyReferenceMax).optional().describe('The payer\'s reference, such as a UTR, UPI transaction id or cheque number'),
+  "comment": zod.string().min(recordPaymentBodyCommentMin).max(recordPaymentBodyCommentMax).optional().describe('Free-text note about the payment')
+}).describe('A payment received from a company')
+
+export const RecordPaymentResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+
+
+/**
+ * Returns the ledger entries posted for one company of the client, earliest due first unless sortBy and sortDirection choose another order. Narrow them to a range of due dates with fromDate and toDate, either of which may be left open, and to an Indian financial year with financialYear; given together, only entries matching both are returned. Entries are returned a page at a time; the summary totals every matching entry across all pages, not just the page returned.
+ * @summary List the ledger entries of a company
+ */
+export const ListCompanyEntriesParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const listCompanyEntriesQueryPageDefault = 0;
+export const listCompanyEntriesQuerySizeDefault = 50;
+export const listCompanyEntriesQuerySortByDefault = `dueDate`;
+export const listCompanyEntriesQuerySortDirectionDefault = `asc`;
+
+export const ListCompanyEntriesQueryParams = zod.object({
+  "fromDate": zod.iso.date().optional().describe('Only return entries due on or after this date (ISO yyyy-MM-dd). Omit to leave the range open at the start'),
+  "toDate": zod.iso.date().optional().describe('Only return entries due on or before this date (ISO yyyy-MM-dd). Omit to leave the range open at the end'),
+  "financialYear": zod.string().optional().describe('Only return entries whose due date falls in this Indian financial year (1 April to 31 March), written as yyyy-yy. Omit to return entries of every year'),
+  "page": zod.int().default(listCompanyEntriesQueryPageDefault).describe('Page to return, counting from 0. A page past the last returns no entries'),
+  "size": zod.int().default(listCompanyEntriesQuerySizeDefault).describe('Largest number of entries a page holds, from 1 to 200'),
+  "sortBy": zod.enum(['dueDate', 'entryDate', 'serviceName', 'totalAmount']).default(listCompanyEntriesQuerySortByDefault).describe('Field to sort entries by: dueDate, entryDate, serviceName or totalAmount. Entries alike in that field follow in due date, then service name, order, which keeps pages stable'),
+  "sortDirection": zod.enum(['asc', 'desc']).default(listCompanyEntriesQuerySortDirectionDefault).describe('Whether sortBy ascends (asc) or descends (desc); either case is accepted')
+})
+
+export const ListCompanyEntriesResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')).optional().describe('The entries on this page, earliest due first; empty when none matches or the page is past the last'),
+  "page": zod.object({
+  "number": zod.int().optional().describe('Number of this page, counting from 0'),
+  "size": zod.int().optional().describe('Largest number of entries a page holds'),
+  "numberOfElements": zod.int().optional().describe('Number of entries on this page'),
+  "totalElements": zod.int().optional().describe('Number of entries across every page'),
+  "totalPages": zod.int().optional().describe('Number of pages; 0 when there are no entries'),
+  "hasNext": zod.boolean().optional().describe('Whether a page follows this one')
+}).optional().describe('Position of this page within every entry matching the filters'),
+  "summary": zod.object({
+  "entryCount": zod.int().optional().describe('Number of entries matching the filters, service charges and payments alike'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST; service charges only'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged'),
+  "byFinancialYear": zod.array(zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the entries\' due dates fall in'),
+  "entryCount": zod.int().optional().describe('Number of entries listed in this financial year'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged')
+}).describe('Totals of the ledger entries listed in one financial year')).optional().describe('The same totals for each financial year the entries fall in, earliest year first; empty when there are no entries'),
+  "byCompany": zod.array(zod.object({
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "entryCount": zod.int().optional().describe('Number of entries listed for this company'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged')
+}).describe('Totals of the ledger entries listed for one company of the client')).optional().describe('The same totals for each company the entries were billed to, ordered by company name. Returned on the client\'s ledger only; empty when there are no entries')
+}).optional().describe('Totals of every entry matching the filters, across all pages')
+}).describe('One page of ledger entries, with the totals of every entry matching the filters')
+
+
+/**
+ * Creates a ledger entry for every service of the company that has fallen due on or before today. Each entry takes the service fee from the Service Catalog, takes off the discount granted on the service, and adds GST at the service's rate; every figure is stored separately. A recurring service is billed once for each date it fell due and has not been billed for, then moves on to its next due date after today. A ONE_OFF service is billed once and never again. Posting again when nothing new is due creates nothing.
+ * @summary Post due services to a company's ledger
+ */
+export const PostDueServicesParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company to bill')
+})
+
+export const PostDueServicesResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+export const PostDueServicesResponse = zod.array(PostDueServicesResponseItem)
+
+
+/**
+ * Returns, for the client and one Indian financial year (1 April to 31 March): the total billed, the total payment received, what is pending (billed less received), and the total discount given, across every company of the client together; and the client's last payment, naming the company that made it. As for a single company, charges count in the year they fell due and payments in the year they were received.
+ * @summary Summarise a client's account for a financial year, across all of their companies
+ */
+export const SummarizeClientParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const SummarizeClientQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to summarise, written as yyyy-yy')
+})
+
+export const SummarizeClientResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Full name of the client'),
+  "financialYear": zod.string().optional().describe('Indian financial year summarised'),
+  "fromDate": zod.iso.date().optional().describe('First day of the financial year, 1 April'),
+  "toDate": zod.iso.date().optional().describe('Last day of the financial year, 31 March'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the year, across every company'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the year from every company, as a positive number'),
+  "pending": zod.number().optional().describe('Billed less received in the year, across every company; negative when the year\'s payments exceed its billing'),
+  "totalDiscount": zod.number().optional().describe('Sum of the discounts taken off the service fees billed in the year, across every company'),
+  "lastPayment": zod.object({
+  "date": zod.iso.date().optional().describe('Date the payment was received'),
+  "amount": zod.number().optional().describe('Amount received, as a positive number'),
+  "companyId": zod.uuid().optional().describe('Company that made the payment; given only in a client\'s summary, which spans several companies'),
+  "companyName": zod.string().optional().describe('Name of the company that made the payment; given only in a client\'s summary')
+}).optional().describe('The most recent payment received in the year from any company, naming the company; absent when none was received')
+}).describe('A client\'s billing and payments for one Indian financial year, across all of their companies')
+
+
+/**
+ * Returns the ledger entries posted for any company of the client, earliest due first unless sortBy and sortDirection choose another order. Each entry carries the companyId it was billed to. Narrow them to a range of due dates with fromDate and toDate, either of which may be left open, and to an Indian financial year with financialYear; given together, only entries matching both are returned. Entries are returned a page at a time; the summary totals every matching entry across all pages, not just the page returned.
+ * @summary List the ledger entries of a client
+ */
+export const ListClientEntriesParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const listClientEntriesQueryPageDefault = 0;
+export const listClientEntriesQuerySizeDefault = 50;
+export const listClientEntriesQuerySortByDefault = `dueDate`;
+export const listClientEntriesQuerySortDirectionDefault = `asc`;
+
+export const ListClientEntriesQueryParams = zod.object({
+  "fromDate": zod.iso.date().optional().describe('Only return entries due on or after this date (ISO yyyy-MM-dd). Omit to leave the range open at the start'),
+  "toDate": zod.iso.date().optional().describe('Only return entries due on or before this date (ISO yyyy-MM-dd). Omit to leave the range open at the end'),
+  "financialYear": zod.string().optional().describe('Only return entries whose due date falls in this Indian financial year (1 April to 31 March), written as yyyy-yy. Omit to return entries of every year'),
+  "page": zod.int().default(listClientEntriesQueryPageDefault).describe('Page to return, counting from 0. A page past the last returns no entries'),
+  "size": zod.int().default(listClientEntriesQuerySizeDefault).describe('Largest number of entries a page holds, from 1 to 200'),
+  "sortBy": zod.enum(['dueDate', 'entryDate', 'serviceName', 'totalAmount']).default(listClientEntriesQuerySortByDefault).describe('Field to sort entries by: dueDate, entryDate, serviceName or totalAmount. Entries alike in that field follow in due date, then service name, order, which keeps pages stable'),
+  "sortDirection": zod.enum(['asc', 'desc']).default(listClientEntriesQuerySortDirectionDefault).describe('Whether sortBy ascends (asc) or descends (desc); either case is accepted')
+})
+
+export const ListClientEntriesResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the ledger entry'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company billed'),
+  "entryType": zod.enum(['SERVICE_CHARGE', 'PAYMENT']).optional().describe('SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received'),
+  "companyServiceId": zod.uuid().optional().describe('Identifier of the service as assigned to the company'),
+  "serviceId": zod.uuid().optional().describe('Identifier of the service in the Service Catalog'),
+  "serviceName": zod.string().optional().describe('Name of the service when the entry was posted'),
+  "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed'),
+  "dueDate": zod.iso.date().optional().describe('For a service charge, the date the service fell due, which it bills; for a payment, the date it was received'),
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the due date falls in'),
+  "entryDate": zod.iso.date().optional().describe('Date the entry was posted to the ledger'),
+  "serviceFee": zod.number().optional().describe('Standard fee of the service, before discount and excluding GST'),
+  "discountPercent": zod.number().optional().describe('Discount granted on the service, as a percentage'),
+  "discountAmount": zod.number().optional().describe('Amount taken off the service fee by the discount'),
+  "taxableAmount": zod.number().optional().describe('Service fee after discount, on which GST is charged'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied, as a percentage'),
+  "gstAmount": zod.number().optional().describe('GST charged on the taxable amount'),
+  "totalAmount": zod.number().optional().describe('For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number'),
+  "paymentMethod": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How a payment was received'),
+  "paymentReference": zod.string().optional().describe('The payer\'s reference for a payment, such as a UTR or cheque number'),
+  "comment": zod.string().optional().describe('Free-text note about a payment'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
+}).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')).optional().describe('The entries on this page, earliest due first; empty when none matches or the page is past the last'),
+  "page": zod.object({
+  "number": zod.int().optional().describe('Number of this page, counting from 0'),
+  "size": zod.int().optional().describe('Largest number of entries a page holds'),
+  "numberOfElements": zod.int().optional().describe('Number of entries on this page'),
+  "totalElements": zod.int().optional().describe('Number of entries across every page'),
+  "totalPages": zod.int().optional().describe('Number of pages; 0 when there are no entries'),
+  "hasNext": zod.boolean().optional().describe('Whether a page follows this one')
+}).optional().describe('Position of this page within every entry matching the filters'),
+  "summary": zod.object({
+  "entryCount": zod.int().optional().describe('Number of entries matching the filters, service charges and payments alike'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST; service charges only'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged'),
+  "byFinancialYear": zod.array(zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the entries\' due dates fall in'),
+  "entryCount": zod.int().optional().describe('Number of entries listed in this financial year'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged')
+}).describe('Totals of the ledger entries listed in one financial year')).optional().describe('The same totals for each financial year the entries fall in, earliest year first; empty when there are no entries'),
+  "byCompany": zod.array(zod.object({
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "entryCount": zod.int().optional().describe('Number of entries listed for this company'),
+  "totalServiceFee": zod.number().optional().describe('Sum of the service fees, before discount and excluding GST'),
+  "totalDiscountAmount": zod.number().optional().describe('Sum of the discounts taken off the service fees'),
+  "totalTaxableAmount": zod.number().optional().describe('Sum of the taxable amounts, on which GST is charged'),
+  "totalGstAmount": zod.number().optional().describe('Sum of the GST charged'),
+  "totalAmount": zod.number().optional().describe('Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid'),
+  "totalPaid": zod.number().optional().describe('Sum of the payments received, as a positive number'),
+  "balance": zod.number().optional().describe('Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged')
+}).describe('Totals of the ledger entries listed for one company of the client')).optional().describe('The same totals for each company the entries were billed to, ordered by company name. Returned on the client\'s ledger only; empty when there are no entries')
+}).optional().describe('Totals of every entry matching the filters, across all pages')
+}).describe('One page of ledger entries, with the totals of every entry matching the filters')
+
+
+/**
+ * Returns, for one company of the client and one Indian financial year (1 April to 31 March): the total billed, the total payment received, what is pending (billed less received), the total discount given, and the date and amount of the last payment. Service charges count in the year they fell due, and payments in the year they were received; a payment is not matched to particular charges, so a payment settling an earlier year's charges reduces the pending amount of the year it was received in.
+ * @summary Summarise a company's account for a financial year
+ */
+export const SummarizeCompanyParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const SummarizeCompanyQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to summarise, written as yyyy-yy')
+})
+
+export const SummarizeCompanyResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "financialYear": zod.string().optional().describe('Indian financial year summarised'),
+  "fromDate": zod.iso.date().optional().describe('First day of the financial year, 1 April'),
+  "toDate": zod.iso.date().optional().describe('Last day of the financial year, 31 March'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the year: taxable amounts plus GST'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the year, as a positive number'),
+  "pending": zod.number().optional().describe('Billed less received in the year; negative when the year\'s payments exceed its billing, for example when they settle an earlier year\'s charges'),
+  "totalDiscount": zod.number().optional().describe('Sum of the discounts taken off the service fees billed in the year'),
+  "lastPayment": zod.object({
+  "date": zod.iso.date().optional().describe('Date the payment was received'),
+  "amount": zod.number().optional().describe('Amount received, as a positive number'),
+  "companyId": zod.uuid().optional().describe('Company that made the payment; given only in a client\'s summary, which spans several companies'),
+  "companyName": zod.string().optional().describe('Name of the company that made the payment; given only in a client\'s summary')
+}).optional().describe('The most recent payment received in the year; absent when none was received')
+}).describe('A company\'s billing and payments for one Indian financial year')

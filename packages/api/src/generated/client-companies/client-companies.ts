@@ -27,7 +27,8 @@ import type {
 import type {
   CompanyRequest,
   CompanyResponse,
-  ErrorResponse
+  ErrorResponse,
+  ListCompaniesParams
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -329,21 +330,30 @@ export const useDeleteCompany = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteCompanyMutationOptions(options), queryClient);
     }
-    export const getListCompaniesUrl = (id: string,) => {
+    export const getListCompaniesUrl = (id: string,
+    params?: ListCompaniesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/psc/cl/v1/clients/${id}/companies`
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${id}/companies?${stringifiedParams}` : `/psc/cl/v1/clients/${id}/companies`
 }
 
 /**
- * Returns every company the client holds, in full, ordered by company name, each with the number of services assigned to it.
+ * Returns every company the client holds, in full, ordered by company name, each with the number of services assigned to it. Given a financialYear, each company also carries what it was billed (totalBilled), what it paid (totalPaymentReceived) and what is pending in that year, from the ledger: charges count in the year they fell due and payments in the year they were received, and a company with no activity in the year shows zeros. Without one, those fields are left out.
  * @summary List the companies of a client
  */
-export const listCompanies = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse[]> => {
+export const listCompanies = async (id: string,
+    params?: ListCompaniesParams, options?: Parameters<typeof apiFetch>[1]): Promise<CompanyResponse[]> => {
 
-  return apiFetch<CompanyResponse[]>(getListCompaniesUrl(id),
+  return apiFetch<CompanyResponse[]>(getListCompaniesUrl(id,params),
   {
     ...options,
     method: 'GET'
@@ -356,23 +366,25 @@ export const listCompanies = async (id: string, options?: Parameters<typeof apiF
 
 
 
-export const getListCompaniesQueryKey = (id: string,) => {
+export const getListCompaniesQueryKey = (id: string,
+    params?: ListCompaniesParams,) => {
     return [
-    `/psc/cl/v1/clients/${id}/companies`
+    `/psc/cl/v1/clients/${id}/companies`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListCompaniesQueryOptions = <TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+export const getListCompaniesQueryOptions = <TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(id: string,
+    params?: ListCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListCompaniesQueryKey(id);
+  const queryKey =  queryOptions?.queryKey ?? getListCompaniesQueryKey(id,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCompanies>>> = ({ signal }) => listCompanies(id, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCompanies>>> = ({ signal }) => listCompanies(id,params, { signal, ...requestOptions });
 
 
 
@@ -386,7 +398,8 @@ export type ListCompaniesQueryError = ErrorType<ErrorResponse>
 
 
 export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> & Pick<
+ id: string,
+    params: undefined |  ListCompaniesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listCompanies>>,
           TError,
@@ -396,7 +409,8 @@ export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> & Pick<
+ id: string,
+    params?: ListCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listCompanies>>,
           TError,
@@ -406,7 +420,8 @@ export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ id: string,
+    params?: ListCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -414,11 +429,12 @@ export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies
  */
 
 export function useListCompanies<TData = Awaited<ReturnType<typeof listCompanies>>, TError = ErrorType<ErrorResponse>>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ id: string,
+    params?: ListCompaniesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCompanies>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListCompaniesQueryOptions(id,options)
+  const queryOptions = getListCompaniesQueryOptions(id,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

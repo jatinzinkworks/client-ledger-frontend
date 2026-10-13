@@ -1,12 +1,14 @@
-import { useClient, useManagerCatalog } from '@cl/api'
-import { clientName, clientSinceLabel, discountLabel } from '@cl/schemas'
-import { Pencil, Plus } from 'lucide-react'
+import { useClient, useClientLedgerSummary, useClientPayments, useManagerCatalog } from '@cl/api'
+import { clientName, clientSinceLabel, clientSummaryCards, discountLabel, financialYearLabel } from '@cl/schemas'
+import { IndianRupee, Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { AddCompanyForm } from '@/components/clients/AddCompanyForm'
 import { CompaniesTable } from '@/components/clients/CompaniesTable'
 import { EditClientForm } from '@/components/clients/EditClientForm'
+import { RecordPaymentForm } from '@/components/clients/RecordPaymentForm'
+import { SummaryCards } from '@/components/clients/SummaryCards'
 import { DetailHeader } from '@/components/DetailHeader'
 import { LoadError } from '@/components/LoadError'
 import { PageBreadcrumb } from '@/components/PageBreadcrumb'
@@ -14,16 +16,21 @@ import { RefreshButton } from '@/components/RefreshButton'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { useFinancialYear } from '@/financialYear/useFinancialYear'
 
 /** One client: their details, manager and discount, and the companies they hold. */
 export function ClientDetailPage() {
   const { id = '' } = useParams()
-  const page = useClient(id)
+  const { financialYear } = useFinancialYear()
+  // The companies list carries each company's billed / received / pending for the year.
+  const page = useClient(id, financialYear)
   const { client, isLoading, notFound, loadError, refetch, isRefreshing, update, saving, remove, deleting } = page
   const navigate = useNavigate()
   const managers = useManagerCatalog()
-  // Which side sheet is open: none, Edit Client or Add Company.
-  const [sheet, setSheet] = useState<'edit' | 'add-company' | null>(null)
+  const payments = useClientPayments(id)
+  const yearSummary = useClientLedgerSummary(id, financialYear)
+  // Which side sheet is open: none, Edit Client, Add Company or Record Payment.
+  const [sheet, setSheet] = useState<'edit' | 'add-company' | 'record-payment' | null>(null)
   const closeSheet = () => setSheet(null)
 
   if (notFound) {
@@ -39,8 +46,9 @@ export function ClientDetailPage() {
   }
 
   const name = client ? clientName(client) : ''
-  // Billed / Received / Pending cards, Record Payment and Export Client Ledger from the mock
-  // come once the API supports them.
+  // Export Client Ledger from the mock comes once the API supports it.
+  // The client's services, for the Billed card's note: a sum over their companies' counts.
+  const serviceCount = page.companies.reduce((total, c) => total + (c.serviceCount ?? 0), 0)
   const details = client
     ? [
         client.email,
@@ -64,15 +72,28 @@ export function ClientDetailPage() {
             details={details}
             actions={
               <>
-                <RefreshButton onRefresh={() => refetch()} refreshing={isRefreshing} />
+                <RefreshButton
+                  onRefresh={() => Promise.all([refetch(), yearSummary.refetch()])}
+                  refreshing={isRefreshing || yearSummary.isRefreshing}
+                />
                 <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('edit')}>
                   <Pencil /> Edit Client
+                </Button>
+                <Button size="touch" onClick={() => setSheet('record-payment')}>
+                  <IndianRupee /> Record Payment
                 </Button>
                 <Button size="touch" onClick={() => setSheet('add-company')}>
                   <Plus /> Add Company
                 </Button>
               </>
             }
+          />
+          <SummaryCards
+            label={`Summary For ${financialYearLabel(financialYear)}`}
+            cards={yearSummary.summary && clientSummaryCards(yearSummary.summary, financialYear, serviceCount)}
+            isLoading={yearSummary.isLoading}
+            error={yearSummary.error}
+            onRetry={() => yearSummary.refetch()}
           />
           <CompaniesTable
             clientId={id}
@@ -94,6 +115,16 @@ export function ClientDetailPage() {
                   deleting={deleting}
                   onDone={closeSheet}
                   onDeleted={() => navigate('/clients', { replace: true })}
+                />
+              )}
+              {sheet === 'record-payment' && (
+                <RecordPaymentForm
+                  clientName={name}
+                  companies={page.companies.flatMap((c) => (c.id ? [{ id: c.id, name: c.companyName ?? '' }] : []))}
+                  pendingFor={payments.balanceOf}
+                  onSave={payments.recordPayment}
+                  saving={payments.recordingPayment}
+                  onDone={closeSheet}
                 />
               )}
               {sheet === 'add-company' && (

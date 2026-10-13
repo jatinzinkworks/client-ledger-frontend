@@ -37,9 +37,9 @@ const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataCol
       </div>
     ),
   },
-  { header: 'Role', render: (manager) => roleLabel(manager.role) },
-  { header: 'Phone', render: (manager) => manager.mobileNumber },
-  { header: 'Clients', align: 'right', render: (manager) => manager.clientCount ?? '—' },
+  { header: 'Role', align: 'center', render: (manager) => roleLabel(manager.role) },
+  { header: 'Phone', align: 'center', render: (manager) => manager.mobileNumber },
+  { header: 'Clients', align: 'center', render: (manager) => manager.clientCount ?? '—' },
 ]
 
 /** The manager list as a table: monogram, name and email, role, phone, clients. Rows open the editor. */

@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router'
 
+import { FinancialYearPicker } from '@/components/FinancialYearPicker'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 import { FIRM } from '@/utils/branding'
@@ -22,6 +23,8 @@ export function AppLayout() {
             <span className="text-xs text-sidebar-muted">{FIRM.tagline}</span>
           </div>
         </div>
+
+        <FinancialYearPicker className="px-2" />
 
         <nav className="flex gap-1 overflow-x-auto md:flex-col">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
@@ -49,7 +52,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:pt-8 md:pb-16">
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-6 md:pt-8 md:pb-16">
         <Outlet />
       </main>
     </div>

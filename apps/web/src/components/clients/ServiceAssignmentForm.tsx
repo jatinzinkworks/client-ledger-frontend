@@ -20,14 +20,14 @@ import { useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router'
 
 import { LoadError } from '@/components/LoadError'
-import { FIELD_CONTROL, FIELD_HINT, FIELD_LABEL } from '@/components/form/fieldStyles'
+import { FIELD_HINT } from '@/components/form/fieldStyles'
+import { ReadOnlyField } from '@/components/form/ReadOnlyField'
 import { SelectField } from '@/components/form/SelectField'
 import { TextField } from '@/components/form/TextField'
 import { BillingBadge } from '@/components/services/BillingBadge'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
 
 import { ChargeSummary } from './ChargeSummary'
 import { DueSchedule } from './DueSchedule'
@@ -140,17 +140,11 @@ export function ServiceAssignmentForm({
         {ready && !empty && (
           <>
             {assignment ? (
-              <div className="flex flex-col gap-1.5">
-                <span id="assign-service-label" className={FIELD_LABEL}>
-                  {ASSIGN_SERVICE_FIELDS.serviceId.label}
-                </span>
-                <p
-                  aria-labelledby="assign-service-label"
-                  className={cn(FIELD_CONTROL, 'flex items-center rounded-md border border-input bg-muted px-3 dark:bg-muted')}
-                >
-                  {assignment.serviceName}
-                </p>
-              </div>
+              <ReadOnlyField
+                id="assign-service"
+                label={ASSIGN_SERVICE_FIELDS.serviceId.label}
+                value={assignment.serviceName ?? ''}
+              />
             ) : (
               <SelectField
                 id="assign-serviceId"

@@ -17,6 +17,7 @@ import {
 import { getGetClientQueryKey, getListClientsQueryKey } from '../generated/clients/clients';
 import type { CompanyRequest, ServiceAssignmentRequest, ServiceAssignmentUpdateRequest } from '../generated/model';
 import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
+import { awaitingFresh, freshData } from './fresh';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /**
@@ -60,10 +61,11 @@ export function useCompany(clientId: string, companyId: string) {
 
   const notFound = isNotFound(company.error);
   return {
-    company: company.data,
-    services: services.data ?? [],
-    isLoading: company.isPending && !notFound,
-    servicesLoading: services.isPending && !services.error,
+    // Only what was fetched since the page opened — never an older cached copy.
+    company: freshData(company),
+    services: freshData(services) ?? [],
+    isLoading: awaitingFresh(company) && !notFound,
+    servicesLoading: awaitingFresh(services),
     /** No such client, or the client holds no such company. */
     notFound,
     loadError: notFound ? null : (company.error as Error | null),

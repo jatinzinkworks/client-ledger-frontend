@@ -1,13 +1,34 @@
-import { useClient, useCompany, useServiceCatalog, type ServiceAssignmentResponse } from '@cl/api'
-import { clientName, companyDetails } from '@cl/schemas'
-import { Pencil, Plus } from 'lucide-react'
+import {
+  LEDGER_PAGE_SIZE,
+  useClient,
+  useCompany,
+  useCompanyLedger,
+  useServiceCatalog,
+  type LedgerEntryResponse,
+  type ServiceAssignmentResponse,
+} from '@cl/api'
+import {
+  DELETE_PAYMENT_WARNING,
+  clientName,
+  companyDetails,
+  financialYearLabel,
+  isPayment,
+  ledgerEntryName,
+  ledgerSummaryCards,
+} from '@cl/schemas'
+import { IndianRupee, Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { AddServiceForm } from '@/components/clients/AddServiceForm'
+import { CompanyLedger } from '@/components/clients/CompanyLedger'
+import { DeleteButton } from '@/components/DeleteButton'
 import { CompanyServicesTable } from '@/components/clients/CompanyServicesTable'
 import { EditCompanyForm } from '@/components/clients/EditCompanyForm'
+import { EditLedgerEntryForm } from '@/components/clients/EditLedgerEntryForm'
 import { EditServiceForm } from '@/components/clients/EditServiceForm'
+import { SummaryCards } from '@/components/clients/SummaryCards'
+import { RecordPaymentForm } from '@/components/clients/RecordPaymentForm'
 import { DetailHeader } from '@/components/DetailHeader'
 import { LoadError } from '@/components/LoadError'
 import { PageBreadcrumb } from '@/components/PageBreadcrumb'
@@ -15,18 +36,38 @@ import { RefreshButton } from '@/components/RefreshButton'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { useFinancialYear } from '@/financialYear/useFinancialYear'
 import { clientPath } from '@/utils/routes'
 
-/** One company of a client: its details and the services assigned to it. */
+type SheetState =
+  | 'edit'
+  | 'add-service'
+  | 'record-payment'
+  | { service: ServiceAssignmentResponse }
+  | { entry: LedgerEntryResponse }
+  | null
+
+/**
+ * One company of a client: its details, the services assigned to it and its ledger. Keyed by
+ * company, so opening another one starts afresh — no state, page number or data carried over.
+ */
 export function CompanyDetailPage() {
   const { id = '', companyId = '' } = useParams()
+  return <CompanyDetail key={`${id}/${companyId}`} id={id} companyId={companyId} />
+}
+
+function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   const page = useCompany(id, companyId)
+  const { financialYear } = useFinancialYear()
+  const ledger = useCompanyLedger(id, companyId, financialYear)
   const navigate = useNavigate()
   const catalog = useServiceCatalog()
-  // Which side sheet is open: none, Edit Company, Add Service or Edit Service (of one service).
-  const [sheet, setSheet] = useState<'edit' | 'add-service' | ServiceAssignmentResponse | null>(null)
+  // Which side sheet is open: none, Edit Company, Add Service, Record Payment, or editing one
+  // service or one ledger entry.
+  const [sheet, setSheet] = useState<SheetState>(null)
   const closeSheet = () => setSheet(null)
-  const editingService = typeof sheet === 'object' ? sheet : null
+  const editingService = sheet && typeof sheet === 'object' && 'service' in sheet ? sheet.service : null
+  const editingEntry = sheet && typeof sheet === 'object' && 'entry' in sheet ? sheet.entry : null
   // For the breadcrumb and Delete Company — usually already cached from the client page.
   const ownerPage = useClient(id)
   const owner = ownerPage.client
@@ -45,8 +86,7 @@ export function CompanyDetailPage() {
   }
 
   const { company } = page
-  // The status badge, CIN / GSTIN, the Billed / Received / Pending / Last Payment cards,
-  // Record Payment and Export To Excel from the mock come once the API supports them.
+  // The status badge, CIN / GSTIN and Export To Excel from the mock come once the API supports them.
   return (
     <div className="flex flex-col gap-6">
       <PageBreadcrumb
@@ -67,9 +107,15 @@ export function CompanyDetailPage() {
             note={company.address}
             actions={
               <>
-                <RefreshButton onRefresh={() => page.refetch()} refreshing={page.isRefreshing} />
+                <RefreshButton
+                  onRefresh={() => Promise.all([page.refetch(), ledger.refetch()])}
+                  refreshing={page.isRefreshing || ledger.isRefreshing}
+                />
                 <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setSheet('edit')}>
                   <Pencil /> Edit Company
+                </Button>
+                <Button size="touch" onClick={() => setSheet('record-payment')}>
+                  <IndianRupee /> Record Payment
                 </Button>
                 <Button size="touch" onClick={() => setSheet('add-service')}>
                   <Plus /> Add Service
@@ -77,18 +123,52 @@ export function CompanyDetailPage() {
               </>
             }
           />
+          <SummaryCards
+            label={`Summary For ${financialYearLabel(financialYear)}`}
+            cards={ledger.yearSummary && ledgerSummaryCards(ledger.yearSummary, financialYear)}
+            isLoading={ledger.yearSummaryLoading}
+            error={ledger.yearSummaryError}
+            onRetry={() => ledger.refetch()}
+          />
           <CompanyServicesTable
             services={page.services}
             isLoading={page.servicesLoading}
             error={page.servicesError}
             onRetry={() => page.refetch()}
-            onEdit={setSheet}
+            onEdit={(service) => setSheet({ service })}
             onDelete={page.deleteService}
             deleting={page.deletingService}
           />
+          <CompanyLedger
+            financialYear={financialYear}
+            entries={ledger.entries}
+            isLoading={ledger.isLoading}
+            error={ledger.error}
+            onRetry={() => ledger.refetch()}
+            page={ledger.page}
+            pageSize={LEDGER_PAGE_SIZE}
+            pageCount={ledger.pageCount}
+            totalEntries={ledger.totalEntries}
+            onPageChange={ledger.setPage}
+            onGenerate={ledger.generate}
+            generating={ledger.generating}
+            onEdit={(entry) => setSheet({ entry })}
+            onDelete={ledger.deleteEntry}
+            deleting={ledger.deletingEntry}
+          />
 
           <Sheet open={sheet !== null} onOpenChange={(open) => !open && closeSheet()}>
-            <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
+            <SheetContent
+              className="flex w-full flex-col gap-0 p-0 outline-none sm:max-w-[500px]"
+              // Editing a ledger entry (a service charge or a payment) opens without a field
+              // focused: focus the panel itself, so keyboard and screen-reader users still start
+              // inside it.
+              onOpenAutoFocus={(event) => {
+                if (!editingEntry) return
+                event.preventDefault()
+                ;(event.currentTarget as HTMLElement | null)?.focus()
+              }}
+            >
               {sheet === 'edit' && (
                 <EditCompanyForm
                   company={company}
@@ -114,6 +194,52 @@ export function CompanyDetailPage() {
                   saving={page.updatingService}
                   onDelete={() => page.deleteService(editingService.id ?? '')}
                   deleting={page.deletingService}
+                  onDone={closeSheet}
+                />
+              )}
+              {editingEntry && isPayment(editingEntry) && (
+                <RecordPaymentForm
+                  key={editingEntry.id}
+                  payment={editingEntry}
+                  clientName={ownerName}
+                  companies={[{ id: companyId, name: company.companyName ?? '' }]}
+                  pendingFor={() => ledger.balance}
+                  onSave={(_, data) => ledger.updatePayment(editingEntry.id ?? '', data)}
+                  saving={ledger.updatingPayment}
+                  onDone={closeSheet}
+                  footerStart={
+                    <DeleteButton
+                      label="Delete Payment"
+                      itemName={ledgerEntryName(editingEntry)}
+                      description={DELETE_PAYMENT_WARNING}
+                      onDelete={async () => {
+                        await ledger.deleteEntry(editingEntry.id ?? '')
+                        closeSheet()
+                      }}
+                      deleting={ledger.deletingEntry}
+                    />
+                  }
+                />
+              )}
+              {editingEntry && !isPayment(editingEntry) && (
+                <EditLedgerEntryForm
+                  // Re-mount for another entry, so the form starts from its rates.
+                  key={editingEntry.id}
+                  entry={editingEntry}
+                  onSave={(data) => ledger.updateEntry(editingEntry.id ?? '', data)}
+                  saving={ledger.updatingEntry}
+                  onDelete={() => ledger.deleteEntry(editingEntry.id ?? '')}
+                  deleting={ledger.deletingEntry}
+                  onDone={closeSheet}
+                />
+              )}
+              {sheet === 'record-payment' && (
+                <RecordPaymentForm
+                  clientName={ownerName}
+                  companies={[{ id: companyId, name: company.companyName ?? '' }]}
+                  pendingFor={() => ledger.balance}
+                  onSave={(_, data) => ledger.recordPayment(data)}
+                  saving={ledger.recordingPayment}
                   onDone={closeSheet}
                 />
               )}

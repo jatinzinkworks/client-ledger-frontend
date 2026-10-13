@@ -5,7 +5,11 @@ import { cn } from '@/lib/utils'
 
 export interface DataColumn<T> {
   header: string
-  align?: 'right'
+  /**
+   * Aligns the column, heading and cells together: text reads from the left (the default), short
+   * fixed-width values (dates, counts, rates, badges) sit centred, and amounts line up on the right.
+   */
+  align?: 'center' | 'right'
   /** Keep the header for screen readers only (e.g. an actions column). */
   hideHeader?: boolean
   render: (row: T) => ReactNode
@@ -19,9 +23,10 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void
 }
 
-/** The Zinkworks list table: muted uppercase header row, roomy body rows. */
+/** The Zinkworks list table: muted uppercase header row, roomy body rows; each heading aligns with its cells. */
 export function DataTable<T>({ columns, rows, rowKey, onRowClick }: DataTableProps<T>) {
-  const alignClass = (column: DataColumn<T>) => column.align === 'right' && 'text-right'
+  const alignClass = (column: DataColumn<T>) =>
+    column.align === 'right' ? 'text-right' : column.align === 'center' && 'text-center'
   return (
     <Table>
       <TableHeader className="bg-muted/60">
@@ -29,7 +34,10 @@ export function DataTable<T>({ columns, rows, rowKey, onRowClick }: DataTablePro
           {columns.map((column) => (
             <TableHead
               key={column.header}
-              className={cn('h-12 px-4 text-xs first:pl-6 last:pr-6 font-bold tracking-[0.04em] text-muted-foreground uppercase', alignClass(column))}
+              className={cn(
+                'h-12 px-4 text-xs font-bold tracking-[0.04em] text-muted-foreground uppercase first:pl-6 last:pr-6',
+                alignClass(column),
+              )}
             >
               {column.hideHeader ? <span className="sr-only">{column.header}</span> : column.header}
             </TableHead>

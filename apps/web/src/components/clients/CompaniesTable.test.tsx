@@ -7,7 +7,17 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { CompaniesTable } from './CompaniesTable'
 
-const textiles: CompanyResponse = { id: 'co-1', companyName: 'Mehta Textiles Pvt Ltd', companyType: 'PRIVATE_LIMITED', address: 'Plot 14', serviceCount: 2 }
+const textiles: CompanyResponse = {
+  id: 'co-1',
+  companyName: 'Mehta Textiles Pvt Ltd',
+  companyType: 'PRIVATE_LIMITED',
+  address: 'Plot 14',
+  serviceCount: 2,
+  financialYear: '2026-27',
+  totalBilled: 39235,
+  totalPaymentReceived: 15605,
+  pending: 23630,
+}
 const exports: CompanyResponse = { id: 'co-2', companyName: 'Mehta Exports LLP', companyType: 'LLP', address: 'Andheri', serviceCount: 0 }
 
 function setup(companies: CompanyResponse[], onDeleteCompany = vi.fn().mockResolvedValue(undefined)) {
@@ -60,5 +70,28 @@ describe('CompaniesTable', () => {
     const { user } = setup([textiles, exports])
     await user.click(screen.getByText('LLP'))
     expect(screen.getByText('Company Page')).toBeVisible()
+  })
+
+  it("shows each company's billed, received and pending for the year, pending in red while owed", () => {
+    setup([textiles, exports])
+    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent)
+    expect(headers).toEqual(expect.arrayContaining(['Billed', 'Received', 'Pending']))
+    const textilesRow = within(screen.getAllByRole('row')[1])
+    expect(textilesRow.getByText('₹39,235')).toBeVisible()
+    expect(textilesRow.getByText('₹15,605')).toHaveClass('text-success')
+    expect(textilesRow.getByText('₹23,630')).toHaveClass('text-destructive')
+    expect(textilesRow.getByText('Overdue')).toBeVisible()
+    // Without the year's figures, billed, received, pending and status stay blank rather than
+    // showing zeros (as does the discount this company has none of).
+    expect(within(screen.getAllByRole('row')[2]).getAllByText('—')).toHaveLength(5)
+  })
+
+  it('marks a settled account and one in credit', () => {
+    setup([
+      { ...textiles, pending: 0 },
+      { ...exports, financialYear: '2026-27', totalBilled: 1000, totalPaymentReceived: 1500, pending: -500 },
+    ])
+    expect(within(screen.getAllByRole('row')[1]).getByText('Settled')).toBeVisible()
+    expect(within(screen.getAllByRole('row')[2]).getByText('In Credit')).toBeVisible()
   })
 })

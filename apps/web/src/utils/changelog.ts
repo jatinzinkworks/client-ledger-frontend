@@ -9,6 +9,57 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 14:48:30',
+    highlights: ["A client's Companies table shows each company's Billed, Received and Pending for the selected financial year, with a status: Overdue, Settled or In Credit."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 14:45:28',
+    highlights: [
+      'Client and company pages now wait for the latest data instead of briefly showing an older copy.',
+      "Client and company page buttons sit to the right of the name; on the client page they read Refresh, Edit Client, Record Payment, Add Company.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 14:42:26',
+    highlights: ["Payments can now be edited: open one from the company's ledger to change its amount, date, method, reference or comment. Edit panels open without jumping into the first field."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 14:29:19',
+    highlights: ["Client pages show the selected financial year's Billed, Received, Pending and Discount across all of the client's companies."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 14:24:25',
+    highlights: ["Company pages show the selected financial year's Billed, Received, Pending, Last Payment and Discount at the top."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 13:52:16',
+    highlights: ["A Financial Year picker in the sidebar (the current Indian financial year and the four before it) filters each company's ledger; it starts at the current year."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 13:47:43',
+    highlights: [
+      "Payments can now be recorded from a company's page or its client's page, showing what the company still owes; they appear in the company's ledger.",
+      'Ledger entries can be corrected (fee, discount and GST rate) or deleted; payments can be deleted.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 13:25:59',
+    highlights: ["Company pages have a Record Payment panel for the amount, date, method, reference and comment."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 13:15:16',
+    highlights: ["Each company page now has a Ledger: Generate Service Entries bills the services that are due, and the entries are listed 20 per page."],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 11:18:31',
     highlights: ['The Managers list now shows how many clients each manager looks after, and Edit Manager shows it too.'],
   },

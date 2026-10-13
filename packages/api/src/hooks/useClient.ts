@@ -15,20 +15,22 @@ import {
   useUpdateClient,
 } from '../generated/clients/clients';
 import type { ClientUpdateRequest, CompanyRequest } from '../generated/model';
+import { awaitingFresh, freshData } from './fresh';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /**
  * One client in full — details, manager name and every company — for the client page. The
  * companies come from the companies list, which (unlike the client) carries each one's service
- * count.
+ * count, and — given a financial year — what each was billed, paid and still owes in it.
  */
-export function useClient(id: string) {
+export function useClient(id: string, financialYear?: string) {
   const queryClient = useQueryClient();
   // orval interpolates path params as-is, so encode the id here.
   const encodedId = encodeURIComponent(id);
   const options = { query: { enabled: !!id, retry: retryUnlessNotFound } };
   const query = useGetClient(encodedId, options);
-  const companies = useListCompanies(encodedId, options);
+  // Given a financial year, each company also carries what it was billed, paid and owes in it.
+  const companies = useListCompanies(encodedId, financialYear ? { financialYear } : undefined, options);
   const update = useUpdateClient({
     mutation: {
       onSuccess: (saved) => {
@@ -57,10 +59,11 @@ export function useClient(id: string) {
 
   const notFound = isNotFound(query.error);
   return {
-    client: query.data,
+    // Only what was fetched since the page opened — never an older cached copy.
+    client: freshData(query),
     /** With service counts; the client's own companies (no counts) until the list arrives. */
-    companies: companies.data ?? query.data?.companies ?? [],
-    isLoading: query.isPending && !notFound,
+    companies: freshData(companies) ?? freshData(query)?.companies ?? [],
+    isLoading: awaitingFresh(query) && !notFound,
     /** No client carries this id (deleted, or a stale link). */
     notFound,
     loadError: notFound ? null : (query.error as Error | null),
