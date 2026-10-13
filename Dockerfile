@@ -78,16 +78,18 @@ FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
 # `docker build`, so bump it when patching by hand.
 USER root
 
-# The last line prints the patched openssl into the build log, so a later scan
+# The last line prints the patched packages into the build log, so a later scan
 # finding can be read against what this layer actually installed (`|| true`
 # because a log line must never be what fails a build).
-ARG APK_PATCH_BUST=2
+ARG APK_PATCH_BUST=3
 RUN echo "apk security-patch layer, bust=${APK_PATCH_BUST}" && \
     apk update && \
-    apk upgrade --no-cache libcrypto3 libssl3 libexpat p11-kit p11-kit-trust c-ares curl libcurl && \
+    apk upgrade --no-cache libcrypto3 libssl3 libexpat p11-kit p11-kit-trust c-ares curl libcurl \
+      libpng pcre2 tiff zlib && \
     apk upgrade --no-cache && \
     rm -rf /var/cache/apk/* && \
-    { echo ">>> patched openssl:"; apk list --installed | grep -E "^libssl3|^libcrypto3" || true; }
+    { echo ">>> patched packages:"; \
+      apk list --installed | grep -E "^(libssl3|libcrypto3|libexpat|libpng|pcre2|tiff|zlib)-[0-9]" || true; }
 
 USER 101
 

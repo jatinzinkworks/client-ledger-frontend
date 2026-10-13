@@ -4,11 +4,11 @@ import { FIELD_HINT, FIELD_LABEL } from '@/components/form/fieldStyles'
 
 interface DueScheduleProps {
   dates: readonly Date[]
-  /** Net charge per invoice before GST; omitted while the discount entry is invalid. */
+  /** Total per invoice with GST; omitted while the discount entry is invalid. */
   amount?: number
 }
 
-/** The upcoming due dates of the service being added, each with its net charge. */
+/** The upcoming due dates of the service, each with its total including GST. */
 export function DueSchedule({ dates, amount }: DueScheduleProps) {
   if (!dates.length) return null
   const title = dates.length === 1 ? 'Due Date' : `Next ${dates.length} Due Dates`
@@ -24,7 +24,7 @@ export function DueSchedule({ dates, amount }: DueScheduleProps) {
           </li>
         ))}
       </ol>
-      {amount != null && <p className={FIELD_HINT}>Net Charge Per Invoice, GST Added On Invoice.</p>}
+      {amount != null && <p className={FIELD_HINT}>Total Per Invoice, Including GST.</p>}
     </section>
   )
 }

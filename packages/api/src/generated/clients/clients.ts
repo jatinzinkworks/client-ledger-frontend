@@ -166,7 +166,7 @@ export const getUpdateClientUrl = (id: string,) => {
 }
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero, and companies already held keep their discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
  * @summary Update a client
  */
 export const updateClient = async (id: string,

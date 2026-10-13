@@ -11,6 +11,7 @@ const services: ServiceAssignmentResponse[] = [
     serviceName: 'GST Return Filing',
     serviceType: 'MONTHLY',
     serviceFee: 3500,
+    gstRatePercent: 18,
     deliveryDate: '2026-10-11',
     nextDueDate: '2026-11-05',
     discountPercent: 5,
@@ -18,7 +19,7 @@ const services: ServiceAssignmentResponse[] = [
 ]
 
 describe('CompanyServicesTable', () => {
-  it('shows the billing cycle, dates, fee and net charge in their own columns', () => {
+  it('shows the billing cycle, dates, fee, net charge, GST rate and total in their own columns', () => {
     render(
       <CompanyServicesTable
         services={services}
@@ -41,13 +42,15 @@ describe('CompanyServicesTable', () => {
       'Fee',
       'Discount',
       'Net Charge',
+      'GST',
+      'Total',
       'Delete',
     ])
 
     const cells = within(screen.getAllByRole('row')[1])
       .getAllByRole('cell')
       .map((c) => c.textContent)
-    expect(cells).toEqual(['GST Return Filing', 'Monthly', '11 Oct 2026', '5 Nov 2026', '—', '₹3,500', '5%', '₹3,325', ''])
+    expect(cells).toEqual(['GST Return Filing', 'Monthly', '11 Oct 2026', '5 Nov 2026', '—', '₹3,500', '5%', '₹3,325', '18%', '₹3,923.5', ''])
   })
 
   it('opens Edit Service from the name or anywhere on the row', async () => {

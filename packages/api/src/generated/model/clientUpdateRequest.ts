@@ -38,7 +38,7 @@ export interface ClientUpdateRequest {
   /** Identifier of the manager from the Manager Catalog who looks after the client */
   managerId: string;
   /**
-     * Discount granted to the client, as a percentage. Companies already held keep their discount; companies added later without one of their own take this
+     * Discount granted to the client, as a percentage. Also applied to every company that does not set its own
      * @minimum 0
      * @maximum 100
      */

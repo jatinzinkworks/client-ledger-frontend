@@ -207,7 +207,8 @@ export const GetClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
@@ -216,7 +217,7 @@ export const GetClientResponse = zod.object({
 
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero, and companies already held keep their discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
  * @summary Update a client
  */
 export const UpdateClientParams = zod.object({
@@ -249,7 +250,7 @@ export const UpdateClientBody = zod.object({
   "phone": zod.string().min(updateClientBodyPhoneMin).max(updateClientBodyPhoneMax).regex(updateClientBodyPhoneRegExp).describe('Contact phone number'),
   "email": zod.email().min(updateClientBodyEmailMin).max(updateClientBodyEmailMax).describe('Contact email address'),
   "managerId": zod.uuid().describe('Identifier of the manager from the Manager Catalog who looks after the client'),
-  "discountPercent": zod.number().min(updateClientBodyDiscountPercentMin).max(updateClientBodyDiscountPercentMax).default(updateClientBodyDiscountPercentDefault).describe('Discount granted to the client, as a percentage. Companies already held keep their discount; companies added later without one of their own take this')
+  "discountPercent": zod.number().min(updateClientBodyDiscountPercentMin).max(updateClientBodyDiscountPercentMax).default(updateClientBodyDiscountPercentDefault).describe('Discount granted to the client, as a percentage. Also applied to every company that does not set its own')
 }).describe('New content for a client, excluding their companies')
 
 export const UpdateClientResponse = zod.object({
@@ -266,7 +267,8 @@ export const UpdateClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
@@ -299,7 +301,8 @@ export const GetCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
@@ -336,7 +339,8 @@ export const UpdateCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
@@ -371,6 +375,7 @@ export const GetService1Response = zod.object({
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
   "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the service fee, as a percentage, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -412,6 +417,7 @@ export const UpdateService1Response = zod.object({
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
   "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the service fee, as a percentage, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -776,7 +782,8 @@ export const CreateClientResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
@@ -797,7 +804,8 @@ export const ListCompaniesResponseItem = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 export const ListCompaniesResponse = zod.array(ListCompaniesResponseItem)
@@ -834,7 +842,8 @@ export const AddCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
   "address": zod.string().optional().describe('Registered address of the company'),
-  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
   "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies')
 }).describe('A company held against a client')
 
@@ -856,6 +865,7 @@ export const ListServices1ResponseItem = zod.object({
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
   "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the service fee, as a percentage, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
@@ -898,6 +908,7 @@ export const AssignServiceResponse = zod.object({
   "serviceName": zod.string().optional().describe('Name of the service in the Service Catalog'),
   "serviceType": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How the service is billed, taken from the Service Catalog'),
   "serviceFee": zod.number().optional().describe('Standard fee of the service, excluding GST and before this assignment\'s discount, taken from the Service Catalog'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the service fee, as a percentage, taken from the Service Catalog'),
   "deliveryDate": zod.iso.date().optional().describe('Date the service is, or was, delivered'),
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),

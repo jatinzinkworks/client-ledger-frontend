@@ -72,12 +72,16 @@ describe('AddServiceForm', () => {
     const summary = within(screen.getByLabelText('Charge Summary'))
     expect(summary.getByText('− ₹175')).toBeVisible()
     expect(summary.getByText('₹3,325')).toBeVisible()
+    expect(summary.getByText('GST (18%)')).toBeVisible()
+    expect(summary.getByText('+ ₹598.5')).toBeVisible()
+    expect(summary.getByText('₹3,923.5')).toBeVisible()
 
     await user.type(screen.getByLabelText('Discount % (Optional)'), '10')
     expect(summary.getByText('₹3,150')).toBeVisible()
+    expect(summary.getByText('₹3,717')).toBeVisible()
   })
 
-  it('lists the next 5 due dates from the delivery date, each at the net charge', async () => {
+  it('lists the next 5 due dates from the delivery date, each at the total with GST', async () => {
     const { user } = setup()
     await user.selectOptions(screen.getByLabelText('Service'), 'svc-gst')
     await user.clear(screen.getByLabelText('Date Delivered'))
@@ -87,11 +91,11 @@ describe('AddServiceForm', () => {
     expect(schedule.getByText('Next 5 Due Dates')).toBeVisible()
     const rows = schedule.getAllByRole('listitem')
     expect(rows.map((row) => row.textContent)).toEqual([
-      '17 Nov 2026₹3,325',
-      '27 Dec 2026₹3,325',
-      '37 Jan 2027₹3,325',
-      '47 Feb 2027₹3,325',
-      '57 Mar 2027₹3,325',
+      '17 Nov 2026₹3,923.5',
+      '27 Dec 2026₹3,923.5',
+      '37 Jan 2027₹3,923.5',
+      '47 Feb 2027₹3,923.5',
+      '57 Mar 2027₹3,923.5',
     ])
   })
 

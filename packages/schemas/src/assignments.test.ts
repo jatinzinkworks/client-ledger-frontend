@@ -7,6 +7,7 @@ import {
   catalogServiceOptions,
   chargeBreakdown,
   effectiveDiscount,
+  gstRateLabel,
   isAssignServiceComplete,
   serviceAssignmentDefaults,
   serviceDiscountHint,
@@ -90,6 +91,12 @@ describe('display', () => {
     );
   });
 
+  it('labels the GST rate, showing 0% rather than a dash', () => {
+    expect(gstRateLabel(18)).toBe('18%');
+    expect(gstRateLabel(0)).toBe('0%');
+    expect(gstRateLabel(undefined)).toBe('—');
+  });
+
   it("explains a blank discount with the company's", () => {
     expect(serviceDiscountHint({ companyName: 'Mehta Textiles', discountPercent: 5 })).toBe(
       "Leave Blank To Use Mehta Textiles's Discount Of 5%.",
@@ -100,8 +107,13 @@ describe('display', () => {
 
 describe('charges', () => {
   it('works out the discount and net charge', () => {
-    expect(chargeBreakdown(3500, 5)).toEqual({ fee: 3500, discount: 175, net: 3325 });
-    expect(chargeBreakdown(999, 12.5)).toEqual({ fee: 999, discount: 124.88, net: 874.12 });
+    expect(chargeBreakdown(3500, 5, 18)).toEqual({ fee: 3500, discount: 175, net: 3325, gstRatePercent: 18, gst: 598.5, total: 3923.5 });
+    expect(chargeBreakdown(999, 12.5, 18)).toEqual({ fee: 999, discount: 124.88, net: 874.12, gstRatePercent: 18, gst: 157.34, total: 1031.46 });
+    expect(chargeBreakdown(1000, 0, 0)).toMatchObject({ net: 1000, gst: 0, total: 1000 });
+  });
+
+  it('applies the default GST rate when the service has none', () => {
+    expect(chargeBreakdown(1000, 0)).toMatchObject({ gstRatePercent: 18, gst: 180, total: 1180 });
   });
 
   it("uses the entered discount, else the company's", () => {

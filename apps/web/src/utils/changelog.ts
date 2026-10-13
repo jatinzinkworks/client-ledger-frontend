@@ -9,6 +9,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 10:45:29',
+    highlights: ["Adding, editing and listing a company's services now shows the GST amount and the total with GST, and the due dates show the total per invoice."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 10:42:47',
+    highlights: ["A company's services list now shows each service's GST rate."],
+  },
+  {
+    version: '0.1.0',
     date: '11 Oct 2026, 18:36:56',
     highlights: ["A client's companies list now shows how many services each company has; a company with services can't be deleted until they are removed."],
   },

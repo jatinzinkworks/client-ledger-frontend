@@ -19,8 +19,10 @@ export interface CompanyResponse {
   companyType?: CompanyResponseCompanyType;
   /** Registered address of the company */
   address?: string;
-  /** Discount granted on this company's work, as a percentage */
+  /** Discount granted on this company's work, as a percentage: the company's own, or the client's current discount when the company has none of its own */
   discountPercent?: number;
+  /** True when the company has no discount of its own, so discountPercent is the client's and follows any change to it */
+  discountInherited?: boolean;
   /** Number of services assigned to the company. Only returned when listing a client's companies */
   serviceCount?: number;
 }

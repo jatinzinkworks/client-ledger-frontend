@@ -106,6 +106,7 @@ export function assignedCatalogService(
       id: a.serviceId,
       serviceName: a.serviceName,
       standardFee: a.serviceFee,
+      gstRatePercent: a.gstRatePercent,
       billingFrequency: a.serviceType,
     }
   );
@@ -129,6 +130,10 @@ export const catalogServiceOptions = (services: readonly CatalogServiceResponse[
 export const addServiceTitle = (company: Pick<CompanyResponse, 'companyName'>) =>
   `Add Service To ${company.companyName ?? 'Company'}`;
 
+/** "18%" for a service's GST rate; a 0% rate shows as "0%", a missing one as "—". */
+export const gstRateLabel = (rate: number | undefined) =>
+  rate == null ? '—' : `${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 }).format(rate)}%`;
+
 /** "Standard Fee ₹3,500 · GST 18% Added On Invoice" beside the service's billing badge. */
 export const standardFeeHint = (service: CatalogServiceResponse) =>
   [
@@ -145,13 +150,25 @@ export const serviceDiscountHint = (company: Pick<CompanyResponse, 'companyName'
 export interface ChargeBreakdown {
   fee: number;
   discount: number;
+  /** After the discount, before GST. */
   net: number;
+  gstRatePercent: number;
+  gst: number;
+  /** The net charge plus GST: what the invoice comes to. */
+  total: number;
 }
 
-/** Fee, discount and net charge (before GST), with the discount rounded to the paisa. */
-export function chargeBreakdown(fee: number, discountPercent: number): ChargeBreakdown {
+const toPaisa = (amount: number) => Math.round(amount * 100) / 100;
+
+/**
+ * Fee, discount, net charge, GST on the net charge, and the total with GST. The discount and GST
+ * are each rounded to the paisa. A missing GST rate is the catalog default.
+ */
+export function chargeBreakdown(fee: number, discountPercent: number, gstRatePercent = DEFAULT_GST_RATE): ChargeBreakdown {
   const discount = Math.round(fee * discountPercent) / 100;
-  return { fee, discount, net: Math.round((fee - discount) * 100) / 100 };
+  const net = toPaisa(fee - discount);
+  const gst = Math.round(net * gstRatePercent) / 100;
+  return { fee, discount, net, gstRatePercent, gst, total: toPaisa(net + gst) };
 }
 
 /**

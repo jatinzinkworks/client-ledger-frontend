@@ -25,6 +25,8 @@ export interface ServiceAssignmentResponse {
   serviceType?: ServiceAssignmentResponseServiceType;
   /** Standard fee of the service, excluding GST and before this assignment's discount, taken from the Service Catalog */
   serviceFee?: number;
+  /** GST rate applied to the service fee, as a percentage, taken from the Service Catalog */
+  gstRatePercent?: number;
   /** Date the service is, or was, delivered */
   deliveryDate?: string;
   /** First date the service's invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date */

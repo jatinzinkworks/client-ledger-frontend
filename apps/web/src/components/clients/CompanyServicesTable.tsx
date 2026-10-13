@@ -5,6 +5,7 @@ import {
   companyDiscountLabel,
   formatApiDate,
   formatInr,
+  gstRateLabel,
   servicesCountLabel,
 } from '@cl/schemas'
 
@@ -24,6 +25,10 @@ interface CompanyServicesTableProps {
   onDelete: (assignmentId: string) => Promise<unknown>
   deleting: boolean
 }
+
+/** The row's charge; only rendered once the fee is known. */
+const charge = (s: ServiceAssignmentResponse) =>
+  chargeBreakdown(s.serviceFee ?? 0, s.discountPercent ?? 0, s.gstRatePercent)
 
 // Charge, Payment and Balance from the mock's ledger join here once the API carries billing.
 function columns({
@@ -80,11 +85,19 @@ function columns({
       header: 'Net Charge',
       align: 'right',
       render: (s) =>
-        s.serviceFee != null ? (
-          <span className="font-bold">{formatInr(chargeBreakdown(s.serviceFee, s.discountPercent ?? 0).net)}</span>
-        ) : (
-          '—'
-        ),
+        s.serviceFee != null ? <span className="font-bold whitespace-nowrap">{formatInr(charge(s).net)}</span> : '—',
+    },
+    // The rate added on the invoice, on top of the net charge.
+    {
+      header: 'GST',
+      align: 'right',
+      render: (s) => gstRateLabel(s.gstRatePercent),
+    },
+    {
+      header: 'Total',
+      align: 'right',
+      render: (s) =>
+        s.serviceFee != null ? <span className="font-bold whitespace-nowrap">{formatInr(charge(s).total)}</span> : '—',
     },
     {
       header: 'Delete',

@@ -94,7 +94,8 @@ export function ServiceAssignmentForm({
   const options = catalogServiceOptions(catalog)
   // The discount the backend will apply (the entry, else the company's); none while invalid.
   const rate = effectiveDiscount(values.discountPercent, company.discountPercent)
-  const charge = service?.standardFee != null && rate != null ? chargeBreakdown(service.standardFee, rate) : undefined
+  const charge =
+    service?.standardFee != null && rate != null ? chargeBreakdown(service.standardFee, rate, service.gstRatePercent) : undefined
 
   const submit = handleSubmit(async (v) => {
     setFormError(undefined)
@@ -190,7 +191,7 @@ export function ServiceAssignmentForm({
               error={errors.comment?.message}
               registration={register('comment')}
             />
-            {service && <DueSchedule dates={upcomingDueDates(service, values.deliveryDate)} amount={charge?.net} />}
+            {service && <DueSchedule dates={upcomingDueDates(service, values.deliveryDate)} amount={charge?.total} />}
           </>
         )}
         {formError && <p className="text-sm text-destructive">{formError}</p>}
