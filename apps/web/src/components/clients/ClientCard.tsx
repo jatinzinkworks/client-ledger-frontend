@@ -20,7 +20,7 @@ export function ClientCard({ client }: { client: ClientSummaryResponse }) {
       </div>
 
       <div className="flex flex-1 flex-col gap-2">
-        <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Companies</span>
+        <span className="font-mono text-[11px] font-bold tracking-[0.08em] text-brand uppercase">Companies</span>
         <ul className="flex flex-col gap-1 text-[15px]">
           {client.companyNames?.map((name) => (
             <li key={name}>{name}</li>

@@ -125,6 +125,7 @@ export const GetManagerResponse = zod.object({
   "email": zod.string().optional().describe('Work email address'),
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -169,6 +170,7 @@ export const UpdateManagerResponse = zod.object({
   "email": zod.string().optional().describe('Work email address'),
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -536,6 +538,7 @@ export const ListManagersResponseItem = zod.object({
   "email": zod.string().optional().describe('Work email address'),
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -577,6 +580,7 @@ export const CreateManagerResponse = zod.object({
   "email": zod.string().optional().describe('Work email address'),
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')

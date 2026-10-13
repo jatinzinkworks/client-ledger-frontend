@@ -85,3 +85,9 @@ export const roleLabel = (role: Role | undefined) => (role ? ROLE_LABELS[role] :
 
 export const managerCountLabel = (count: number) => `${count} ${count === 1 ? 'Manager' : 'Managers'}`;
 
+/** "12 Clients" / "1 Client" for the clients a manager looks after; "No Clients Yet" for none. */
+export function managerClientsLabel(count: number | undefined): string {
+  const n = count ?? 0;
+  return n === 0 ? 'No Clients Yet' : `${n} ${n === 1 ? 'Client' : 'Clients'}`;
+}
+

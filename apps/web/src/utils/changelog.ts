@@ -9,6 +9,16 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 11:18:31',
+    highlights: ['The Managers list now shows how many clients each manager looks after, and Edit Manager shows it too.'],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 11:08:31',
+    highlights: ['Service cards now show a pointer cursor on hover, and their company count and billing schedule are easier to read.'],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 10:45:29',
     highlights: ["Adding, editing and listing a company's services now shows the GST amount and the total with GST, and the due dates show the total per invoice."],
   },

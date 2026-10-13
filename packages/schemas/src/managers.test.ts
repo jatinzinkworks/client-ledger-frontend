@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  managerClientsLabel,
   managerCountLabel,
   managerFieldFromApi,
   managerFormDefaults,
@@ -64,6 +65,13 @@ describe('display helpers', () => {
     expect(roleLabel('SENIOR_MANAGER')).toBe('Senior Manager');
     expect(managerCountLabel(1)).toBe('1 Manager');
     expect(managerCountLabel(4)).toBe('4 Managers');
+  });
+
+  it('labels how many clients a manager looks after', () => {
+    expect(managerClientsLabel(12)).toBe('12 Clients');
+    expect(managerClientsLabel(1)).toBe('1 Client');
+    expect(managerClientsLabel(0)).toBe('No Clients Yet');
+    expect(managerClientsLabel(undefined)).toBe('No Clients Yet');
   });
 
   it('maps backend field errors onto form fields', () => {

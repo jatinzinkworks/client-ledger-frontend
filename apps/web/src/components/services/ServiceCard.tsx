@@ -16,7 +16,7 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
       type="button"
       onClick={() => onSelect(service)}
       aria-label={`Edit ${service.serviceName}`}
-      className="flex h-full flex-col gap-4 rounded-lg border border-border bg-card p-6 text-left text-card-foreground transition-shadow outline-none hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50"
+      className="flex h-full cursor-pointer flex-col gap-4 rounded-lg border border-border bg-card p-6 text-left text-card-foreground transition-shadow outline-none hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring/50"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">
@@ -37,9 +37,9 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
         <span className="text-xs text-muted-foreground">{formatGst(service.gstRatePercent)}</span>
       </div>
 
-      <div className="flex flex-col gap-0.5 border-t border-border pt-4 text-sm">
-        <span>{usageLabel(service.usedByCompanies)}</span>
-        <span className="text-xs text-muted-foreground">{scheduleSummary(billing, service.invoiceSchedule)}</span>
+      <div className="flex flex-col gap-1 border-t border-border pt-4 text-base">
+        <span className="font-medium">{usageLabel(service.usedByCompanies)}</span>
+        <span className="text-sm text-muted-foreground">{scheduleSummary(billing, service.invoiceSchedule)}</span>
       </div>
     </button>
   )

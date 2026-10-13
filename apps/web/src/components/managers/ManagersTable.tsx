@@ -8,7 +8,7 @@ interface ManagersTableProps {
   onSelect: (manager: ManagerResponse) => void
 }
 
-// Monthly Salary, Clients and Pending from the mock join here once the API carries them.
+// Monthly Salary and Pending from the mock join here once the API carries them.
 const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataColumn<ManagerResponse>[] => [
   {
     header: 'Manager',
@@ -39,9 +39,10 @@ const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataCol
   },
   { header: 'Role', render: (manager) => roleLabel(manager.role) },
   { header: 'Phone', render: (manager) => manager.mobileNumber },
+  { header: 'Clients', align: 'right', render: (manager) => manager.clientCount ?? '—' },
 ]
 
-/** The manager list as a table: monogram, name and email, role, phone. Rows open the editor. */
+/** The manager list as a table: monogram, name and email, role, phone, clients. Rows open the editor. */
 export function ManagersTable({ managers, onSelect }: ManagersTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">

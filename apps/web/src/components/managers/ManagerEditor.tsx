@@ -2,6 +2,7 @@ import { ApiError, errorMessage, fieldErrors, type ManagerRequest, type ManagerR
 import {
   MANAGER_FIELD_LABELS,
   ROLE_OPTIONS,
+  managerClientsLabel,
   managerFieldFromApi,
   managerFormDefaults,
   managerFormSchema,
@@ -85,6 +86,11 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
       </SheetHeader>
 
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
+        {!isNew && (
+          <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
+            Looks After {managerClientsLabel(manager.clientCount)}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-4">
           {textField('firstName', 'text', 'off')}
           {textField('lastName', 'text', 'off')}

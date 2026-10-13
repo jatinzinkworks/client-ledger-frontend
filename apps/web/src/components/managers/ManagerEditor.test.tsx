@@ -14,6 +14,7 @@ const neha: ManagerResponse = {
   email: 'neha@pranaysinghal.in',
   role: 'SENIOR_MANAGER',
   mobileNumber: '+91 98201 55610',
+  clientCount: 12,
 }
 
 function setup({ manager = undefined as ManagerResponse | undefined, onSave = vi.fn().mockResolvedValue(undefined) } = {}) {
@@ -42,6 +43,7 @@ describe('ManagerEditor', () => {
     expect(screen.getByRole('heading', { name: 'Edit Manager' })).toBeVisible()
     expect(screen.getByLabelText('First Name')).toHaveValue('Neha')
     expect(screen.getByLabelText('Role')).toHaveValue('SENIOR_MANAGER')
+    expect(screen.getByText('Looks After 12 Clients')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Delete Manager' })).toBeEnabled()
   })
 

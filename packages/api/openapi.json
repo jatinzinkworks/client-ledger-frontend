@@ -2368,6 +2368,12 @@
             "description": "Mobile contact number",
             "example": "+91 98765 43210"
           },
+          "clientCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of clients assigned to the manager. Returned when listing managers and when fetching one by id",
+            "example": 12
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",

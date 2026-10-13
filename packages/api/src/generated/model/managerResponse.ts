@@ -23,6 +23,8 @@ export interface ManagerResponse {
   role?: ManagerResponseRole;
   /** Mobile contact number */
   mobileNumber?: string;
+  /** Number of clients assigned to the manager. Returned when listing managers and when fetching one by id */
+  clientCount?: number;
   /** When the manager was added */
   createdAt?: string;
   /** When the manager was last updated */
