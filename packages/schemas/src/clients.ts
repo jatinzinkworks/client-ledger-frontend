@@ -24,6 +24,7 @@ import {
 import { z } from 'zod';
 
 import { optionalPercent, requiredEmail, requiredPhone, requiredText } from './fields';
+import { accountStatus } from './ledger';
 import { managerName, roleLabel } from './managers';
 
 // Lengths, the phone pattern and the company limit come from the generated OpenAPI schema.
@@ -307,11 +308,14 @@ export function filterClients<T extends ClientSummaryResponse>(
   clients: readonly T[],
   query: string,
   managerId: string = ALL_MANAGERS,
+  /** Only clients who still owe something (status Overdue). */
+  overdueOnly = false,
 ): T[] {
   const q = query.trim().toLowerCase();
   return clients.filter(
     (c) =>
       (managerId === ALL_MANAGERS || c.managerId === managerId) &&
+      (!overdueOnly || accountStatus(c.totalPending) === 'OVERDUE') &&
       (!q || [clientName(c), c.email ?? '', ...(c.companyNames ?? [])].some((text) => text.toLowerCase().includes(q))),
   );
 }

@@ -18,8 +18,9 @@ import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } fr
 
 import { ClientDetailsFields } from './ClientDetailsFields'
 import { CompanyListFields } from './CompanyListFields'
+import { EYEBROW } from '@/utils/typography'
 
-const SECTION_LABEL = 'font-mono text-[11px] tracking-[0.08em] text-brand uppercase'
+const SECTION_LABEL = EYEBROW
 
 interface OnboardClientFormProps {
   managers: readonly ManagerResponse[]

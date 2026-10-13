@@ -1,11 +1,12 @@
 import { useServiceCatalog, type CatalogServiceResponse } from '@cl/api'
 import { filterServices, type CategoryFilter } from '@cl/schemas'
-import { Plus } from 'lucide-react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { LoadError } from '@/components/LoadError'
 import { PageHeader } from '@/components/PageHeader'
 import { RefreshButton } from '@/components/RefreshButton'
+import { AdjustPricesForm } from '@/components/services/AdjustPricesForm'
 import { ServiceCard } from '@/components/services/ServiceCard'
 import { ServiceEditor } from '@/components/services/ServiceEditor'
 import { ServiceFilters } from '@/components/services/ServiceFilters'
@@ -13,8 +14,8 @@ import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 
-/** What the side sheet is showing: nothing, a new service, or an existing one. */
-type Editing = { kind: 'closed' } | { kind: 'new' } | { kind: 'edit'; service: CatalogServiceResponse }
+/** What the side sheet is showing: nothing, a new service, an existing one, or Adjust Prices. */
+type Editing = { kind: 'closed' } | { kind: 'new' } | { kind: 'edit'; service: CatalogServiceResponse } | { kind: 'adjust' }
 
 export function ServicesPage() {
   const catalog = useServiceCatalog()
@@ -35,6 +36,15 @@ export function ServicesPage() {
         actions={
           <>
             <RefreshButton onRefresh={() => catalog.refetch()} refreshing={catalog.isRefreshing} />
+            <Button
+              variant="outline"
+              size="touch"
+              className="border-primary/50 bg-card"
+              onClick={() => setEditing({ kind: 'adjust' })}
+              disabled={!count}
+            >
+              <SlidersHorizontal /> Adjust Prices
+            </Button>
             <Button size="touch" onClick={() => setEditing({ kind: 'new' })}>
               <Plus /> New Service
             </Button>
@@ -71,7 +81,16 @@ export function ServicesPage() {
 
       <Sheet open={editing.kind !== 'closed'} onOpenChange={(open) => !open && close()}>
         <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
-          {editing.kind !== 'closed' && (
+          {editing.kind === 'adjust' && (
+            <AdjustPricesForm
+              services={catalog.services}
+              defaultScope={category}
+              onApply={catalog.updateFees}
+              applying={catalog.updatingFees}
+              onDone={close}
+            />
+          )}
+          {(editing.kind === 'new' || editing.kind === 'edit') && (
             <ServiceEditor
               key={editingService?.id ?? 'new'}
               service={editingService}

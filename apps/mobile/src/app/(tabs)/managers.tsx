@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-n
 import { ManagerCard } from '@/components/managers/ManagerCard';
 import { Button } from '@/components/ui/Button';
 import { useThemeColors } from '@/theme/useThemeColors';
+import { EYEBROW } from '@/utils/typography';
 
 export default function ManagersScreen() {
   const catalog = useManagerCatalog();
@@ -23,7 +24,7 @@ export default function ManagersScreen() {
       }
       ListHeaderComponent={
         <View className="flex-row items-center justify-between pb-1">
-          <Text className="font-mono text-[11px] uppercase tracking-widest text-brand">
+          <Text className={EYEBROW}>
             {catalog.isLoading ? ' ' : managerCountLabel(count)}
           </Text>
           <Button label="+ Add Manager" className="py-2" onPress={openNew} />

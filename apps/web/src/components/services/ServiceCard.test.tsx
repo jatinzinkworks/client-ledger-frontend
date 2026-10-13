@@ -15,6 +15,8 @@ const gstFiling: CatalogServiceResponse = {
   gstRatePercent: 18,
   invoiceSchedule: { dayOfMonth: 11 },
   usedByCompanies: 5,
+  financialYear: '2026-27',
+  totalBilled: 77000,
 }
 
 describe('ServiceCard', () => {
@@ -29,6 +31,7 @@ describe('ServiceCard', () => {
       '+ GST 18%',
       '5 Companies',
       'Invoiced 11th Of Each Month',
+      '₹77,000 Billed',
     ]) {
       expect(screen.getByText(text)).toBeVisible()
     }
@@ -39,5 +42,12 @@ describe('ServiceCard', () => {
     render(<ServiceCard service={gstFiling} onSelect={onSelect} />)
     await userEvent.click(screen.getByRole('button', { name: 'Edit GST return filing' }))
     expect(onSelect).toHaveBeenCalledWith(gstFiling)
+  })
+})
+
+describe('ServiceCard without a financial year', () => {
+  it('leaves the billed amount out', () => {
+    render(<ServiceCard service={{ ...gstFiling, financialYear: undefined, totalBilled: undefined }} onSelect={vi.fn()} />)
+    expect(screen.queryByText(/Billed/)).not.toBeInTheDocument()
   })
 })

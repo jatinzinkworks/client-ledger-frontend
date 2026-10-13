@@ -2,6 +2,7 @@ import { keepPreviousData, useQueryClient, type QueryClient } from '@tanstack/re
 import { useState } from 'react';
 
 import { getListCompaniesQueryKey } from '../generated/client-companies/client-companies';
+import { getListClientsQueryKey } from '../generated/clients/clients';
 import { getListServices1QueryKey } from '../generated/client-services/client-services';
 import {
   getListClientEntriesQueryKey,
@@ -16,6 +17,8 @@ import {
   useUpdateEntry,
   useUpdatePayment,
 } from '../generated/ledger/ledger';
+import { getListManagersQueryKey } from '../generated/manager-catalog/manager-catalog';
+import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
 import type { LedgerEntryUpdateRequest, ListCompanyEntriesParams, PaymentRequest } from '../generated/model';
 import { awaitingFresh, freshData } from './fresh';
 import { retryUnlessNotFound } from './singletonSetting';
@@ -36,6 +39,10 @@ export const refreshLedgers = (queryClient: QueryClient, clientId: string, compa
       getListClientEntriesQueryKey(clientId),
       getSummarizeClientQueryKey(clientId),
       getListCompaniesQueryKey(clientId),
+      // All-time figures: each client's and manager's pending, each service's billed.
+      getListClientsQueryKey(),
+      getListManagersQueryKey(),
+      getListServicesQueryKey(),
     ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
   );
 

@@ -113,7 +113,6 @@ export const radius = { sm: 4, md: 8, lg: 12, pill: 999 };
 
 export const fontFamily = {
   sans: 'Lato',
-  mono: 'JetBrains Mono',
 };
 
 /** `primaryForeground` → `primary-foreground`, the CSS variable / Tailwind class form. */

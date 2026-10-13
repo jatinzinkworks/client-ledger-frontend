@@ -9,8 +9,53 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 17:21:30',
+    highlights: ["Edit Manager lists the manager's clients, with what each still owes and their status; a name opens the client."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 17:08:12',
+    highlights: ['Overdue Only on the Clients page narrows the list to clients who still owe something.', 'A client card shows its Pending amount in red while the client owes anything.'],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 17:02:38',
+    highlights: [
+      "Client cards show what each client still owes across all years, with a status: Overdue, Settled or In Credit.",
+      'Service cards show how much each service has billed to date.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 16:49:56',
+    highlights: ["The Managers table shows each manager's Pending: what their clients still owe across all years."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 16:34:05',
+    highlights: ["Small labels such as a service card's category and the headings above panels use the app's main font in bold, so they are easier to read."],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 16:21:47',
+    highlights: ['Service cards show how much each service has billed, when the catalog provides it.'],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 16:08:21',
+    highlights: ['Adjust Prices now saves: the new fees apply to every service shown, all at once. Charges already posted keep their amount.'],
+  },
+  {
+    version: '0.1.0',
+    date: '13 Oct 2026, 15:52:44',
+    highlights: [
+      'Adjust Prices on the Services page previews a percentage change to the fees of every service or one category, with rounding. Saving the new prices comes in a later update.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 15:31:09',
-    highlights: ["Export Ledger is on company pages too: it downloads that company's ledger for the selected financial year as an Excel workbook."],
+    highlights: ["Export Ledger is on company pages too: it downloads that company's ledger for the selected financial year as an Excel workbook.", 'The GST rate and description on service cards are in a larger font.'],
   },
   {
     version: '0.1.0',

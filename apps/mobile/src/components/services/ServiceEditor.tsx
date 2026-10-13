@@ -27,6 +27,7 @@ import { Alert, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { SelectControl, TextControl } from '@/components/ui/FormControls';
+import { EYEBROW } from '@/utils/typography';
 
 type Form = Control<ServiceFormInput, unknown, ServiceFormValues>;
 
@@ -54,7 +55,7 @@ function InvoiceScheduleFields({ control }: { control: Form }) {
 
   return (
     <View className="gap-4 rounded-md bg-muted p-4">
-      <Text className="font-mono text-[11px] uppercase tracking-widest text-brand">Invoice Schedule</Text>
+      <Text className={EYEBROW}>Invoice Schedule</Text>
       {billing === 'QUARTERLY' && <SelectControl control={control} name="monthOfQuarter" label={SERVICE_FIELD_LABELS.monthOfQuarter} options={MONTH_OF_QUARTER_OPTIONS} />}
       {billing === 'ANNUAL' && <SelectControl control={control} name="month" label={SERVICE_FIELD_LABELS.month} options={MONTH_OPTIONS} />}
       <SelectControl control={control} name="dayOfMonth" label={SERVICE_FIELD_LABELS.dayOfMonth} options={DAY_OPTIONS} />

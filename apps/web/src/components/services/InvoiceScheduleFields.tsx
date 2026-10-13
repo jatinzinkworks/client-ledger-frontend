@@ -11,6 +11,7 @@ import {
 import { useFormContext, useWatch } from 'react-hook-form'
 
 import { SelectField } from '@/components/form/SelectField'
+import { EYEBROW } from '@/utils/typography'
 
 /** The schedule panel: which month (quarterly / annual) and day invoices are raised, plus a preview. */
 export function InvoiceScheduleFields() {
@@ -49,7 +50,7 @@ export function InvoiceScheduleFields() {
 
   return (
     <div className="flex flex-col gap-4 rounded-md bg-muted p-4">
-      <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Invoice Schedule</span>
+      <span className={EYEBROW}>Invoice Schedule</span>
       <div className="grid grid-cols-2 gap-4">
         {monthField && (
           <SelectField

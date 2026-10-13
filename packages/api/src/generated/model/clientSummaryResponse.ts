@@ -28,4 +28,6 @@ export interface ClientSummaryResponse {
   discountPercent?: number;
   /** Names of the companies the client holds, ordered by name */
   companyNames?: string[];
+  /** What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed */
+  totalPending?: number;
 }

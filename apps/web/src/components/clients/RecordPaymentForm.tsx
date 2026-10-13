@@ -24,6 +24,7 @@ import { SelectField } from '@/components/form/SelectField'
 import { TextField } from '@/components/form/TextField'
 import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { EYEBROW } from '@/utils/typography'
 
 export interface PaymentCompany {
   id: string
@@ -107,7 +108,7 @@ export function RecordPaymentForm({
   return (
     <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
       <SheetHeader className="gap-1 border-b border-border p-6">
-        <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Payments</span>
+        <span className={EYEBROW}>Payments</span>
         <SheetTitle className="text-2xl font-bold">{payment ? 'Edit Payment' : 'Record Payment'}</SheetTitle>
         <SheetDescription className="sr-only">
           {payment ? 'Correct a payment received from' : 'Record a payment received from'} {clientName}

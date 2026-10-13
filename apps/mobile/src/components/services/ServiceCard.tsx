@@ -11,6 +11,7 @@ import {
 import { Pressable, Text, View } from 'react-native';
 
 import { cn } from '@/utils/cn';
+import { EYEBROW } from '@/utils/typography';
 
 // Same badge roles as the web card. NativeWind can't apply opacity modifiers to our
 // CSS-variable colours, so the tinted web pill becomes an outlined one here.
@@ -38,7 +39,7 @@ export function ServiceCard({ service, onPress }: ServiceCardProps) {
       className="gap-3 rounded-lg border border-border bg-card p-4 active:opacity-80"
     >
       <View className="flex-row items-center justify-between">
-        <Text className="font-mono text-[11px] uppercase tracking-widest text-brand">
+        <Text className={EYEBROW}>
           {service.category ? CATEGORY_LABELS[service.category] : ''}
         </Text>
         {billing && badge && (

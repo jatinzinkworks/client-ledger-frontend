@@ -30,7 +30,8 @@ export function useCompany(clientId: string, companyId: string) {
   const ids = [encodeURIComponent(clientId), encodeURIComponent(companyId)] as const;
   const options = { query: { enabled: !!clientId && !!companyId, retry: retryUnlessNotFound } };
   const company = useGetCompany(...ids, options);
-  const services = useListServices1(...ids, options);
+  // financialYear (each service's totalBilled for the year) is not used yet.
+  const services = useListServices1(...ids, undefined, options);
   const queryClient = useQueryClient();
   const update = useUpdateCompany({
     mutation: {

@@ -29,6 +29,8 @@ export interface ClientResponse {
   discountPercent?: number;
   /** Companies the client holds, ordered by name */
   companies?: CompanyResponse[];
+  /** What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id */
+  totalPending?: number;
   /** When the client was added */
   createdAt?: string;
   /** When the client was last updated */

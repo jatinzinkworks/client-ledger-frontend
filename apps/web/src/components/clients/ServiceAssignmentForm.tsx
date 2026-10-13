@@ -31,6 +31,7 @@ import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } fr
 
 import { ChargeSummary } from './ChargeSummary'
 import { DueSchedule } from './DueSchedule'
+import { EYEBROW } from '@/utils/typography'
 
 export interface ServiceAssignmentFormProps {
   company: CompanyResponse
@@ -120,7 +121,7 @@ export function ServiceAssignmentForm({
   return (
     <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
       <SheetHeader className="gap-1 border-b border-border p-6">
-        <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Services</span>
+        <span className={EYEBROW}>Services</span>
         <SheetTitle className="text-2xl font-bold">{title}</SheetTitle>
         <SheetDescription className="sr-only">{description}</SheetDescription>
       </SheetHeader>

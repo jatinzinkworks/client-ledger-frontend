@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 import { InvoiceScheduleFields } from './InvoiceScheduleFields'
+import { EYEBROW } from '@/utils/typography'
 
 interface ServiceEditorProps {
   /** The service being edited, or undefined to create one. */
@@ -86,7 +87,7 @@ export function ServiceEditor({ service, defaultCategory, onSave, onDelete, savi
     <FormProvider {...form}>
       <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
         <SheetHeader className="gap-1 border-b border-border p-6">
-          <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Service Catalog</span>
+          <span className={EYEBROW}>Service Catalog</span>
           <SheetTitle className="text-2xl font-bold">{isNew ? 'New Service' : 'Edit Service'}</SheetTitle>
           <SheetDescription className="sr-only">
             {isNew ? 'Add a service to the catalog' : `Edit ${service.serviceName}`}

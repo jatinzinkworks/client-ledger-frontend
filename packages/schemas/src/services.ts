@@ -222,6 +222,10 @@ export const formatInr = (amount: number) => inr.format(amount);
 
 export const formatGst = (rate: number | undefined) => `+ GST ${formatRate(rate ?? DEFAULT_GST_RATE)}`;
 
+/** "₹77,000 Billed"; empty when the list does not carry the amount. */
+export const serviceBilledLabel = (totalBilled: number | undefined) =>
+  totalBilled != null ? `${formatInr(totalBilled)} Billed` : '';
+
 export function usageLabel(companies: number | undefined): string {
   const n = companies ?? 0;
   if (n === 0) return 'Not Used Yet';

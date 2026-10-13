@@ -8,7 +8,7 @@ const byName = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
 
 // The backend orders by last name; screens list clients by full name, A to Z, like managers.
 // Module-level so React Query can memoise the selection between renders.
-const sortByName = (clients: ClientSummaryResponse[]) =>
+export const sortClientsByName = (clients: ClientSummaryResponse[]) =>
   [...clients].sort((a, b) => byName.compare(fullName(a), fullName(b)));
 
 /**
@@ -18,7 +18,7 @@ const sortByName = (clients: ClientSummaryResponse[]) =>
 export function useClients() {
   const queryClient = useQueryClient();
   // Every client; the screens filter by manager in memory (the endpoint's managerId param is unused).
-  const query = useListClients(undefined, { query: { select: sortByName } });
+  const query = useListClients(undefined, { query: { select: sortClientsByName } });
   const create = useCreateClient({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }) },
   });

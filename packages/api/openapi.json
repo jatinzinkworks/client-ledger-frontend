@@ -260,13 +260,79 @@
         }
       }
     },
+    "/psc/cl/v1/services/fees": {
+      "put": {
+        "tags": [
+          "Service Catalog"
+        ],
+        "summary": "Update the standard fees of several services",
+        "description": "Changes the standard fee of each service named, in one go, and nothing else about them. The update is all or nothing: if any service is unknown, or one is named twice, no fee changes. Up to 200 services may be changed at once. Charges already posted to the ledger keep the fee they were posted with; services due afterwards are billed at the new fee.",
+        "operationId": "updateFees",
+        "requestBody": {
+          "description": "The new standard fee of each service to change",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceFeeBulkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Fees updated; the updated services, in the order the request named them",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogServiceResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body failed validation, such as a missing or negative fee or an empty list, or a service is named more than once",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "One or more identifiers name no service; the message lists each",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/psc/cl/v1/managers/{id}": {
       "get": {
         "tags": [
           "Manager Catalog"
         ],
         "summary": "Fetch a manager",
-        "description": "Returns one manager by identifier.",
+        "description": "Returns one manager by identifier, with the clients assigned to them, as the client list shows them, how many there are, and what they still owe in total.",
         "operationId": "getManager",
         "parameters": [
           {
@@ -1564,8 +1630,20 @@
           "Service Catalog"
         ],
         "summary": "List services",
-        "description": "Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.",
+        "description": "Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged. Each service also carries what it was billed across every client (totalBilled): the sum of its service charges in the ledger, GST included, or zero when there are none. Given a financialYear, only charges falling due in that year count, and financialYear is echoed back; without one, every charge due to date counts.",
         "operationId": "listServices",
+        "parameters": [
+          {
+            "name": "financialYear",
+            "in": "query",
+            "description": "Indian financial year (1 April to 31 March), written as yyyy-yy, to total each service's billed amount for. Omit to total every year to date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-27"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The catalog, empty when nothing has been added yet",
@@ -1982,7 +2060,7 @@
           "Clients"
         ],
         "summary": "List clients",
-        "description": "Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.",
+        "description": "Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.",
         "operationId": "listClients",
         "parameters": [
           {
@@ -2263,7 +2341,7 @@
           "Client Services"
         ],
         "summary": "List the services of a company",
-        "description": "Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged.",
+        "description": "Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged. Given a financialYear, each service also carries what it was billed in that year (totalBilled): the sum of its service charges in the ledger falling due in the year, GST included, or zero when none did. Without one, those fields are left out.",
         "operationId": "listServices_1",
         "parameters": [
           {
@@ -2287,6 +2365,16 @@
               "format": "uuid"
             },
             "example": "4c1f8a52-2d6b-4e93-b7a0-9e5d3c1f6a28"
+          },
+          {
+            "name": "financialYear",
+            "in": "query",
+            "description": "Indian financial year (1 April to 31 March), written as yyyy-yy, to add each service's billed amount for. Omit to leave it out",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-27"
           }
         ],
         "responses": {
@@ -2304,7 +2392,7 @@
             }
           },
           "400": {
-            "description": "An identifier is not a valid UUID",
+            "description": "An identifier is not a valid UUID, or financialYear is not a year such as 2026-27",
             "content": {
               "application/json": {
                 "schema": {
@@ -3579,6 +3667,18 @@
             "example": 12,
             "readOnly": true
           },
+          "financialYear": {
+            "type": "string",
+            "description": "Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date",
+            "example": "2026-27",
+            "readOnly": true
+          },
+          "totalBilled": {
+            "type": "number",
+            "description": "Sum of this service's charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog",
+            "example": 39235,
+            "readOnly": true
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -3649,6 +3749,46 @@
           }
         }
       },
+      "ServiceFeeBulkUpdateRequest": {
+        "type": "object",
+        "description": "New standard fees for several services",
+        "properties": {
+          "updates": {
+            "type": "array",
+            "description": "The new fee of each service to change, each service at most once",
+            "items": {
+              "$ref": "#/components/schemas/ServiceFeeUpdate"
+            },
+            "maxItems": 200,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "updates"
+        ]
+      },
+      "ServiceFeeUpdate": {
+        "type": "object",
+        "description": "New standard fee for one service",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the service in the catalog",
+            "example": "b41e7a52-9c3d-4f16-8ad0-5e2b9c7f1d38"
+          },
+          "standardFee": {
+            "type": "number",
+            "description": "New standard fee charged for the service, excluding GST",
+            "example": 5500,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "serviceId",
+          "standardFee"
+        ]
+      },
       "ManagerRequest": {
         "type": "object",
         "description": "Manager to store in the catalog",
@@ -3702,6 +3842,67 @@
           "role"
         ]
       },
+      "ClientSummaryResponse": {
+        "type": "object",
+        "description": "A client as shown in the client list",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the client",
+            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Given name of the client",
+            "example": "Rohan"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Family name of the client",
+            "example": "Mehta"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+91 98200 12345"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "rohan.mehta@example.com"
+          },
+          "managerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the manager who looks after the client",
+            "example": "e9b2c4d1-7f35-4a68-91c0-3d8a5e2f6b47"
+          },
+          "managerName": {
+            "type": "string",
+            "description": "Full name of the manager who looks after the client",
+            "example": "Pranay Singhal"
+          },
+          "discountPercent": {
+            "type": "number",
+            "description": "Discount granted to the client, as a percentage",
+            "example": 10
+          },
+          "companyNames": {
+            "type": "array",
+            "description": "Names of the companies the client holds, ordered by name",
+            "items": {
+              "type": "string",
+              "example": "Mehta Textiles Pvt Ltd"
+            }
+          },
+          "totalPending": {
+            "type": "number",
+            "description": "What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed",
+            "example": 19630
+          }
+        }
+      },
       "ManagerResponse": {
         "type": "object",
         "description": "A manager held in the catalog",
@@ -3747,6 +3948,18 @@
             "format": "int64",
             "description": "Number of clients assigned to the manager. Returned when listing managers and when fetching one by id",
             "example": 12
+          },
+          "totalPending": {
+            "type": "number",
+            "description": "What the manager's clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id",
+            "example": 20630
+          },
+          "clients": {
+            "type": "array",
+            "description": "Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id",
+            "items": {
+              "$ref": "#/components/schemas/ClientSummaryResponse"
+            }
           },
           "createdAt": {
             "type": "string",
@@ -3871,6 +4084,11 @@
             "items": {
               "$ref": "#/components/schemas/CompanyResponse"
             }
+          },
+          "totalPending": {
+            "type": "number",
+            "description": "What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id",
+            "example": 19630
           },
           "createdAt": {
             "type": "string",
@@ -4110,6 +4328,16 @@
             "type": "string",
             "description": "Free-text note about this delivery, absent when none was given",
             "example": "Filing for September 2026"
+          },
+          "financialYear": {
+            "type": "string",
+            "description": "Financial year totalBilled covers. Only returned when listing a company's services for a financial year",
+            "example": "2026-27"
+          },
+          "totalBilled": {
+            "type": "number",
+            "description": "Sum of this service's charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year",
+            "example": 11210
           },
           "createdAt": {
             "type": "string",
@@ -4646,62 +4874,6 @@
           "deliveryDate",
           "serviceId"
         ]
-      },
-      "ClientSummaryResponse": {
-        "type": "object",
-        "description": "A client as shown in the client list",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the client",
-            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
-          },
-          "firstName": {
-            "type": "string",
-            "description": "Given name of the client",
-            "example": "Rohan"
-          },
-          "lastName": {
-            "type": "string",
-            "description": "Family name of the client",
-            "example": "Mehta"
-          },
-          "phone": {
-            "type": "string",
-            "description": "Contact phone number",
-            "example": "+91 98200 12345"
-          },
-          "email": {
-            "type": "string",
-            "description": "Contact email address",
-            "example": "rohan.mehta@example.com"
-          },
-          "managerId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the manager who looks after the client",
-            "example": "e9b2c4d1-7f35-4a68-91c0-3d8a5e2f6b47"
-          },
-          "managerName": {
-            "type": "string",
-            "description": "Full name of the manager who looks after the client",
-            "example": "Pranay Singhal"
-          },
-          "discountPercent": {
-            "type": "number",
-            "description": "Discount granted to the client, as a percentage",
-            "example": 10
-          },
-          "companyNames": {
-            "type": "array",
-            "description": "Names of the companies the client holds, ordered by name",
-            "items": {
-              "type": "string",
-              "example": "Mehta Textiles Pvt Ltd"
-            }
-          }
-        }
       },
       "ClientLedgerSummaryResponse": {
         "type": "object",

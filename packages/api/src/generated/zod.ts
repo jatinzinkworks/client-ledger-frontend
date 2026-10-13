@@ -33,6 +33,8 @@ export const GetServiceResponse = zod.object({
   "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
 }).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
   "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
 }).describe('A service held in the catalog')
@@ -94,6 +96,8 @@ export const UpdateServiceResponse = zod.object({
   "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
 }).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
   "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
 }).describe('A service held in the catalog')
@@ -111,7 +115,51 @@ export const DeleteServiceResponse = zod.void()
 
 
 /**
- * Returns one manager by identifier.
+ * Changes the standard fee of each service named, in one go, and nothing else about them. The update is all or nothing: if any service is unknown, or one is named twice, no fee changes. Up to 200 services may be changed at once. Charges already posted to the ledger keep the fee they were posted with; services due afterwards are billed at the new fee.
+ * @summary Update the standard fees of several services
+ */
+export const updateFeesBodyUpdatesItemStandardFeeMin = 0;
+
+export const updateFeesBodyUpdatesMin = 0;
+export const updateFeesBodyUpdatesMax = 200;
+
+
+
+export const UpdateFeesBody = zod.object({
+  "updates": zod.array(zod.object({
+  "serviceId": zod.uuid().describe('Identifier of the service in the catalog'),
+  "standardFee": zod.number().min(updateFeesBodyUpdatesItemStandardFeeMin).describe('New standard fee charged for the service, excluding GST')
+}).describe('New standard fee for one service')).min(updateFeesBodyUpdatesMin).max(updateFeesBodyUpdatesMax).describe('The new fee of each service to change, each service at most once')
+}).describe('New standard fees for several services')
+
+export const updateFeesResponseInvoiceScheduleDayOfMonthMax = 31;
+
+
+
+export const UpdateFeesResponseItem = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the service'),
+  "serviceName": zod.string().optional().describe('Name of the service'),
+  "description": zod.string().optional().describe('What the service covers'),
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('Practice area the service belongs to'),
+  "billingFrequency": zod.enum(['ONE_OFF', 'MONTHLY', 'QUARTERLY', 'ANNUAL']).optional().describe('How often the service is billed'),
+  "standardFee": zod.number().optional().describe('Standard fee charged for the service, excluding GST'),
+  "gstRatePercent": zod.number().optional().describe('GST rate applied to the fee, as a percentage'),
+  "invoiceSchedule": zod.object({
+  "dayOfMonth": zod.int().min(1).max(updateFeesResponseInvoiceScheduleDayOfMonthMax).optional().describe('Day of the month the invoice is raised. In months shorter than this day, the invoice falls on the last day of that month instead'),
+  "monthOfQuarter": zod.enum(['FIRST_MONTH', 'SECOND_MONTH', 'THIRD_MONTH']).optional().describe('Quarterly billing only: which month after the quarter closes the invoice is raised in'),
+  "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
+}).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
+  "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
+}).describe('A service held in the catalog')
+export const UpdateFeesResponse = zod.array(UpdateFeesResponseItem)
+
+
+/**
+ * Returns one manager by identifier, with the clients assigned to them, as the client list shows them, how many there are, and what they still owe in total.
  * @summary Fetch a manager
  */
 export const GetManagerParams = zod.object({
@@ -126,6 +174,19 @@ export const GetManagerResponse = zod.object({
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
   "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
+  "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
+  "clients": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
+}).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -171,6 +232,19 @@ export const UpdateManagerResponse = zod.object({
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
   "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
+  "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
+  "clients": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
+}).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -217,6 +291,7 @@ export const GetClientResponse = zod.object({
   "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
   "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
 }).describe('A client held in the ledger')
@@ -281,6 +356,7 @@ export const UpdateClientResponse = zod.object({
   "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
   "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
 }).describe('A client held in the ledger')
@@ -398,6 +474,8 @@ export const GetService1Response = zod.object({
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
   "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing a company\'s services for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
 }).describe('A catalog service assigned to a company')
@@ -440,6 +518,8 @@ export const UpdateService1Response = zod.object({
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
   "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing a company\'s services for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
 }).describe('A catalog service assigned to a company')
@@ -617,9 +697,13 @@ export const DeleteEntryResponse = zod.void()
 
 
 /**
- * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.
+ * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged. Each service also carries what it was billed across every client (totalBilled): the sum of its service charges in the ledger, GST included, or zero when there are none. Given a financialYear, only charges falling due in that year count, and financialYear is echoed back; without one, every charge due to date counts.
  * @summary List services
  */
+export const ListServicesQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March), written as yyyy-yy, to total each service\'s billed amount for. Omit to total every year to date')
+})
+
 export const listServicesResponseInvoiceScheduleDayOfMonthMax = 31;
 
 
@@ -638,6 +722,8 @@ export const ListServicesResponseItem = zod.object({
   "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
 }).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
   "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
 }).describe('A service held in the catalog')
@@ -696,6 +782,8 @@ export const CreateServiceResponse = zod.object({
   "month": zod.enum(['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER']).optional().describe('Annual billing only: the month the invoice is raised in, by name')
 }).optional().describe('When invoices are raised. Absent for ONE_OFF billing'),
   "usedByCompanies": zod.int().optional().describe('How many companies currently subscribe to this service. Read only'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was created'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was last updated')
 }).describe('A service held in the catalog')
@@ -713,6 +801,19 @@ export const ListManagersResponseItem = zod.object({
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
   "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
+  "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
+  "clients": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
+}).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -755,6 +856,19 @@ export const CreateManagerResponse = zod.object({
   "role": zod.enum(['SENIOR_MANAGER', 'MANAGER', 'ASSOCIATE']).optional().describe('Seniority the manager holds'),
   "mobileNumber": zod.string().optional().describe('Mobile contact number'),
   "clientCount": zod.int().optional().describe('Number of clients assigned to the manager. Returned when listing managers and when fetching one by id'),
+  "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
+  "clients": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
+}).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
@@ -874,7 +988,7 @@ export const SaveFirmDetailsResponse = zod.object({
 
 
 /**
- * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.
+ * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
  * @summary List clients
  */
 export const ListClientsQueryParams = zod.object({
@@ -890,7 +1004,8 @@ export const ListClientsResponseItem = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
-  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name')
+  "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')
 export const ListClientsResponse = zod.array(ListClientsResponseItem)
 
@@ -968,6 +1083,7 @@ export const CreateClientResponse = zod.object({
   "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
   "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
 }).describe('A client held in the ledger')
@@ -1043,12 +1159,16 @@ export const AddCompanyResponse = zod.object({
 
 
 /**
- * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged.
+ * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged. Given a financialYear, each service also carries what it was billed in that year (totalBilled): the sum of its service charges in the ledger falling due in the year, GST included, or zero when none did. Without one, those fields are left out.
  * @summary List the services of a company
  */
 export const ListServices1Params = zod.object({
   "clientId": zod.uuid().describe('Identifier of the client'),
   "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const ListServices1QueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March), written as yyyy-yy, to add each service\'s billed amount for. Omit to leave it out')
 })
 
 export const ListServices1ResponseItem = zod.object({
@@ -1064,6 +1184,8 @@ export const ListServices1ResponseItem = zod.object({
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
   "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing a company\'s services for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
 }).describe('A catalog service assigned to a company')
@@ -1107,6 +1229,8 @@ export const AssignServiceResponse = zod.object({
   "nextDueDate": zod.iso.date().optional().describe('First date the service\'s invoice schedule falls on, on or after the delivery date. A ONE_OFF service is due on its delivery date'),
   "discountPercent": zod.number().optional().describe('Discount granted on this service, as a percentage'),
   "comment": zod.string().optional().describe('Free-text note about this delivery, absent when none was given'),
+  "financialYear": zod.string().optional().describe('Financial year totalBilled covers. Only returned when listing a company\'s services for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of this service\'s charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year'),
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the service was assigned'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the assignment was last updated')
 }).describe('A catalog service assigned to a company')

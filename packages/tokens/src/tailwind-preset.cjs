@@ -20,7 +20,6 @@ module.exports = {
       },
       fontFamily: {
         sans: [fontFamily.sans],
-        mono: [fontFamily.mono],
       },
     },
   },

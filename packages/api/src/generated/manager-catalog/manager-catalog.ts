@@ -62,7 +62,7 @@ export const getGetManagerUrl = (id: string,) => {
 }
 
 /**
- * Returns one manager by identifier.
+ * Returns one manager by identifier, with the clients assigned to them, as the client list shows them, how many there are, and what they still owe in total.
  * @summary Fetch a manager
  */
 export const getManager = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<ManagerResponse> => {

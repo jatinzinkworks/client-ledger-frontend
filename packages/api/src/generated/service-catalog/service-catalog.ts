@@ -27,7 +27,9 @@ import type {
 import type {
   CatalogServiceRequest,
   CatalogServiceResponse,
-  ErrorResponse
+  ErrorResponse,
+  ListServicesParams,
+  ServiceFeeBulkUpdateRequest
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -317,21 +319,116 @@ export const useDeleteService = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteServiceMutationOptions(options), queryClient);
     }
-    export const getListServicesUrl = () => {
+    export const getUpdateFeesUrl = () => {
 
 
 
 
-  return `/psc/cl/v1/services`
+  return `/psc/cl/v1/services/fees`
 }
 
 /**
- * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged.
+ * Changes the standard fee of each service named, in one go, and nothing else about them. The update is all or nothing: if any service is unknown, or one is named twice, no fee changes. Up to 200 services may be changed at once. Charges already posted to the ledger keep the fee they were posted with; services due afterwards are billed at the new fee.
+ * @summary Update the standard fees of several services
+ */
+export const updateFees = async (serviceFeeBulkUpdateRequest: ServiceFeeBulkUpdateRequest, options?: Parameters<typeof apiFetch>[1]): Promise<CatalogServiceResponse[]> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<CatalogServiceResponse[]>(getUpdateFeesUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(serviceFeeBulkUpdateRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateFeesMutationKey = () => ['updateFees'] as const;
+
+export const getUpdateFeesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFees>>, TError,UpdateFeesMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateFees>>, TError,UpdateFeesMutationVariables, TContext> => {
+
+const mutationKey = getUpdateFeesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateFees>>, UpdateFeesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateFees(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateFeesMutationResult = NonNullable<Awaited<ReturnType<typeof updateFees>>>
+    export type UpdateFeesMutationBody = ServiceFeeBulkUpdateRequest
+    export type UpdateFeesMutationError = ErrorType<ErrorResponse>
+    export type UpdateFeesMutationVariables = {data: ServiceFeeBulkUpdateRequest}
+
+    /**
+ * @summary Update the standard fees of several services
+ */
+export const useUpdateFees = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFees>>, TError,UpdateFeesMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateFees>>,
+        TError,
+        UpdateFeesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateFeesMutationOptions(options), queryClient);
+    }
+    export const getListServicesUrl = (params?: ListServicesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/services?${stringifiedParams}` : `/psc/cl/v1/services`
+}
+
+/**
+ * Returns every service in the catalog, ordered by name. The list is returned whole; it is not paged. Each service also carries what it was billed across every client (totalBilled): the sum of its service charges in the ledger, GST included, or zero when there are none. Given a financialYear, only charges falling due in that year count, and financialYear is echoed back; without one, every charge due to date counts.
  * @summary List services
  */
-export const listServices = async ( options?: Parameters<typeof apiFetch>[1]): Promise<CatalogServiceResponse[]> => {
+export const listServices = async (params?: ListServicesParams, options?: Parameters<typeof apiFetch>[1]): Promise<CatalogServiceResponse[]> => {
 
-  return apiFetch<CatalogServiceResponse[]>(getListServicesUrl(),
+  return apiFetch<CatalogServiceResponse[]>(getListServicesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -344,23 +441,23 @@ export const listServices = async ( options?: Parameters<typeof apiFetch>[1]): P
 
 
 
-export const getListServicesQueryKey = () => {
+export const getListServicesQueryKey = (params?: ListServicesParams,) => {
     return [
-    `/psc/cl/v1/services`
+    `/psc/cl/v1/services`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListServicesQueryOptions = <TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+export const getListServicesQueryOptions = <TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>(params?: ListServicesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListServicesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListServicesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listServices>>> = ({ signal }) => listServices({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listServices>>> = ({ signal }) => listServices(params, { signal, ...requestOptions });
 
 
 
@@ -374,7 +471,7 @@ export type ListServicesQueryError = ErrorType<ErrorResponse>
 
 
 export function useListServices<TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>> & Pick<
+ params: undefined |  ListServicesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServices>>,
           TError,
@@ -384,7 +481,7 @@ export function useListServices<TData = Awaited<ReturnType<typeof listServices>>
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListServices<TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>> & Pick<
+ params?: ListServicesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServices>>,
           TError,
@@ -394,7 +491,7 @@ export function useListServices<TData = Awaited<ReturnType<typeof listServices>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListServices<TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ params?: ListServicesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -402,11 +499,11 @@ export function useListServices<TData = Awaited<ReturnType<typeof listServices>>
  */
 
 export function useListServices<TData = Awaited<ReturnType<typeof listServices>>, TError = ErrorType<ErrorResponse>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ params?: ListServicesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListServicesQueryOptions(options)
+  const queryOptions = getListServicesQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

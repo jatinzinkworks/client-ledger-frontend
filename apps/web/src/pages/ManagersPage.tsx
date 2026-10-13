@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { LoadError } from '@/components/LoadError'
+import { ManagerClientsSection } from '@/components/managers/ManagerClients'
 import { ManagerEditor } from '@/components/managers/ManagerEditor'
 import { ManagersTable } from '@/components/managers/ManagersTable'
 import { PageHeader } from '@/components/PageHeader'
@@ -67,6 +68,7 @@ export function ManagersPage() {
               saving={catalog.saving}
               deleting={catalog.deleting}
               onDone={close}
+              clients={editingManager?.id && <ManagerClientsSection managerId={editingManager.id} />}
             />
           )}
         </SheetContent>

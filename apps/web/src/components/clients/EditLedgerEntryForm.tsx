@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 import { ChargeSummary } from './ChargeSummary'
+import { EYEBROW } from '@/utils/typography'
 
 interface EditLedgerEntryFormProps {
   entry: LedgerEntryResponse
@@ -77,7 +78,7 @@ export function EditLedgerEntryForm({ entry, onSave, saving, onDelete, deleting,
   return (
     <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
       <SheetHeader className="gap-1 border-b border-border p-6">
-        <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Ledger</span>
+        <span className={EYEBROW}>Ledger</span>
         <SheetTitle className="text-2xl font-bold">Edit Ledger Entry</SheetTitle>
         <SheetDescription className="sr-only">Correct the rates of {ledgerEntryName(entry)}</SheetDescription>
       </SheetHeader>

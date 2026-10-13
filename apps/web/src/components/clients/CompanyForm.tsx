@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 import { CompanyFields } from './CompanyFields'
+import { EYEBROW } from '@/utils/typography'
 
 interface CompanyFormProps {
   title: string
@@ -88,7 +89,7 @@ export function CompanyForm({
     <FormProvider {...form}>
       <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
         <SheetHeader className="gap-1 border-b border-border p-6">
-          <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Clients</span>
+          <span className={EYEBROW}>Clients</span>
           <SheetTitle className="text-2xl font-bold">{title}</SheetTitle>
           <SheetDescription className="sr-only">{description}</SheetDescription>
         </SheetHeader>

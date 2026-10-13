@@ -31,6 +31,10 @@ export interface CatalogServiceResponse {
   invoiceSchedule?: InvoiceSchedule;
   /** How many companies currently subscribe to this service. Read only */
   readonly usedByCompanies?: number;
+  /** Financial year totalBilled covers. Only returned when listing the catalog for a financial year; absent when totalBilled covers every year to date */
+  readonly financialYear?: string;
+  /** Sum of this service's charges across every client, taxable amounts plus GST: those falling due in financialYear when listing for one, otherwise every charge due to date. Zero when nothing fell due. Only returned when listing the catalog */
+  readonly totalBilled?: number;
   /** When the service was created */
   createdAt?: string;
   /** When the service was last updated */

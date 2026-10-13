@@ -26,6 +26,7 @@ import type {
 
 import type {
   ErrorResponse,
+  ListServices1Params,
   ServiceAssignmentRequest,
   ServiceAssignmentResponse,
   ServiceAssignmentUpdateRequest
@@ -343,22 +344,31 @@ export const useRemoveService = <TError = ErrorType<ErrorResponse>,
       return useMutation(getRemoveServiceMutationOptions(options), queryClient);
     }
     export const getListServices1Url = (clientId: string,
-    companyId: string,) => {
+    companyId: string,
+    params?: ListServices1Params,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/psc/cl/v1/clients/${clientId}/companies/${companyId}/services`
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/companies/${companyId}/services?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/companies/${companyId}/services`
 }
 
 /**
- * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged.
+ * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged. Given a financialYear, each service also carries what it was billed in that year (totalBilled): the sum of its service charges in the ledger falling due in the year, GST included, or zero when none did. Without one, those fields are left out.
  * @summary List the services of a company
  */
 export const listServices1 = async (clientId: string,
-    companyId: string, options?: Parameters<typeof apiFetch>[1]): Promise<ServiceAssignmentResponse[]> => {
+    companyId: string,
+    params?: ListServices1Params, options?: Parameters<typeof apiFetch>[1]): Promise<ServiceAssignmentResponse[]> => {
 
-  return apiFetch<ServiceAssignmentResponse[]>(getListServices1Url(clientId,companyId),
+  return apiFetch<ServiceAssignmentResponse[]>(getListServices1Url(clientId,companyId,params),
   {
     ...options,
     method: 'GET'
@@ -372,24 +382,26 @@ export const listServices1 = async (clientId: string,
 
 
 export const getListServices1QueryKey = (clientId: string,
-    companyId: string,) => {
+    companyId: string,
+    params?: ListServices1Params,) => {
     return [
-    `/psc/cl/v1/clients/${clientId}/companies/${companyId}/services`
+    `/psc/cl/v1/clients/${clientId}/companies/${companyId}/services`, ...(params ? [params] : [])
     ] as const;
     }
 
 
 export const getListServices1QueryOptions = <TData = Awaited<ReturnType<typeof listServices1>>, TError = ErrorType<ErrorResponse>>(clientId: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+    companyId: string,
+    params?: ListServices1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListServices1QueryKey(clientId,companyId);
+  const queryKey =  queryOptions?.queryKey ?? getListServices1QueryKey(clientId,companyId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listServices1>>> = ({ signal }) => listServices1(clientId,companyId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listServices1>>> = ({ signal }) => listServices1(clientId,companyId,params, { signal, ...requestOptions });
 
 
 
@@ -404,7 +416,8 @@ export type ListServices1QueryError = ErrorType<ErrorResponse>
 
 export function useListServices1<TData = Awaited<ReturnType<typeof listServices1>>, TError = ErrorType<ErrorResponse>>(
  clientId: string,
-    companyId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>> & Pick<
+    companyId: string,
+    params: undefined |  ListServices1Params, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServices1>>,
           TError,
@@ -415,7 +428,8 @@ export function useListServices1<TData = Awaited<ReturnType<typeof listServices1
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListServices1<TData = Awaited<ReturnType<typeof listServices1>>, TError = ErrorType<ErrorResponse>>(
  clientId: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>> & Pick<
+    companyId: string,
+    params?: ListServices1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServices1>>,
           TError,
@@ -426,7 +440,8 @@ export function useListServices1<TData = Awaited<ReturnType<typeof listServices1
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListServices1<TData = Awaited<ReturnType<typeof listServices1>>, TError = ErrorType<ErrorResponse>>(
  clientId: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+    companyId: string,
+    params?: ListServices1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -435,11 +450,12 @@ export function useListServices1<TData = Awaited<ReturnType<typeof listServices1
 
 export function useListServices1<TData = Awaited<ReturnType<typeof listServices1>>, TError = ErrorType<ErrorResponse>>(
  clientId: string,
-    companyId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+    companyId: string,
+    params?: ListServices1Params, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServices1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListServices1QueryOptions(clientId,companyId,options)
+  const queryOptions = getListServices1QueryOptions(clientId,companyId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

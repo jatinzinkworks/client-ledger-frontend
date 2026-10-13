@@ -12,7 +12,7 @@ import {
   type ManagerFormValues,
 } from '@cl/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { DeleteButton } from '@/components/DeleteButton'
@@ -20,6 +20,7 @@ import { SelectField } from '@/components/form/SelectField'
 import { TextField } from '@/components/form/TextField'
 import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { EYEBROW } from '@/utils/typography'
 
 interface ManagerEditorProps {
   /** The manager being edited, or undefined to add one. */
@@ -29,10 +30,12 @@ interface ManagerEditorProps {
   saving: boolean
   deleting: boolean
   onDone: () => void
+  /** Shown under the fields when editing, e.g. the manager's clients. */
+  clients?: ReactNode
 }
 
 /** The add / edit form shown in the side sheet. */
-export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onDone }: ManagerEditorProps) {
+export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onDone, clients }: ManagerEditorProps) {
   const isNew = !manager
   const {
     register,
@@ -78,7 +81,7 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
   return (
     <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
       <SheetHeader className="gap-1 border-b border-border p-6">
-        <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Managers</span>
+        <span className={EYEBROW}>Managers</span>
         <SheetTitle className="text-2xl font-bold">{isNew ? 'Add Manager' : 'Edit Manager'}</SheetTitle>
         <SheetDescription className="sr-only">
           {isNew ? 'Add a manager to the team' : `Edit ${managerName(manager)}`}
@@ -107,6 +110,7 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
           {textField('mobileNumber', 'tel', 'off')}
         </div>
         {formError && <p className="text-sm text-destructive">{formError}</p>}
+        {!isNew && clients}
       </div>
 
       <SheetFooter className="flex-row items-center gap-3 border-t border-border p-6">

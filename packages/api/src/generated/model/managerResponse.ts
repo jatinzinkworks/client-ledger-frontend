@@ -5,6 +5,7 @@
  * REST API for the PSC Client Ledger backend service.
  * OpenAPI spec version: v1
  */
+import type { ClientSummaryResponse } from './clientSummaryResponse';
 import type { ManagerResponseRole } from './managerResponseRole';
 
 /**
@@ -25,6 +26,10 @@ export interface ManagerResponse {
   mobileNumber?: string;
   /** Number of clients assigned to the manager. Returned when listing managers and when fetching one by id */
   clientCount?: number;
+  /** What the manager's clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id */
+  totalPending?: number;
+  /** Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id */
+  clients?: ClientSummaryResponse[];
   /** When the manager was added */
   createdAt?: string;
   /** When the manager was last updated */

@@ -1,14 +1,15 @@
 import type { ManagerResponse } from '@cl/api'
-import { managerInitials, managerName, roleLabel } from '@cl/schemas'
+import { formatInr, managerInitials, managerName, roleLabel } from '@cl/schemas'
 
 import { DataTable, type DataColumn } from '@/components/DataTable'
+import { cn } from '@/lib/utils'
 
 interface ManagersTableProps {
   managers: readonly ManagerResponse[]
   onSelect: (manager: ManagerResponse) => void
 }
 
-// Monthly Salary and Pending from the mock join here once the API carries them.
+// Monthly Salary from the mock joins here once the API carries it.
 const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataColumn<ManagerResponse>[] => [
   {
     header: 'Manager',
@@ -40,9 +41,22 @@ const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataCol
   { header: 'Role', align: 'center', render: (manager) => roleLabel(manager.role) },
   { header: 'Phone', align: 'center', render: (manager) => manager.mobileNumber },
   { header: 'Clients', align: 'center', render: (manager) => manager.clientCount ?? '—' },
+  {
+    // What the manager's clients still owe, across every financial year (negative when overpaid).
+    header: 'Pending',
+    align: 'right',
+    render: (manager) =>
+      manager.totalPending != null ? (
+        <span className={cn('font-bold tabular-nums', manager.totalPending > 0 && 'text-destructive')}>
+          {formatInr(manager.totalPending)}
+        </span>
+      ) : (
+        '—'
+      ),
+  },
 ]
 
-/** The manager list as a table: monogram, name and email, role, phone, clients. Rows open the editor. */
+/** The manager list as a table: monogram, name and email, role, phone, clients, pending. Rows open the editor. */
 export function ManagersTable({ managers, onSelect }: ManagersTableProps) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">

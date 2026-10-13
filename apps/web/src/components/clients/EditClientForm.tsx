@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
 import { ClientDetailsFields } from './ClientDetailsFields'
+import { EYEBROW } from '@/utils/typography'
 
 interface EditClientFormProps {
   client: ClientResponse
@@ -78,7 +79,7 @@ export function EditClientForm({
     <FormProvider {...form}>
       <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
         <SheetHeader className="gap-1 border-b border-border p-6">
-          <span className="font-mono text-[11px] tracking-[0.08em] text-brand uppercase">Clients</span>
+          <span className={EYEBROW}>Clients</span>
           <SheetTitle className="text-2xl font-bold">Edit Client</SheetTitle>
           <SheetDescription className="sr-only">Change the client's contact details, manager and discount</SheetDescription>
         </SheetHeader>

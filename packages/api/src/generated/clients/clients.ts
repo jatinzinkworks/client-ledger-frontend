@@ -336,7 +336,7 @@ export const useDeleteClient = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. The list is returned whole; it is not paged.
+ * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
  * @summary List clients
  */
 export const listClients = async (params?: ListClientsParams, options?: Parameters<typeof apiFetch>[1]): Promise<ClientSummaryResponse[]> => {

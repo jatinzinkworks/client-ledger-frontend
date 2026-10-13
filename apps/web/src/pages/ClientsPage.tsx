@@ -18,11 +18,12 @@ export function ClientsPage() {
   const managers = useManagerCatalog()
   const [query, setQuery] = useState('')
   const [managerId, setManagerId] = useState(ALL_MANAGERS)
+  const [overdueOnly, setOverdueOnly] = useState(false)
   const [onboarding, setOnboarding] = useState(false)
 
   const visible = useMemo(
-    () => filterClients(clients.clients, query, managerId),
-    [clients.clients, query, managerId],
+    () => filterClients(clients.clients, query, managerId, overdueOnly),
+    [clients.clients, query, managerId, overdueOnly],
   )
   const count = clients.clients.length
   const onboard = () => setOnboarding(true)
@@ -53,6 +54,8 @@ export function ClientsPage() {
         managerId={managerId}
         onManagerChange={setManagerId}
         managers={managers.managers}
+        overdueOnly={overdueOnly}
+        onOverdueOnlyChange={setOverdueOnly}
       />
 
       {clients.isLoading && <Spinner />}
@@ -69,7 +72,7 @@ export function ClientsPage() {
           <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
             <p className="text-lg font-bold">{count ? 'No Clients Match Your Search' : 'No Clients Yet'}</p>
             <p className="text-sm text-muted-foreground">
-              {count ? 'Try A Different Name, Email, Company Or Manager.' : 'Onboard The People Your Firm Works For, With Their Companies.'}
+              {count ? 'Try A Different Name, Email, Company, Manager Or Status.' : 'Onboard The People Your Firm Works For, With Their Companies.'}
             </p>
             {!count && (
               <Button size="touch" onClick={onboard}>

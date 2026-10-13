@@ -133,6 +133,16 @@ describe('display helpers', () => {
     expect(filterClients(clients, ' ')).toHaveLength(2);
   });
 
+  it('narrows to clients who are overdue, with the other filters', () => {
+    const owing = [
+      { ...clients[0]!, totalPending: 500 },
+      { ...clients[1]!, totalPending: 0 },
+    ];
+    expect(filterClients(owing, '', ALL_MANAGERS, true).map(clientName)).toEqual(['Rajesh Mehta']);
+    expect(filterClients(owing, '', 'm-2', true)).toEqual([]);
+    expect(filterClients(owing, '', ALL_MANAGERS, false)).toHaveLength(2);
+  });
+
   it('narrows to one manager, alone or with the search', () => {
     expect(filterClients(clients, '', 'm-2').map(clientName)).toEqual(['Priya Nair']);
     expect(filterClients(clients, '', ALL_MANAGERS)).toHaveLength(2);

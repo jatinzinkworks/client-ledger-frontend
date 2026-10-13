@@ -18,7 +18,6 @@ ${colorNames.map((n) => `  --color-${toKebab(n)}: var(--${toKebab(n)});`).join('
   --radius-md: ${radius.md}px;
   --radius-lg: ${radius.lg}px;
   --font-sans: "${fontFamily.sans}", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "${fontFamily.mono}", ui-monospace, "SF Mono", Menlo, monospace;
 }
 `;
 }

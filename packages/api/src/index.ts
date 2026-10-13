@@ -15,5 +15,6 @@ export { LEDGER_PAGE_SIZE, useCompanyLedger } from './hooks/useCompanyLedger';
 export { useClients } from './hooks/useClients';
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { useManagerCatalog } from './hooks/useManagerCatalog';
+export { useManagerClients } from './hooks/useManagerClients';
 export { usePaymentTerms } from './hooks/usePaymentTerms';
 export { useServiceCatalog } from './hooks/useServiceCatalog';

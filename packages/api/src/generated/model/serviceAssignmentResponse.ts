@@ -35,6 +35,10 @@ export interface ServiceAssignmentResponse {
   discountPercent?: number;
   /** Free-text note about this delivery, absent when none was given */
   comment?: string;
+  /** Financial year totalBilled covers. Only returned when listing a company's services for a financial year */
+  financialYear?: string;
+  /** Sum of this service's charges falling due in the financial year: taxable amounts plus GST; zero when nothing fell due. Only returned when listing for a financial year */
+  totalBilled?: number;
   /** When the service was assigned */
   createdAt?: string;
   /** When the assignment was last updated */

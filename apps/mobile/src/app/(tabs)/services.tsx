@@ -8,6 +8,7 @@ import { ServiceCard } from '@/components/services/ServiceCard';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { Button } from '@/components/ui/Button';
 import { useThemeColors } from '@/theme/useThemeColors';
+import { EYEBROW } from '@/utils/typography';
 
 export default function ServicesScreen() {
   const catalog = useServiceCatalog();
@@ -32,7 +33,7 @@ export default function ServicesScreen() {
       ListHeaderComponent={
         <View className="gap-3 pb-1">
           <View className="flex-row items-center justify-between">
-            <Text className="font-mono text-[11px] uppercase tracking-widest text-brand">
+            <Text className={EYEBROW}>
               {catalog.isLoading ? ' ' : `${count} ${count === 1 ? 'Service' : 'Services'}`}
             </Text>
             <Button label="+ New Service" className="py-2" onPress={openNew} />
