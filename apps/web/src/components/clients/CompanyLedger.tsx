@@ -180,9 +180,9 @@ export function CompanyLedger({
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-card" aria-labelledby="company-ledger-title">
-      <div className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6 pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3">
         <div className="flex items-baseline gap-4">
-          <h2 id="company-ledger-title" className="text-2xl font-bold">
+          <h2 id="company-ledger-title" className="text-xl font-bold">
             Ledger
           </h2>
           {!isLoading && !error && (

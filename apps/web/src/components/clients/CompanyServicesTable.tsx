@@ -8,14 +8,19 @@ import {
   gstRateLabel,
   servicesCountLabel,
 } from '@cl/schemas'
+import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 
 import { DataTable, type DataColumn } from '@/components/DataTable'
 import { DeleteButton } from '@/components/DeleteButton'
 import { LoadError } from '@/components/LoadError'
 import { BillingBadge } from '@/components/services/BillingBadge'
 import { Spinner } from '@/components/Spinner'
+import { cn } from '@/lib/utils'
 
 interface CompanyServicesTableProps {
+  /** Starts collapsed to its heading unless set; the heading toggles it. */
+  defaultExpanded?: boolean
   services: readonly ServiceAssignmentResponse[]
   isLoading: boolean
   error: Error | null
@@ -124,8 +129,8 @@ function columns({
   ]
 }
 
-/** The services assigned to a company, most recent delivery first. Rows open Edit Service. */
-export function CompanyServicesTable({
+/** The section's body: loading, error, the table, or a note that there are no services yet. */
+function ServicesBody({
   services,
   isLoading,
   error,
@@ -133,33 +138,60 @@ export function CompanyServicesTable({
   onEdit,
   onDelete,
   deleting,
-}: CompanyServicesTableProps) {
+}: Omit<CompanyServicesTableProps, 'defaultExpanded'>) {
+  if (isLoading) return <Spinner className="mx-6 mb-6" />
+  if (error) {
+    return (
+      <div className="px-6 pb-6">
+        <LoadError error={error} onRetry={onRetry} />
+      </div>
+    )
+  }
+  return services.length ? (
+    <DataTable
+      columns={columns({ onEdit, onDelete, deleting })}
+      rows={services}
+      rowKey={(s) => s.id ?? `${s.serviceId}-${s.deliveryDate}`}
+      onRowClick={onEdit}
+    />
+  ) : (
+    <p className="border-t border-border px-6 py-10 text-center text-sm text-muted-foreground">
+      No Services Recorded For This Company Yet.
+    </p>
+  )
+}
+
+/**
+ * The services assigned to a company, most recent delivery first, collapsed to its heading by
+ * default; the heading (with the count) toggles it. Rows open Edit Service.
+ */
+export function CompanyServicesTable({ defaultExpanded = false, ...props }: CompanyServicesTableProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const { services, isLoading, error } = props
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-card">
-      <div className="flex items-baseline justify-between gap-4 px-6 pt-6 pb-4">
-        <h2 className="text-2xl font-bold">Services</h2>
-        {!isLoading && !error && <span className="text-sm text-muted-foreground">{servicesCountLabel(services.length)}</span>}
-      </div>
-      {isLoading && <Spinner className="mx-6 mb-6" />}
-      {error && (
-        <div className="px-6 pb-6">
-          <LoadError error={error} onRetry={onRetry} />
+      <h2>
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          aria-expanded={expanded}
+          aria-controls="company-services-body"
+          className="flex w-full items-center justify-between gap-4 px-6 py-3 text-left hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none"
+        >
+          <span className="flex items-center gap-2 text-xl font-bold">
+            <ChevronDown className={cn('size-5 transition-transform', !expanded && '-rotate-90')} aria-hidden />
+            Services
+          </span>
+          {!isLoading && !error && (
+            <span className="text-sm font-normal text-muted-foreground">{servicesCountLabel(services.length)}</span>
+          )}
+        </button>
+      </h2>
+      {expanded && (
+        <div id="company-services-body">
+          <ServicesBody {...props} />
         </div>
       )}
-      {!isLoading &&
-        !error &&
-        (services.length ? (
-          <DataTable
-            columns={columns({ onEdit, onDelete, deleting })}
-            rows={services}
-            rowKey={(s) => s.id ?? `${s.serviceId}-${s.deliveryDate}`}
-            onRowClick={onEdit}
-          />
-        ) : (
-          <p className="border-t border-border px-6 py-10 text-center text-sm text-muted-foreground">
-            No Services Recorded For This Company Yet.
-          </p>
-        ))}
     </section>
   )
 }

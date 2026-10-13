@@ -22,6 +22,7 @@ describe('CompanyServicesTable', () => {
   it('shows the billing cycle, dates, fee, net charge, GST rate and total in their own columns', () => {
     render(
       <CompanyServicesTable
+        defaultExpanded
         services={services}
         isLoading={false}
         error={null}
@@ -58,6 +59,7 @@ describe('CompanyServicesTable', () => {
     const user = userEvent.setup()
     render(
       <CompanyServicesTable
+        defaultExpanded
         services={services}
         isLoading={false}
         error={null}
@@ -80,6 +82,7 @@ describe('CompanyServicesTable', () => {
     const user = userEvent.setup()
     render(
       <CompanyServicesTable
+        defaultExpanded
         services={services}
         isLoading={false}
         error={null}
@@ -97,5 +100,28 @@ describe('CompanyServicesTable', () => {
     await user.click(screen.getByRole('button', { name: 'Delete Service' }))
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith('a-1'))
     expect(onEdit).not.toHaveBeenCalled()
+  })
+
+  it('starts collapsed to its heading and count, and the heading toggles it', async () => {
+    const user = userEvent.setup()
+    render(
+      <CompanyServicesTable
+        services={services}
+        isLoading={false}
+        error={null}
+        onRetry={vi.fn()}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        deleting={false}
+      />,
+    )
+    const heading = screen.getByRole('button', { name: /Services/ })
+    expect(heading).toHaveAttribute('aria-expanded', 'false')
+    expect(heading).toHaveTextContent('1 Service')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+
+    await user.click(heading)
+    expect(heading).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('table')).toBeVisible()
   })
 })

@@ -9,6 +9,11 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '13 Oct 2026, 14:52:51',
+    highlights: ["On a company page the Services section starts collapsed, showing its count; click its heading to open it. The Services and Ledger headings are more compact."],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 14:48:30',
     highlights: ["A client's Companies table shows each company's Billed, Received and Pending for the selected financial year, with a status: Overdue, Settled or In Credit."],
   },
