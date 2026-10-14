@@ -1,9 +1,10 @@
 import { useManagerCatalog } from '@cl/api';
 import { Stack, router } from 'expo-router';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/theme/useThemeColors';
 
+import { ManagerClients } from './ManagerClients';
 import { ManagerEditor } from './ManagerEditor';
 
 /** Full-screen add / edit, pushed over the tabs. Reads the manager from the cached list. */
@@ -32,6 +33,11 @@ export function ManagerEditorScreen({ id }: { id?: string }) {
             deleting={catalog.deleting}
             onDone={close}
           />
+        )}
+        {manager?.id && (
+          <View className="pt-8">
+            <ManagerClients managerId={manager.id} />
+          </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>

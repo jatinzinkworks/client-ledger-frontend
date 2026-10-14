@@ -5,6 +5,7 @@ export * from './fields';
 export * from './financialYears';
 export * from './firmDetails';
 export * from './ledger';
+export * from './ledgerEmail';
 export * from './managers';
 export * from './payments';
 export * from './paymentTerms';

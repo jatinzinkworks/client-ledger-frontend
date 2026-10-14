@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BulkPostingResponse,
   ClientLedgerStatusParams,
   ClientLedgerStatusResponse,
   ClientLedgerSummaryResponse,
@@ -447,6 +448,80 @@ export const useDeleteEntry = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteEntryMutationOptions(options), queryClient);
+    }
+    export const getPostAllDueServicesUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/ledger-entries/post-due`
+}
+
+/**
+ * Takes no input. Goes through every company of every client and posts its due services to its ledger, exactly as posting for one company does: every service fallen due on or before today and not yet billed is billed once. Each company is posted on its own, so a failure for one is listed under failures and the others are still posted. Running it again when nothing new is due creates nothing.
+ * @summary Post due services to the ledgers of every company
+ */
+export const postAllDueServices = async ( options?: Parameters<typeof apiFetch>[1]): Promise<BulkPostingResponse> => {
+
+  return apiFetch<BulkPostingResponse>(getPostAllDueServicesUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getPostAllDueServicesMutationKey = () => ['postAllDueServices'] as const;
+
+export const getPostAllDueServicesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAllDueServices>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postAllDueServices>>, TError,void, TContext> => {
+
+const mutationKey = getPostAllDueServicesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postAllDueServices>>, void> = () => {
+
+
+          return  postAllDueServices(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostAllDueServicesMutationResult = NonNullable<Awaited<ReturnType<typeof postAllDueServices>>>
+
+    export type PostAllDueServicesMutationError = ErrorType<ErrorResponse>
+
+
+    /**
+ * @summary Post due services to the ledgers of every company
+ */
+export const usePostAllDueServices = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postAllDueServices>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postAllDueServices>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getPostAllDueServicesMutationOptions(options), queryClient);
     }
     export const getListPaymentsUrl = (clientId: string,
     companyId: string,

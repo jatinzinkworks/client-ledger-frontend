@@ -1,15 +1,13 @@
-import { Check, ChevronDown } from 'lucide-react-native';
+import { ChevronDown } from 'lucide-react-native';
 import { useState } from 'react';
-import { FlatList, Modal, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/theme/useThemeColors';
 import { cn } from '@/utils/cn';
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+import { OptionSheet, type SelectOption } from './OptionSheet';
+
+export type { SelectOption } from './OptionSheet';
 
 interface SelectFieldProps {
   label: string;
@@ -18,22 +16,28 @@ interface SelectFieldProps {
   onChange: (value: string) => void;
   error?: string;
   placeholder?: string;
+  /** Shown under the field, e.g. what an empty choice means. */
+  hint?: string;
+  disabled?: boolean;
 }
 
 /**
  * React Native has no <select>: a field-styled button that opens a bottom sheet of options.
  * Long lists (e.g. 31 days) scroll inside the sheet.
  */
-export function SelectField({ label, value, options, onChange, error, placeholder = 'Choose…' }: SelectFieldProps) {
+export function SelectField({
+  label,
+  value,
+  options,
+  onChange,
+  error,
+  placeholder = 'Choose…',
+  hint,
+  disabled,
+}: SelectFieldProps) {
   const [open, setOpen] = useState(false);
   const colors = useThemeColors();
-  const insets = useSafeAreaInsets();
   const current = options.find((o) => o.value === String(value ?? ''));
-
-  const choose = (next: string) => {
-    onChange(next);
-    setOpen(false);
-  };
 
   return (
     <View className="gap-1.5">
@@ -41,10 +45,13 @@ export function SelectField({ label, value, options, onChange, error, placeholde
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${current?.label ?? placeholder}`}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
         onPress={() => setOpen(true)}
         className={cn(
           'min-h-11 flex-row items-center justify-between rounded-md border bg-background px-3 py-2.5',
           error ? 'border-destructive' : 'border-input',
+          disabled && 'opacity-60',
         )}
       >
         <Text className={cn('text-base', current ? 'text-foreground' : 'text-muted-foreground')}>
@@ -52,32 +59,23 @@ export function SelectField({ label, value, options, onChange, error, placeholde
         </Text>
         <ChevronDown size={18} color={colors.mutedForeground} />
       </Pressable>
-      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      {error ? (
+        <Text className="text-sm text-destructive">{error}</Text>
+      ) : (
+        hint && <Text className="text-sm text-muted-foreground">{hint}</Text>
+      )}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable accessibilityLabel="Close" className="flex-1 bg-black/40" onPress={() => setOpen(false)} />
-        <View className="max-h-[70%] rounded-t-lg bg-card" style={{ paddingBottom: insets.bottom }}>
-          <Text className="border-b border-border px-5 py-4 text-lg font-bold text-card-foreground">{label}</Text>
-          <FlatList
-            data={options}
-            keyExtractor={(o) => o.value}
-            renderItem={({ item }) => {
-              const selected = item.value === current?.value;
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => choose(item.value)}
-                  className="min-h-12 flex-row items-center justify-between px-5 active:bg-muted"
-                >
-                  <Text className={cn('text-base text-card-foreground', selected && 'font-bold')}>{item.label}</Text>
-                  {selected && <Check size={18} color={colors.primary} />}
-                </Pressable>
-              );
-            }}
-          />
-        </View>
-      </Modal>
+      <OptionSheet
+        title={label}
+        visible={open}
+        options={options}
+        selected={current?.value}
+        onChoose={(next) => {
+          onChange(next);
+          setOpen(false);
+        }}
+        onClose={() => setOpen(false)}
+      />
     </View>
   );
 }

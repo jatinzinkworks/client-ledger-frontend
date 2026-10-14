@@ -1,9 +1,10 @@
 import type { ManagerResponse } from '@cl/api';
-import { managerInitials, managerName, roleLabel } from '@cl/schemas';
+import { formatInr, managerClientsLabel, managerInitials, managerName, roleLabel } from '@cl/schemas';
 import { Phone } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
 import { useThemeColors } from '@/theme/useThemeColors';
+import { cn } from '@/utils/cn';
 
 interface ManagerCardProps {
   manager: ManagerResponse;
@@ -14,6 +15,7 @@ interface ManagerCardProps {
 export function ManagerCard({ manager, onPress }: ManagerCardProps) {
   const colors = useThemeColors();
   const name = managerName(manager);
+  const pending = manager.totalPending;
   return (
     <Pressable
       accessibilityRole="button"
@@ -40,6 +42,15 @@ export function ManagerCard({ manager, onPress }: ManagerCardProps) {
           <Phone size={14} color={colors.mutedForeground} />
           <Text className="text-sm text-muted-foreground">{manager.mobileNumber}</Text>
         </View>
+      </View>
+      {/* Pending is what their clients owe across all years, not the selected one; red while owed. */}
+      <View className="flex-row items-center justify-between">
+        <Text className="text-sm text-card-foreground">{managerClientsLabel(manager.clientCount)}</Text>
+        {pending != null && (
+          <Text className={cn('text-base font-bold', pending > 0 ? 'text-destructive' : 'text-card-foreground')}>
+            {formatInr(pending)} Pending
+          </Text>
+        )}
       </View>
     </Pressable>
   );

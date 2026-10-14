@@ -8,6 +8,7 @@ import { ServiceCard } from '@/components/services/ServiceCard';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { Button } from '@/components/ui/Button';
 import { useThemeColors } from '@/theme/useThemeColors';
+import { adjustPricesHref } from '@/utils/routes';
 import { EYEBROW } from '@/utils/typography';
 
 export default function ServicesScreen() {
@@ -20,6 +21,9 @@ export default function ServicesScreen() {
 
   const openNew = () =>
     router.push({ pathname: '/service/new', params: category === 'ALL' ? {} : { category } });
+  // Adjust Prices starts out applying to the category the list is filtered to.
+  const openAdjust = () =>
+    router.push({ pathname: adjustPricesHref, params: category === 'ALL' ? {} : { category } });
 
   return (
     <FlatList
@@ -32,11 +36,12 @@ export default function ServicesScreen() {
       }
       ListHeaderComponent={
         <View className="gap-3 pb-1">
-          <View className="flex-row items-center justify-between">
-            <Text className={EYEBROW}>
-              {catalog.isLoading ? ' ' : `${count} ${count === 1 ? 'Service' : 'Services'}`}
-            </Text>
-            <Button label="+ New Service" className="py-2" onPress={openNew} />
+          <Text className={EYEBROW}>
+            {catalog.isLoading ? ' ' : `${count} ${count === 1 ? 'Service' : 'Services'}`}
+          </Text>
+          <View className="flex-row gap-2">
+            <Button variant="outline" label="Adjust Prices" className="flex-1 py-2" disabled={!count} onPress={openAdjust} />
+            <Button label="+ New Service" className="flex-1 py-2" onPress={openNew} />
           </View>
           <ServiceFilters query={query} onQueryChange={setQuery} category={category} onCategoryChange={setCategory} />
         </View>

@@ -790,6 +790,26 @@ export const CreateServiceResponse = zod.object({
 
 
 /**
+ * Takes no input. Emails every client, one after another, their ledger summary for the current Indian financial year across all of their companies, exactly as emailing one client does: to the client, copying in their manager, with the year's Excel ledger attached. Each client is emailed on its own, so one that fails is listed under failures and the others are still emailed. Clients with nothing billed or received in the year are emailed too. The response returns once every client has been tried, so it takes longer the more clients there are.
+ * @summary Email every client their ledger summary
+ */
+export const SendAllClientLedgerSummariesResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year summarised: the current one'),
+  "clientCount": zod.int().optional().describe('How many clients there are'),
+  "sentCount": zod.int().optional().describe('How many clients were emailed'),
+  "sent": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client')
+}).describe('A client emailed their ledger summary in a run')).optional().describe('The clients emailed, by name'),
+  "failures": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "error": zod.string().optional().describe('Why the email was not sent; nothing was sent to the client')
+}).describe('A client whose ledger summary could not be emailed in a run')).optional().describe('The clients that could not be emailed; empty when every email was sent. The other clients are emailed regardless')
+}).describe('The outcome of emailing every client their ledger summary')
+
+
+/**
  * Returns every manager, ordered by last name then first name. The list is returned whole; it is not paged.
  * @summary List managers
  */
@@ -872,6 +892,29 @@ export const CreateManagerResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was added'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the manager was last updated')
 }).describe('A manager held in the catalog')
+
+
+/**
+ * Takes no input. Goes through every company of every client and posts its due services to its ledger, exactly as posting for one company does: every service fallen due on or before today and not yet billed is billed once. Each company is posted on its own, so a failure for one is listed under failures and the others are still posted. Running it again when nothing new is due creates nothing.
+ * @summary Post due services to the ledgers of every company
+ */
+export const PostAllDueServicesResponse = zod.object({
+  "asOf": zod.iso.date().optional().describe('The day services were posted as due on: today'),
+  "companyCount": zod.int().optional().describe('How many companies were looked at'),
+  "entriesPosted": zod.int().optional().describe('How many ledger entries were posted across every company'),
+  "companies": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "entriesPosted": zod.int().optional().describe('How many ledger entries were posted for the company')
+}).describe('What was posted to one company\'s ledger in a run')).optional().describe('The companies something was posted for, in client then company order; those with nothing due are left out'),
+  "failures": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "error": zod.string().optional().describe('Why posting failed; nothing was posted for the company')
+}).describe('A company whose due services could not be posted in a run')).optional().describe('The companies posting failed for; empty when every company succeeded. Other companies are posted regardless')
+}).describe('The outcome of posting the due services of every company of every client')
 
 
 /**
@@ -1159,6 +1202,26 @@ export const AddCompanyResponse = zod.object({
 
 
 /**
+ * Emails the client a summary of their ledger for the current Indian financial year (1 April to 31 March) across all of their companies together: what was billed, the discount given, what was received, what is pending and the last payment, followed by each company's billed, received and pending amounts. The year's full ledger is attached as an Excel workbook with a sheet per company. It goes to the client's email address, copying in their manager, from the address set in MAIL_FROM; replies go to the firm's email from Global Settings when one is saved. The email is sent before the response returns.
+ * @summary Email a client the ledger summary across all of their companies
+ */
+export const SendClientLedgerSummaryParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const SendClientLedgerSummaryResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company summarised. Absent when the summary spans all of the client\'s companies'),
+  "financialYear": zod.string().optional().describe('Indian financial year summarised: the current one'),
+  "to": zod.string().optional().describe('Address the email was sent to: the client\'s'),
+  "cc": zod.array(zod.string()).optional().describe('Addresses copied in: the client\'s manager'),
+  "subject": zod.string().optional().describe('Subject of the email'),
+  "attachmentName": zod.string().optional().describe('Name of the Excel ledger attached'),
+  "sentAt": zod.iso.datetime({"offset":true}).optional().describe('When the email was handed to the SMTP server')
+}).describe('Confirms a ledger summary email was sent')
+
+
+/**
  * Returns every service assigned to one company of the client, most recent delivery first. The list is returned whole; it is not paged. Given a financialYear, each service also carries what it was billed in that year (totalBilled): the sum of its service charges in the ledger falling due in the year, GST included, or zero when none did. Without one, those fields are left out.
  * @summary List the services of a company
  */
@@ -1353,6 +1416,27 @@ export const RecordPaymentResponse = zod.object({
   "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was posted'),
   "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the entry was last changed; its posting time until its rates are corrected')
 }).describe('A charge for a service that fell due, or a payment received. entryType tells them apart; fields that do not apply to the type are left out')
+
+
+/**
+ * Emails the client a summary of the company's ledger for the current Indian financial year (1 April to 31 March): what was billed, the discount given, what was received, what is pending and the last payment, with the year's full ledger attached as an Excel workbook. It goes to the client's email address, copying in their manager, from the address set in MAIL_FROM; replies go to the firm's email from Global Settings when one is saved. The email is sent before the response returns.
+ * @summary Email a client the ledger summary of one of their companies
+ */
+export const SendLedgerSummaryParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company to summarise')
+})
+
+export const SendLedgerSummaryResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company summarised. Absent when the summary spans all of the client\'s companies'),
+  "financialYear": zod.string().optional().describe('Indian financial year summarised: the current one'),
+  "to": zod.string().optional().describe('Address the email was sent to: the client\'s'),
+  "cc": zod.array(zod.string()).optional().describe('Addresses copied in: the client\'s manager'),
+  "subject": zod.string().optional().describe('Subject of the email'),
+  "attachmentName": zod.string().optional().describe('Name of the Excel ledger attached'),
+  "sentAt": zod.iso.datetime({"offset":true}).optional().describe('When the email was handed to the SMTP server')
+}).describe('Confirms a ledger summary email was sent')
 
 
 /**

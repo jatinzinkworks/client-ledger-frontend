@@ -11,13 +11,15 @@ type PassThrough = Pick<
 interface TextFieldProps extends PassThrough {
   label: string;
   error?: string;
+  /** A line under the input, hidden while it shows an error. */
+  hint?: string;
   value: unknown;
   onChangeText: (text: string) => void;
   onBlur: () => void;
 }
 
-/** A labelled text input with its validation message underneath. */
-export function TextField({ label, error, value, onChangeText, onBlur, multiline, ...inputProps }: TextFieldProps) {
+/** A labelled text input with its validation message (or hint) underneath. */
+export function TextField({ label, error, hint, value, onChangeText, onBlur, multiline, ...inputProps }: TextFieldProps) {
   const colors = useThemeColors();
   return (
     <View className="gap-1.5">
@@ -37,7 +39,11 @@ export function TextField({ label, error, value, onChangeText, onBlur, multiline
         )}
         {...inputProps}
       />
-      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      {error ? (
+        <Text className="text-sm text-destructive">{error}</Text>
+      ) : (
+        hint && <Text className="text-sm text-muted-foreground">{hint}</Text>
+      )}
     </View>
   );
 }

@@ -3,6 +3,7 @@ import {
   useClient,
   useCompany,
   useCompanyLedger,
+  useCompanyLedgerEmail,
   useCompanyLedgerExport,
   useServiceCatalog,
   type LedgerEntryResponse,
@@ -12,6 +13,8 @@ import {
   DELETE_PAYMENT_WARNING,
   clientName,
   companyDetails,
+  companyLedgerEmailDescription,
+  ledgerEmailTooltip,
   financialYearLabel,
   isPayment,
   ledgerEntryName,
@@ -23,6 +26,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 
 import { AddServiceForm } from '@/components/clients/AddServiceForm'
 import { CompanyLedger } from '@/components/clients/CompanyLedger'
+import { EmailLedgerButton } from '@/components/clients/EmailLedgerButton'
 import { DeleteButton } from '@/components/DeleteButton'
 import { CompanyServicesTable } from '@/components/clients/CompanyServicesTable'
 import { EditCompanyForm } from '@/components/clients/EditCompanyForm'
@@ -64,6 +68,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   const { financialYear } = useFinancialYear()
   const ledger = useCompanyLedger(id, companyId, financialYear)
   const ledgerExport = useCompanyLedgerExport(id, companyId)
+  const ledgerEmail = useCompanyLedgerEmail(id, companyId)
   const navigate = useNavigate()
   const catalog = useServiceCatalog()
   // Which side sheet is open: none, Edit Company, Add Service, Record Payment, or editing one
@@ -119,6 +124,12 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
                 <ExportLedgerButton
                   onExport={saveLedgerExport(ledgerExport.exportLedger, company.companyName ?? '', financialYear)}
                   exporting={ledgerExport.exporting}
+                />
+                <EmailLedgerButton
+                  description={companyLedgerEmailDescription(company.companyName ?? '')}
+                  tooltip={ledgerEmailTooltip('company')}
+                  onSend={ledgerEmail.send}
+                  sending={ledgerEmail.sending}
                 />
                 <Button size="touch" onClick={() => setSheet('record-payment')}>
                   <IndianRupee /> Record Payment

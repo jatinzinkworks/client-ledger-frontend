@@ -1,8 +1,7 @@
 import { CATEGORY_FILTERS, type CategoryFilter } from '@cl/schemas';
-import { Search } from 'lucide-react-native';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { useThemeColors } from '@/theme/useThemeColors';
+import { SearchField } from '@/components/ui/SearchField';
 import { cn } from '@/utils/cn';
 
 interface ServiceFiltersProps {
@@ -14,23 +13,9 @@ interface ServiceFiltersProps {
 
 /** Name search above a horizontally scrolling row of category chips. */
 export function ServiceFilters({ query, onQueryChange, category, onCategoryChange }: ServiceFiltersProps) {
-  const colors = useThemeColors();
   return (
     <View className="gap-3">
-      <View className="flex-row items-center gap-2 rounded-md border border-input bg-card px-3">
-        <Search size={18} color={colors.mutedForeground} />
-        <TextInput
-          accessibilityLabel="Search services by name"
-          value={query}
-          onChangeText={onQueryChange}
-          placeholder="Search Services By Name"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-          className="flex-1 py-2.5 text-base text-foreground"
-        />
-      </View>
+      <SearchField value={query} onChangeText={onQueryChange} placeholder="Search Services By Name" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
         {CATEGORY_FILTERS.map(({ value, label }) => {
           const active = value === category;

@@ -9,6 +9,35 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '14 Oct 2026, 15:39:55',
+    highlights: [
+      'On the Overview (web and mobile), a mail icon beside each client and company in the rankings emails them their ledger summary for the current year, after you confirm.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '14 Oct 2026, 15:13:53',
+    highlights: [
+      "Email Summary on a client page (web and mobile) emails the client their ledger summary across all of their companies for the current financial year, with the Excel ledger attached (a sheet per company) and their manager copied in, after you confirm.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '14 Oct 2026, 13:58:57',
+    highlights: [
+      "Email Summary on a company page (web and mobile) emails the client that company's ledger summary for the current financial year, with the Excel ledger attached and their manager copied in, after you confirm.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '14 Oct 2026, 13:29:25',
+    highlights: [
+      "The mobile app now does everything the web app does: the Overview, Clients (onboard, edit, companies, Balance By Financial Year), each company's services, ledger and payments, and Excel export through the share sheet, with the financial year picked in the header.",
+      'On mobile, Services gains Adjust Prices and shows what each service has billed; manager cards show what their clients owe, and Edit Manager lists those clients.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '14 Oct 2026, 12:13:01',
     highlights: [
       "The Overview's figure cards compare this year with last year to the same date, green when the change is good and red when it is not.",

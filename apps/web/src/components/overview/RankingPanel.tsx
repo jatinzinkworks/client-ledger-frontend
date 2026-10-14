@@ -19,6 +19,7 @@ import { SegmentedControl } from '@/components/SegmentedControl'
 import { cn } from '@/lib/utils'
 import { clientPath, companyPath } from '@/utils/routes'
 
+import { EmailShortcut } from './EmailShortcut'
 import { OverviewPanel } from './OverviewPanel'
 
 /** A ranked client or company opens its page; managers have none. */
@@ -28,19 +29,25 @@ function entryPath(subject: RankSubject, e: RankEntry): string | undefined {
   return undefined
 }
 
-/** The ranked name, linked to its page when it has one, with who it is underneath. */
+/**
+ * The ranked name, linked to its page when it has one, with a mail shortcut to email a client or
+ * company their ledger summary, and who it is underneath.
+ */
 function EntryName({ subject, entry }: { subject: RankSubject; entry: RankEntry }) {
   const path = entryPath(subject, entry)
   const note = rankEntryNote(subject, entry)
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      {path ? (
-        <Link to={path} className="truncate font-bold text-foreground hover:underline">
-          {entry.name}
-        </Link>
-      ) : (
-        <span className="truncate font-bold">{entry.name}</span>
-      )}
+      <div className="flex min-w-0 items-center gap-1">
+        {path ? (
+          <Link to={path} className="truncate font-bold text-foreground hover:underline">
+            {entry.name}
+          </Link>
+        ) : (
+          <span className="truncate font-bold">{entry.name}</span>
+        )}
+        <EmailShortcut subject={subject} entry={entry} />
+      </div>
       {note && <span className="truncate text-[13px] text-muted-foreground">{note}</span>}
     </div>
   )
