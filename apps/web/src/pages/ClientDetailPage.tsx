@@ -92,6 +92,7 @@ export function ClientDetailPage() {
       {client && (
         <>
           <DetailHeader
+            level="client"
             title={name}
             details={details}
             onEdit={() => setSheet('edit')}

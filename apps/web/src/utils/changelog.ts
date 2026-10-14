@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '14 Oct 2026, 15:42:00',
+    highlights: [
+      'Client and company pages now say which one you are on: a solid Client badge, or an outlined Company badge with the client it belongs to (tap to go up), plus a coloured bar beside the name.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '14 Oct 2026, 15:39:55',
     highlights: [
       'On the Overview (web and mobile), a mail icon beside each client and company in the rankings emails them their ledger summary for the current year, after you confirm.',

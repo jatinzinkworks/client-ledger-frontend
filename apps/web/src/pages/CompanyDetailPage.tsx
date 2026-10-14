@@ -111,6 +111,8 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
       {company && (
         <>
           <DetailHeader
+            level="company"
+            owner={owner ? { name: ownerName, to: clientPath(id) } : undefined}
             title={company.companyName ?? ''}
             details={companyDetails(company)}
             onEdit={() => setSheet('edit')}

@@ -3,6 +3,7 @@ import { clientName, clientSinceLabel, discountLabel } from '@cl/schemas';
 import { Pencil } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
+import { LEVEL_ACCENT, LevelBadge } from '@/components/LevelBadge';
 import { useThemeColors } from '@/theme/useThemeColors';
 import { EYEBROW } from '@/utils/typography';
 
@@ -23,12 +24,15 @@ interface ClientHeaderProps {
   onEdit: () => void;
 }
 
-/** The client page's header: the year being shown, the name with Edit Client, and their details. */
+/** The client page's header: the Client badge and year, the name with Edit Client, and their details. */
 export function ClientHeader({ client, yearLabel, onEdit }: ClientHeaderProps) {
   const colors = useThemeColors();
   return (
-    <View className="gap-1">
-      <Text className={EYEBROW}>Client · {yearLabel}</Text>
+    <View className={`gap-1.5 ${LEVEL_ACCENT.client}`}>
+      <View className="flex-row flex-wrap items-center gap-2">
+        <LevelBadge level="client" />
+        <Text className={EYEBROW}>{yearLabel}</Text>
+      </View>
       <View className="flex-row items-center gap-2">
         <Text className="flex-shrink text-2xl font-bold text-foreground">{clientName(client)}</Text>
         <Pressable
