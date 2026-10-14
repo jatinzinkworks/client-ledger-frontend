@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '14 Oct 2026, 17:09:50',
+    highlights: [
+      'Payment Terms on mobile now match the web: pick a reminder from the same list (or turn reminders off), and see an example due date as you type.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '14 Oct 2026, 15:42:00',
     highlights: [
       'Client and company pages now say which one you are on: a solid Client badge, or an outlined Company badge with the client it belongs to (tap to go up), plus a coloured bar beside the name.',

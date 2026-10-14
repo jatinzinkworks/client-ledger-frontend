@@ -1,7 +1,10 @@
 import type { PaymentTermsRequest } from '@cl/api';
 import {
   PAYMENT_TERMS_DAY_FIELDS,
+  REMINDER_OFF,
+  paymentDueExample,
   paymentTermsFormSchema,
+  reminderOptions,
   toPaymentTermsRequest,
   type PaymentTermsDayField,
   type PaymentTermsFormInput,
@@ -9,12 +12,14 @@ import {
 } from '@cl/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { Switch, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
 import { DaysField } from '@/components/ui/DaysField';
-import { useThemeColors } from '@/theme/useThemeColors';
+import { SelectField } from '@/components/ui/SelectField';
 import { applyFieldErrors } from '@/utils/applyFieldErrors';
+
+const DAY_FIELDS = ['paymentDueAfterDays', 'markOverdueAfterDays'] as const;
 
 interface PaymentTermsFormProps {
   defaultValues: PaymentTermsFormInput;
@@ -22,20 +27,23 @@ interface PaymentTermsFormProps {
   saving: boolean;
 }
 
-// Same schema, defaults and labels as the web form — only the rendering differs.
+// Same schema, defaults, labels and reminder presets as the web form — only the rendering differs.
 export function PaymentTermsForm({ defaultValues, onSubmit, saving }: PaymentTermsFormProps) {
-  const colors = useThemeColors();
   const {
     control,
     handleSubmit,
     setError,
+    setValue,
     reset,
     formState: { errors, isDirty },
   } = useForm<PaymentTermsFormInput, unknown, PaymentTermsFormValues>({
     resolver: zodResolver(paymentTermsFormSchema),
     defaultValues,
   });
-  const remindersOn = useWatch({ control, name: 'paymentReminderEnabled' });
+  const [dueDays, remindersOn, reminderDays] = useWatch({
+    control,
+    name: ['paymentDueAfterDays', 'paymentReminderEnabled', 'paymentReminderDays'],
+  });
 
   const submit = handleSubmit(async (values) => {
     try {
@@ -46,46 +54,48 @@ export function PaymentTermsForm({ defaultValues, onSubmit, saving }: PaymentTer
     }
   });
 
-  const dayField = (name: PaymentTermsDayField) => (
-    <Controller
-      key={name}
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <DaysField
-          {...PAYMENT_TERMS_DAY_FIELDS[name]}
-          error={errors[name]?.message}
-          value={field.value}
-          onChangeText={field.onChange}
-          onBlur={field.onBlur}
-        />
-      )}
-    />
-  );
+  const hintFor = (name: PaymentTermsDayField) => {
+    const due = Number(dueDays);
+    return name === 'paymentDueAfterDays' && Number.isInteger(due) && due > 0
+      ? paymentDueExample(due)
+      : PAYMENT_TERMS_DAY_FIELDS[name].hint;
+  };
+
+  // One picker drives two API fields: "off" disables reminders, a number enables them.
+  const reminderValue = remindersOn && reminderDays != null ? String(reminderDays) : REMINDER_OFF;
+  const onReminderChange = (value: string) => {
+    const opts = { shouldDirty: true, shouldValidate: true };
+    setValue('paymentReminderEnabled', value !== REMINDER_OFF, opts);
+    if (value !== REMINDER_OFF) setValue('paymentReminderDays', Number(value), opts);
+  };
 
   return (
     <View className="gap-5">
-      {(['paymentDueAfterDays', 'markOverdueAfterDays'] as const).map(dayField)}
-
-      <View className="flex-row items-center justify-between gap-4 rounded-md border border-border p-4">
-        <View className="flex-1 gap-1">
-          <Text className="text-sm font-bold text-foreground">Payment Reminders</Text>
-          <Text className="text-sm text-muted-foreground">Remind Clients About Outstanding Invoices</Text>
-        </View>
+      {DAY_FIELDS.map((name) => (
         <Controller
+          key={name}
           control={control}
-          name="paymentReminderEnabled"
+          name={name}
           render={({ field }) => (
-            <Switch
-              accessibilityLabel="Payment Reminders"
+            <DaysField
+              label={PAYMENT_TERMS_DAY_FIELDS[name].label}
+              hint={hintFor(name)}
+              error={errors[name]?.message}
               value={field.value}
-              onValueChange={field.onChange}
-              trackColor={{ true: colors.primary, false: colors.muted }}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
             />
           )}
         />
-      </View>
-      {remindersOn && dayField('paymentReminderDays')}
+      ))}
+
+      <SelectField
+        label={PAYMENT_TERMS_DAY_FIELDS.paymentReminderDays.label}
+        value={reminderValue}
+        options={reminderOptions(typeof reminderDays === 'number' ? reminderDays : undefined)}
+        onChange={onReminderChange}
+        error={errors.paymentReminderDays?.message}
+      />
 
       <Button label={saving ? 'Saving…' : 'Save Payment Terms'} disabled={saving || !isDirty} onPress={submit} />
     </View>
