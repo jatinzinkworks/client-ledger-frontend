@@ -9,6 +9,22 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '14 Oct 2026, 12:13:01',
+    highlights: [
+      "The Overview's figure cards compare this year with last year to the same date, green when the change is good and red when it is not.",
+      'New on the Overview: billed and received month by month, how long what is owed has been due (0–30 to 90+ days, with what is overdue), and billing by practice area with its top services.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '14 Oct 2026, 11:36:52',
+    highlights: [
+      "The Overview page now shows the firm's year at a glance: billed, received, pending and discount, alongside how many clients, companies and services you have.",
+      'Three panels rank the clients, companies and managers owing most, side by side; Billed Most ranks who was billed most. Each covers the selected year or all years. Received Payments lists the latest 20 payments by day.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '13 Oct 2026, 17:36:44',
     highlights: [
       'A client page shows Balance By Financial Year: billed, discount, received, closing balance and status (Pending, Carried or Settled) for every year since they became a client. Click a year to see its companies.',

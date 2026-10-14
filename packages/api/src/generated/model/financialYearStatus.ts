@@ -34,6 +34,6 @@ export interface FinancialYearStatus {
   closingBalance?: number;
   /** Where the year stands */
   status?: FinancialYearStatusStatus;
-  /** The same figures for each company with ledger entries in the year, ordered by company name; they add up to the year's */
+  /** The same figures for each company with ledger entries in the year, ordered by company name; they add up to the year's. With pendingOnly, only the companies still owing for the year */
   companies?: CompanyYearStatus[];
 }

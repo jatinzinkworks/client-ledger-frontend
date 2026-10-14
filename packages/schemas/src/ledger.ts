@@ -111,12 +111,23 @@ export const deleteEntryWarning = (e: Pick<LedgerEntryResponse, 'entryType'>) =>
 /** How a summary card's figure is coloured: owed in red, received in green. */
 export type SummaryTone = 'default' | 'positive' | 'negative';
 
+/** How a figure moved against an earlier period, e.g. this year to date against last. */
+export interface SummaryChange {
+  direction: 'up' | 'down' | 'flat';
+  /** "12% vs FY 2025–26 To Date". */
+  label: string;
+  /** Green when the move is good (more received), red when bad (more pending). */
+  tone: SummaryTone;
+}
+
 export interface SummaryCard {
   label: string;
   value: string;
   /** A smaller line under the figure. */
   note?: string;
   tone: SummaryTone;
+  /** Against an earlier period, when known. */
+  change?: SummaryChange;
 }
 
 /**

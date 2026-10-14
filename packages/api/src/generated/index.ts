@@ -4,4 +4,5 @@ export * from './clients/clients';
 export * from './global-settings/global-settings';
 export * from './ledger/ledger';
 export * from './manager-catalog/manager-catalog';
+export * from './overview/overview';
 export * from './service-catalog/service-catalog';

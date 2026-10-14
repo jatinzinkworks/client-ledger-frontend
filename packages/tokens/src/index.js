@@ -70,6 +70,9 @@ export const themes = {
     sidebarAccent: palette.surface2,
     sidebarBorder: palette.hairlineStrong,
     // A setting that must stand out on the navy sidebar (the selected financial year).
+    // Chart series (Overview): billed and received. Validated as a pair for colour-blind separation.
+    chartBilled: '#2A78D6',
+    chartReceived: '#1BAF7A',
     sidebarHighlight: palette.white,
     sidebarHighlightForeground: palette.navy,
   },
@@ -101,6 +104,8 @@ export const themes = {
     sidebarMuted: palette.inkSubtle,
     sidebarAccent: palette.surface2,
     sidebarBorder: palette.hairline,
+    chartBilled: '#3987E5',
+    chartReceived: '#199E70',
     sidebarHighlight: palette.white,
     sidebarHighlightForeground: palette.navy,
   },

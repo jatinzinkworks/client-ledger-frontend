@@ -22,6 +22,7 @@ import { getListManagersQueryKey } from '../generated/manager-catalog/manager-ca
 import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
 import type { LedgerEntryUpdateRequest, ListCompanyEntriesParams, PaymentRequest } from '../generated/model';
 import { awaitingFresh, freshData } from './fresh';
+import { refreshOverview } from './useOverview';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /** Ledger entries shown per page on the company page. */
@@ -33,8 +34,8 @@ export const LEDGER_PAGE_SIZE = 20;
  * Ids are already encoded.
  */
 export const refreshLedgers = (queryClient: QueryClient, clientId: string, companyId: string) =>
-  Promise.all(
-    [
+  Promise.all([
+    ...[
       getListCompanyEntriesQueryKey(clientId, companyId),
       getSummarizeCompanyQueryKey(clientId, companyId),
       getListClientEntriesQueryKey(clientId),
@@ -46,7 +47,9 @@ export const refreshLedgers = (queryClient: QueryClient, clientId: string, compa
       getListManagersQueryKey(),
       getListServicesQueryKey(),
     ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-  );
+    // The firm-wide figures, rankings and latest payments.
+    refreshOverview(queryClient),
+  ]);
 
 /** Whether a cached ledger query (key: [url, params]) was for this financial year. */
 const sameFinancialYear = (queryKey: readonly unknown[] | undefined, financialYear: string | undefined) =>

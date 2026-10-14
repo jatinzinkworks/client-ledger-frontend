@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ClientLedgerStatusParams,
   ClientLedgerStatusResponse,
   ClientLedgerSummaryResponse,
   CompanyLedgerSummaryResponse,
@@ -978,21 +979,30 @@ export function useSummarizeClient<TData = Awaited<ReturnType<typeof summarizeCl
 
 
 
-export const getClientLedgerStatusUrl = (clientId: string,) => {
+export const getClientLedgerStatusUrl = (clientId: string,
+    params?: ClientLedgerStatusParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/psc/cl/v1/clients/${clientId}/ledger-status`
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/ledger-status?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/ledger-status`
 }
 
 /**
- * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. Each year also carries the same figures for each company with entries in it.
- * @summary Show a client's balance for every financial year
+ * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first, or only for the financialYear given: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. clientSince and yearCount always cover every year since then, whichever years are listed. Each year also carries the same figures for each company with entries in it; with pendingOnly, only the companies still owing for the year (a closing balance above zero) are listed, while the year's own figures and companyCount still cover every company.
+ * @summary Show a client's balance for every financial year, or for one
  */
-export const clientLedgerStatus = async (clientId: string, options?: Parameters<typeof apiFetch>[1]): Promise<ClientLedgerStatusResponse> => {
+export const clientLedgerStatus = async (clientId: string,
+    params?: ClientLedgerStatusParams, options?: Parameters<typeof apiFetch>[1]): Promise<ClientLedgerStatusResponse> => {
 
-  return apiFetch<ClientLedgerStatusResponse>(getClientLedgerStatusUrl(clientId),
+  return apiFetch<ClientLedgerStatusResponse>(getClientLedgerStatusUrl(clientId,params),
   {
     ...options,
     method: 'GET'
@@ -1005,23 +1015,25 @@ export const clientLedgerStatus = async (clientId: string, options?: Parameters<
 
 
 
-export const getClientLedgerStatusQueryKey = (clientId: string,) => {
+export const getClientLedgerStatusQueryKey = (clientId: string,
+    params?: ClientLedgerStatusParams,) => {
     return [
-    `/psc/cl/v1/clients/${clientId}/ledger-status`
+    `/psc/cl/v1/clients/${clientId}/ledger-status`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getClientLedgerStatusQueryOptions = <TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(clientId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+export const getClientLedgerStatusQueryOptions = <TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(clientId: string,
+    params?: ClientLedgerStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getClientLedgerStatusQueryKey(clientId);
+  const queryKey =  queryOptions?.queryKey ?? getClientLedgerStatusQueryKey(clientId,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientLedgerStatus>>> = ({ signal }) => clientLedgerStatus(clientId, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof clientLedgerStatus>>> = ({ signal }) => clientLedgerStatus(clientId,params, { signal, ...requestOptions });
 
 
 
@@ -1035,7 +1047,8 @@ export type ClientLedgerStatusQueryError = ErrorType<ErrorResponse>
 
 
 export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(
- clientId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>> & Pick<
+ clientId: string,
+    params: undefined |  ClientLedgerStatusParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof clientLedgerStatus>>,
           TError,
@@ -1045,7 +1058,8 @@ export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLe
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(
- clientId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>> & Pick<
+ clientId: string,
+    params?: ClientLedgerStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof clientLedgerStatus>>,
           TError,
@@ -1055,19 +1069,21 @@ export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLe
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(
- clientId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ clientId: string,
+    params?: ClientLedgerStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Show a client's balance for every financial year
+ * @summary Show a client's balance for every financial year, or for one
  */
 
 export function useClientLedgerStatus<TData = Awaited<ReturnType<typeof clientLedgerStatus>>, TError = ErrorType<ErrorResponse>>(
- clientId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ clientId: string,
+    params?: ClientLedgerStatusParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof clientLedgerStatus>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getClientLedgerStatusQueryOptions(clientId,options)
+  const queryOptions = getClientLedgerStatusQueryOptions(clientId,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

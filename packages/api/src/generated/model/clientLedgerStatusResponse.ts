@@ -15,10 +15,10 @@ export interface ClientLedgerStatusResponse {
   clientId?: string;
   /** Full name of the client */
   clientName?: string;
-  /** First day of the first financial year listed: that of the client's earliest ledger entry, or of the day they were added if earlier */
+  /** First day of the client's first financial year: that of their earliest ledger entry, or of the day they were added if earlier, whichever years are listed */
   clientSince?: string;
-  /** Number of financial years listed, from clientSince to the current year */
+  /** Number of financial years from clientSince to the current year, whether every one is listed or only the year asked for */
   yearCount?: number;
-  /** Every financial year from clientSince to the current one, latest first, including years with no entries */
+  /** Every financial year from clientSince to the current one, latest first, including years with no entries; or only the year asked for */
   years?: FinancialYearStatus[];
 }

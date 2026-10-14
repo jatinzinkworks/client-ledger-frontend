@@ -9,7 +9,7 @@ import { retryUnlessNotFound } from './singletonSetting';
 export function useClientYearBalances(clientId: string) {
   const enabled = !!clientId;
   // orval interpolates path params as-is, so encode the id here.
-  const query = useClientLedgerStatus(encodeURIComponent(clientId), { query: { enabled, retry: retryUnlessNotFound } });
+  const query = useClientLedgerStatus(encodeURIComponent(clientId), undefined, { query: { enabled, retry: retryUnlessNotFound } });
   return {
     // Only what was fetched since the page opened — never an older cached copy.
     status: freshData(query),

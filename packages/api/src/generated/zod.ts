@@ -1487,6 +1487,290 @@ export const PostDueServicesResponse = zod.array(PostDueServicesResponseItem)
 
 
 /**
+ * Returns, across every client and one Indian financial year (1 April to 31 March): the total billed, the total payment received, what is pending (billed less received) and the total discount given, worked out as each client's ledger summary does. Charges count in the year they fell due and payments in the year they were received; earlier years' balances are not brought forward. Also returns how many clients, companies and assigned services there are now. previousToDate gives the same figures for the previous year up to the same point in it (today a year earlier while the year is running, the whole previous year once it is over), so this year to date compares fairly with last.
+ * @summary Show the firm's position for a financial year
+ */
+export const OverviewQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to total, written as yyyy-yy')
+})
+
+export const OverviewResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March) the amounts cover'),
+  "fromDate": zod.iso.date().optional().describe('First day of the financial year'),
+  "toDate": zod.iso.date().optional().describe('Last day of the financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the year across every client: taxable amounts plus GST, after discount'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the year across every client'),
+  "pending": zod.number().optional().describe('Billed less received in the year; negative when more was received. Earlier years\' balances are not brought forward'),
+  "totalDiscount": zod.number().optional().describe('Sum of the discounts given on the year\'s service charges'),
+  "previousToDate": zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year the period falls in'),
+  "fromDate": zod.iso.date().optional().describe('First day of the period: the first day of the financial year'),
+  "toDate": zod.iso.date().optional().describe('Last day of the period'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the period: taxable amounts plus GST, after discount'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; negative when more was received'),
+  "totalDiscount": zod.number().optional().describe('Sum of the discounts given on the period\'s service charges')
+}).optional().describe('The same figures for the previous financial year, up to the same point in it: the same day a year earlier while the requested year is running, its whole year once the requested year is over. For comparing this year to date with last year to date'),
+  "totalClients": zod.int().optional().describe('Number of clients, as of now'),
+  "totalCompanies": zod.int().optional().describe('Number of companies across every client, as of now'),
+  "totalServices": zod.int().optional().describe('Number of services assigned across every company of every client, as of now')
+}).describe('The firm\'s position for one financial year across every client')
+
+
+/**
+ * Returns the managers whose clients still owe, most first, with what those clients were billed and paid and what remains pending (billed less received) across all of them, and how many clients each manager has. Clients count towards the manager they are assigned to now, including their history from before. Given a financialYear, only charges falling due and payments received in that year count; without one, every year to date counts, as in each manager's totalPending. Managers whose clients are settled or in credit overall are left out; those owing the same are ranked in identifier order.
+ * @summary Rank the managers whose clients owe most
+ */
+export const topPendingManagersQueryLimitDefault = 10;
+
+export const TopPendingManagersQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topPendingManagersQueryLimitDefault).describe('Most managers to return, from 1 to 50')
+})
+
+export const TopPendingManagersResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most managers asked for'),
+  "managers": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the manager whose clients owe most'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager'),
+  "managerName": zod.string().optional().describe('Full name of the manager'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager now'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges of the manager\'s clients in the period: taxable amounts plus GST, after discount'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received from the manager\'s clients in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; always above zero here')
+}).describe('A manager and what their clients still owe')).optional().describe('The managers whose clients still owe, most first, at most limit of them; those whose clients are settled or in credit overall are left out')
+}).describe('The managers whose clients owe most')
+
+
+/**
+ * Returns the companies still owing, most first, with what each was billed and paid and what remains pending (billed less received), and the client each belongs to. Given a financialYear, only charges falling due and payments received in that year count, as in each company's ledger summary; without one, every year to date counts. Companies settled or in credit are left out; those owing the same are ranked in identifier order.
+ * @summary Rank the companies owing most
+ */
+export const topPendingCompaniesQueryLimitDefault = 10;
+
+export const TopPendingCompaniesQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topPendingCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 50')
+})
+
+export const TopPendingCompaniesResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most companies asked for'),
+  "companies": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the company owing most'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client the company belongs to'),
+  "clientName": zod.string().optional().describe('Full name of the client the company belongs to'),
+  "totalBilled": zod.number().optional().describe('Sum of the company\'s service charges in the period: taxable amounts plus GST, after discount'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the company\'s payments received in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; always above zero here')
+}).describe('A company and what it still owes')).optional().describe('The companies still owing, most first, at most limit of them; those settled or in credit are left out')
+}).describe('The companies owing most')
+
+
+/**
+ * Returns the clients still owing, most first, with what each was billed and paid and what remains pending (billed less received) across all of their companies, and their manager. Given a financialYear, only charges falling due and payments received in that year count, as in each client's ledger summary; without one, every year to date counts, as in the client list's totalPending. Clients settled or in credit are left out; those owing the same are ranked in identifier order.
+ * @summary Rank the clients owing most
+ */
+export const topPendingClientsQueryLimitDefault = 10;
+
+export const TopPendingClientsQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topPendingClientsQueryLimitDefault).describe('Most clients to return, from 1 to 50')
+})
+
+export const TopPendingClientsResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most clients asked for'),
+  "clients": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the client owing most'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Full name of the client'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "totalBilled": zod.number().optional().describe('Sum of the client\'s service charges in the period: taxable amounts plus GST, after discount'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the client\'s payments received in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; always above zero here')
+}).describe('A client and what they still owe')).optional().describe('The clients still owing, most first, at most limit of them; those settled or in credit are left out')
+}).describe('The clients owing most')
+
+
+/**
+ * Returns the managers whose clients were billed anything, most billed first, with what was billed to those clients (service charges, GST included, after discount), what was received from them and what remains pending, and how many clients each manager has. Clients count towards the manager they are assigned to now, including their history from before. Given a financialYear, only charges falling due and payments received in that year count; without one, every year to date counts. Managers billed the same are ranked in identifier order.
+ * @summary Rank the managers whose clients were billed most
+ */
+export const topBilledManagersQueryLimitDefault = 10;
+
+export const TopBilledManagersQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topBilledManagersQueryLimitDefault).describe('Most managers to return, from 1 to 50')
+})
+
+export const TopBilledManagersResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most managers asked for'),
+  "managers": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the manager whose clients were billed most'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager'),
+  "managerName": zod.string().optional().describe('Full name of the manager'),
+  "clientCount": zod.int().optional().describe('Number of clients assigned to the manager now'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges of the manager\'s clients in the period: taxable amounts plus GST, after discount; always above zero here'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received from the manager\'s clients in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; negative when more was received')
+}).describe('A manager and what was billed to their clients')).optional().describe('The managers whose clients were billed anything, most billed first, at most limit of them')
+}).describe('The managers whose clients were billed most')
+
+
+/**
+ * Returns the companies billed anything, most billed first, with what each was billed (service charges, GST included, after discount) and paid, what remains pending, and the client each belongs to. Given a financialYear, only charges falling due and payments received in that year count, as in each company's ledger summary; without one, every year to date counts. Companies billed the same are ranked in identifier order.
+ * @summary Rank the companies billed most
+ */
+export const topBilledCompaniesQueryLimitDefault = 10;
+
+export const TopBilledCompaniesQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topBilledCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 50')
+})
+
+export const TopBilledCompaniesResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most companies asked for'),
+  "companies": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the company billed most'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Name of the company'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client the company belongs to'),
+  "clientName": zod.string().optional().describe('Full name of the client the company belongs to'),
+  "totalBilled": zod.number().optional().describe('Sum of the company\'s service charges in the period: taxable amounts plus GST, after discount; always above zero here'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the company\'s payments received in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; negative when more was received')
+}).describe('A company and what it was billed')).optional().describe('The companies billed anything, most billed first, at most limit of them')
+}).describe('The companies billed most')
+
+
+/**
+ * Returns the clients billed anything, most billed first, with what each was billed (service charges, GST included, after discount) and paid across all of their companies, what remains pending, and their manager. Given a financialYear, only charges falling due and payments received in that year count, as in each client's ledger summary; without one, every year to date counts. Clients billed the same are ranked in identifier order.
+ * @summary Rank the clients billed most
+ */
+export const topBilledClientsQueryLimitDefault = 10;
+
+export const TopBilledClientsQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
+  "limit": zod.int().default(topBilledClientsQueryLimitDefault).describe('Most clients to return, from 1 to 50')
+})
+
+export const TopBilledClientsResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Financial year the amounts cover. Absent when they cover every year to date'),
+  "limit": zod.int().optional().describe('The most clients asked for'),
+  "clients": zod.array(zod.object({
+  "rank": zod.int().optional().describe('Position in the ranking, from 1 for the client billed most'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Full name of the client'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "totalBilled": zod.number().optional().describe('Sum of the client\'s service charges in the period: taxable amounts plus GST, after discount; always above zero here'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the client\'s payments received in the period'),
+  "pending": zod.number().optional().describe('Billed less received in the period; negative when more was received')
+}).describe('A client and what they were billed')).optional().describe('The clients billed anything, most billed first, at most limit of them')
+}).describe('The clients billed most')
+
+
+/**
+ * Returns the latest payments received across every client and company, most recently received first; payments received the same day come latest recorded first. Each carries its amount as a positive number, how and when it was received, and the company and client that made it. 20 are returned unless limit asks otherwise.
+ * @summary List the latest payments received
+ */
+export const recentPaymentsQueryLimitDefault = 20;
+
+export const RecentPaymentsQueryParams = zod.object({
+  "limit": zod.int().default(recentPaymentsQueryLimitDefault).describe('Most payments to return, from 1 to 100')
+})
+
+export const RecentPaymentsResponse = zod.object({
+  "limit": zod.int().optional().describe('The most payments asked for'),
+  "payments": zod.array(zod.object({
+  "paymentId": zod.uuid().optional().describe('Identifier of the payment\'s ledger entry'),
+  "dateReceived": zod.iso.date().optional().describe('Date the payment was received'),
+  "amount": zod.number().optional().describe('Amount received, as a positive number'),
+  "method": zod.enum(['BANK_TRANSFER', 'UPI', 'CHEQUE', 'CASH']).optional().describe('How the payment was received'),
+  "reference": zod.string().optional().describe('Reference of the payment, such as a UTR or cheque number. Absent when none was given'),
+  "comment": zod.string().optional().describe('Note about the payment. Absent when none was given'),
+  "companyId": zod.uuid().optional().describe('Identifier of the company that paid'),
+  "companyName": zod.string().optional().describe('Name of the company that paid'),
+  "clientId": zod.uuid().optional().describe('Identifier of the client the company belongs to'),
+  "clientName": zod.string().optional().describe('Full name of the client the company belongs to'),
+  "recordedAt": zod.iso.datetime({"offset":true}).optional().describe('When the payment was recorded')
+}).describe('A payment received, with who made it')).optional().describe('The latest payments, most recently received first; payments received the same day come latest recorded first. At most limit of them')
+}).describe('The latest payments received across every client')
+
+
+/**
+ * Returns all twelve months of one Indian financial year, April first, each with what was billed across every client (service charges falling due in the month, GST included, after discount), what was received in the month and the discount given. Months without entries are listed with zeros.
+ * @summary Show what was billed and received each month of a financial year
+ */
+export const MonthlyTrendQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to show, written as yyyy-yy')
+})
+
+export const MonthlyTrendResponse = zod.object({
+  "financialYear": zod.string().optional().describe('The Indian financial year'),
+  "months": zod.array(zod.object({
+  "month": zod.string().optional().describe('The calendar month, written as yyyy-MM'),
+  "billed": zod.number().optional().describe('Service charges falling due in the month, GST included, after discount'),
+  "received": zod.number().optional().describe('Payments received in the month'),
+  "discount": zod.number().optional().describe('Discount given on the service charges falling due in the month')
+}).describe('What was billed and received across every client in one month')).optional().describe('All twelve months of the year, April first; months without entries have every amount zero')
+}).describe('What was billed and received across every client in each month of a financial year')
+
+
+/**
+ * Returns every service category (Compliance, Tax, Audit, Accounting and Advisory), billed most first, each with what its catalog services were billed in the year (service charges falling due in it, GST included, after discount) and how many of them were billed. Categories are those the services are in now. Given topServices, each category also lists that many of its most billed services.
+ * @summary Split a financial year's billing across the practice areas
+ */
+export const billedByCategoryQueryTopServicesDefault = 0;
+
+export const BilledByCategoryQueryParams = zod.object({
+  "financialYear": zod.string().describe('Indian financial year to split, written as yyyy-yy'),
+  "topServices": zod.int().default(billedByCategoryQueryTopServicesDefault).describe('Most billed services to list in each category, from 0 to 10; 0 lists none')
+})
+
+export const BilledByCategoryResponse = zod.object({
+  "financialYear": zod.string().optional().describe('The Indian financial year'),
+  "categories": zod.array(zod.object({
+  "category": zod.enum(['COMPLIANCE', 'TAX', 'AUDIT', 'ACCOUNTING', 'ADVISORY']).optional().describe('The practice area'),
+  "billed": zod.number().optional().describe('Service charges of the category\'s services falling due in the year, GST included, after discount'),
+  "serviceCount": zod.int().optional().describe('How many of the category\'s catalog services were billed in the year'),
+  "topServices": zod.array(zod.object({
+  "catalogServiceId": zod.uuid().optional().describe('Identifier of the catalog service'),
+  "serviceName": zod.string().optional().describe('Name of the catalog service'),
+  "billed": zod.number().optional().describe('Service charges falling due in the year, GST included, after discount')
+}).describe('A catalog service and what it was billed')).optional().describe('The category\'s services billed most, most first; those billed the same in name order. At most topServices of them. Absent when topServices is 0')
+}).describe('What one practice area was billed in a financial year')).optional().describe('Every practice area, billed most first; those billed the same in the catalog\'s order. Areas with nothing billed are listed with zero')
+}).describe('A financial year\'s billing split across the practice areas')
+
+
+/**
+ * Returns, as of today, what remains unpaid across every company split into ranges of days past due: 0-30, 31-60, 61-90 and 90+, each with how many companies owe in it. Days past due run from the date a service charge fell due. Payments are not matched to charges, so each company's payments are applied to its oldest charges first; companies settled or in credit owe nothing. Also returns what has been due for longer than the payment terms' markOverdueAfterDays (60 when no payment terms are saved) as overdue.
+ * @summary Show how long what the firm is owed has been due
+ */
+export const AgeingResponse = zod.object({
+  "asOf": zod.iso.date().optional().describe('The day the ageing is worked out on: today'),
+  "overdueAfterDays": zod.int().optional().describe('Days past due after which an unpaid charge is overdue, from the payment terms'),
+  "buckets": zod.array(zod.object({
+  "label": zod.string().optional().describe('The range of days, as shown on the chart'),
+  "fromDays": zod.int().optional().describe('Fewest days past due in the range'),
+  "toDays": zod.int().optional().describe('Most days past due in the range. Absent for the last, open-ended range'),
+  "amount": zod.number().optional().describe('What remains unpaid of the charges due for this many days'),
+  "companyCount": zod.int().optional().describe('How many companies owe something in the range')
+}).describe('What is owed that has been due for a range of days')).optional().describe('The ranges of days past due, newest first: 0-30, 31-60, 61-90 and 90+. Every range is listed, with zero when nothing is owed in it'),
+  "total": zod.number().optional().describe('Everything owed: the sum of the ranges'),
+  "overdue": zod.number().optional().describe('What has been due for more than overdueAfterDays'),
+  "companyCount": zod.int().optional().describe('How many companies owe anything')
+}).describe('How long what the firm is owed has been due, across every client')
+
+
+/**
  * Returns, for the client and one Indian financial year (1 April to 31 March): the total billed, the total payment received, what is pending (billed less received), and the total discount given, across every company of the client together; and the client's last payment, naming the company that made it. As for a single company, charges count in the year they fell due and payments in the year they were received.
  * @summary Summarise a client's account for a financial year, across all of their companies
  */
@@ -1518,18 +1802,25 @@ export const SummarizeClientResponse = zod.object({
 
 
 /**
- * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. Each year also carries the same figures for each company with entries in it.
- * @summary Show a client's balance for every financial year
+ * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first, or only for the financialYear given: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. clientSince and yearCount always cover every year since then, whichever years are listed. Each year also carries the same figures for each company with entries in it; with pendingOnly, only the companies still owing for the year (a closing balance above zero) are listed, while the year's own figures and companyCount still cover every company.
+ * @summary Show a client's balance for every financial year, or for one
  */
 export const ClientLedgerStatusParams = zod.object({
   "clientId": zod.uuid().describe('Identifier of the client')
 })
 
+export const clientLedgerStatusQueryPendingOnlyDefault = false;
+
+export const ClientLedgerStatusQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Only list this Indian financial year, written as yyyy-yy. Omit to list every year since the client became one'),
+  "pendingOnly": zod.boolean().default(clientLedgerStatusQueryPendingOnlyDefault).describe('List, in each year, only the companies still owing for it. The year\'s own figures still cover every company')
+})
+
 export const ClientLedgerStatusResponse = zod.object({
   "clientId": zod.uuid().optional().describe('Identifier of the client'),
   "clientName": zod.string().optional().describe('Full name of the client'),
-  "clientSince": zod.iso.date().optional().describe('First day of the first financial year listed: that of the client\'s earliest ledger entry, or of the day they were added if earlier'),
-  "yearCount": zod.int().optional().describe('Number of financial years listed, from clientSince to the current year'),
+  "clientSince": zod.iso.date().optional().describe('First day of the client\'s first financial year: that of their earliest ledger entry, or of the day they were added if earlier, whichever years are listed'),
+  "yearCount": zod.int().optional().describe('Number of financial years from clientSince to the current year, whether every one is listed or only the year asked for'),
   "years": zod.array(zod.object({
   "financialYear": zod.string().optional().describe('Indian financial year (1 April to 31 March)'),
   "fromDate": zod.iso.date().optional().describe('First day of the financial year'),
@@ -1550,8 +1841,8 @@ export const ClientLedgerStatusResponse = zod.object({
   "received": zod.number().optional().describe('Payments received in the year'),
   "closingBalance": zod.number().optional().describe('Billed less discount less received: what the year\'s activity left owing; negative when more was received'),
   "status": zod.enum(['PENDING', 'CARRIED', 'SETTLED']).optional().describe('Where the company\'s year stands')
-}).describe('One company\'s balance in one financial year')).optional().describe('The same figures for each company with ledger entries in the year, ordered by company name; they add up to the year\'s')
-}).describe('A client\'s balance in one financial year')).optional().describe('Every financial year from clientSince to the current one, latest first, including years with no entries')
+}).describe('One company\'s balance in one financial year')).optional().describe('The same figures for each company with ledger entries in the year, ordered by company name; they add up to the year\'s. With pendingOnly, only the companies still owing for the year')
+}).describe('A client\'s balance in one financial year')).optional().describe('Every financial year from clientSince to the current one, latest first, including years with no entries; or only the year asked for')
 }).describe('A client\'s ledger balance for every financial year since they became a client')
 
 

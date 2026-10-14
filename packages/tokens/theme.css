@@ -29,6 +29,8 @@
   --sidebar-muted: #98A5B6;
   --sidebar-accent: #0F3568;
   --sidebar-border: #2A4A7A;
+  --chart-billed: #2A78D6;
+  --chart-received: #1BAF7A;
   --sidebar-highlight: #FFFFFF;
   --sidebar-highlight-foreground: #04224C;
 }
@@ -61,6 +63,8 @@
   --sidebar-muted: #98A5B6;
   --sidebar-accent: #0F3568;
   --sidebar-border: #1F3D6B;
+  --chart-billed: #3987E5;
+  --chart-received: #199E70;
   --sidebar-highlight: #FFFFFF;
   --sidebar-highlight-foreground: #04224C;
 }
@@ -93,6 +97,8 @@
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
+  --color-chart-billed: var(--chart-billed);
+  --color-chart-received: var(--chart-received);
   --color-sidebar-highlight: var(--sidebar-highlight);
   --color-sidebar-highlight-foreground: var(--sidebar-highlight-foreground);
   --radius-sm: 4px;

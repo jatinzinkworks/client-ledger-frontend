@@ -27,7 +27,7 @@ export function ClientCard({ client }: { client: ClientSummaryResponse }) {
           <h2 className="truncate text-xl font-bold">{clientName(client)}</h2>
           <p className="truncate text-sm text-muted-foreground">{client.email}</p>
         </div>
-        {status && <AccountStatusBadge status={status} />}
+        {status && <AccountStatusBadge status={status} className="px-3.5 text-[13px]" />}
       </div>
 
       <div className="flex flex-1 flex-col gap-2">
