@@ -27,6 +27,8 @@ export interface ClientResponse {
   managerName?: string;
   /** Discount granted to the client, as a percentage */
   discountPercent?: number;
+  /** Whether the client has agreed to receive WhatsApp messages from the firm */
+  whatsappOptIn?: boolean;
   /** Companies the client holds, ordered by name */
   companies?: CompanyResponse[];
   /** What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id */

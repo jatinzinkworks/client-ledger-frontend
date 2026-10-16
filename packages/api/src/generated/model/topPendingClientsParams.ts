@@ -12,7 +12,7 @@ export type TopPendingClientsParams = {
  */
 financialYear?: string;
 /**
- * Most clients to return, from 1 to 50
+ * Most clients to return, from 1 to 100
  */
 limit?: number;
 };

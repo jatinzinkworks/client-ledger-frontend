@@ -17,14 +17,15 @@ const normalizeAll = (services: CatalogServiceResponse[]) => services.map(normal
 /**
  * The service catalog for a screen, shared by web and mobile: the full list (the endpoint is
  * not paged) plus create / update / delete and bulk fee changes, each of which refreshes the
- * list on success.
+ * list on success. Given a financialYear, each service's totalBilled covers that year only;
+ * without one, every year to date (screens that do not show it leave it out).
  */
-export function useServiceCatalog() {
+export function useServiceCatalog(financialYear?: string) {
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
 
-  // Fetched without financialYear (by request), so services carry no per-year totalBilled.
-  const query = useListServices(undefined, { query: { select: normalizeAll } });
+  // Invalidating by the bare list key also refreshes every year's copy.
+  const query = useListServices(financialYear ? { financialYear } : undefined, { query: { select: normalizeAll } });
   const create = useCreateService({ mutation: { onSuccess: refresh } });
   const update = useUpdateService({ mutation: { onSuccess: refresh } });
   const remove = useDeleteService({ mutation: { onSuccess: refresh } });

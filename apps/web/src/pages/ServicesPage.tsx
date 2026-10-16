@@ -1,5 +1,5 @@
 import { useServiceCatalog, type CatalogServiceResponse } from '@cl/api'
-import { filterServices, type CategoryFilter } from '@cl/schemas'
+import { filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas'
 import { Plus, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -13,12 +13,15 @@ import { ServiceFilters } from '@/components/services/ServiceFilters'
 import { Spinner } from '@/components/Spinner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { useFinancialYear } from '@/financialYear/useFinancialYear'
 
 /** What the side sheet is showing: nothing, a new service, an existing one, or Adjust Prices. */
 type Editing = { kind: 'closed' } | { kind: 'new' } | { kind: 'edit'; service: CatalogServiceResponse } | { kind: 'adjust' }
 
 export function ServicesPage() {
-  const catalog = useServiceCatalog()
+  const { financialYear } = useFinancialYear()
+  // Each card's billed amount is for the selected year.
+  const catalog = useServiceCatalog(financialYear)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('ALL')
   const [editing, setEditing] = useState<Editing>({ kind: 'closed' })
@@ -31,7 +34,7 @@ export function ServicesPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        eyebrow={catalog.isLoading ? undefined : `${count} ${count === 1 ? 'Service' : 'Services'}`}
+        eyebrow={catalog.isLoading ? undefined : servicesEyebrow(count, financialYear)}
         title="Services"
         actions={
           <>

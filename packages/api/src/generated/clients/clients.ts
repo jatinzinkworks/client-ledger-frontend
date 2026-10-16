@@ -30,7 +30,8 @@ import type {
   ClientSummaryResponse,
   ClientUpdateRequest,
   ErrorResponse,
-  ListClientsParams
+  ListClientsParams,
+  WhatsAppOptInRequest
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -166,7 +167,7 @@ export const getUpdateClientUrl = (id: string,) => {
 }
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount. The client's WhatsApp opt-in is left as it is; record it with PATCH /clients/{id}/whatsapp-opt-in.
  * @summary Update a client
  */
 export const updateClient = async (id: string,
@@ -515,4 +516,93 @@ export const useCreateClient = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCreateClientMutationOptions(options), queryClient);
+    }
+    export const getUpdateWhatsAppOptInUrl = (id: string,) => {
+
+
+
+
+  return `/psc/cl/v1/clients/${id}/whatsapp-opt-in`
+}
+
+/**
+ * Sets whether the client agrees to receive WhatsApp messages from the firm, such as payment reminders, and changes nothing else. WhatsApp messages are only sent to clients who have opted in. This, and creating a client, are the only ways to change it: updating a client leaves it as it is. When a client changes from opted out to opted in, and the WHATSAPP_OPT_IN_CONFIRMATION_TEMPLATE setting names a template, they are sent a WhatsApp message confirming it in the background once the change is saved. The response does not wait for it and does not depend on it: if it cannot be sent, the opt-in still stands and the failure is logged.
+ * @summary Record a client's WhatsApp opt-in
+ */
+export const updateWhatsAppOptIn = async (id: string,
+    whatsAppOptInRequest: WhatsAppOptInRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ClientResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<ClientResponse>(getUpdateWhatsAppOptInUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(whatsAppOptInRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateWhatsAppOptInMutationKey = () => ['updateWhatsAppOptIn'] as const;
+
+export const getUpdateWhatsAppOptInMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext> => {
+
+const mutationKey = getUpdateWhatsAppOptInMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, UpdateWhatsAppOptInMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateWhatsAppOptIn(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateWhatsAppOptInMutationResult = NonNullable<Awaited<ReturnType<typeof updateWhatsAppOptIn>>>
+    export type UpdateWhatsAppOptInMutationBody = WhatsAppOptInRequest
+    export type UpdateWhatsAppOptInMutationError = ErrorType<ErrorResponse>
+    export type UpdateWhatsAppOptInMutationVariables = {id: string;data: WhatsAppOptInRequest}
+
+    /**
+ * @summary Record a client's WhatsApp opt-in
+ */
+export const useUpdateWhatsAppOptIn = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateWhatsAppOptIn>>,
+        TError,
+        UpdateWhatsAppOptInMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateWhatsAppOptInMutationOptions(options), queryClient);
     }

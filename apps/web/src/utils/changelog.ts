@@ -9,6 +9,20 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '16 Oct 2026, 13:29:07',
+    highlights: [
+      'On the Services screen (web and mobile), each service now shows what it billed in the selected financial year, rather than across every year.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '16 Oct 2026, 09:17:10',
+    highlights: [
+      'The Overview now lists the top 100 clients and companies who owe most (up from 10), and the top 20 managers.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '14 Oct 2026, 17:09:50',
     highlights: [
       'Payment Terms on mobile now match the web: pick a reminder from the same list (or turn reminders off), and see an example due date as you type.',

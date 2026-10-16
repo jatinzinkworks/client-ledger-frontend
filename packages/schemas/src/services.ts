@@ -20,6 +20,7 @@ import {
 import { z } from 'zod';
 
 import { blankToUndefined, hasAtMostTwoDecimals } from './fields';
+import { financialYearLabel } from './financialYears';
 
 // Lengths and bounds come from the generated OpenAPI schema. The schedule rules mirror the
 // backend's @AssertTrue checks on CatalogServiceRequest: a recurring service needs a day of
@@ -222,7 +223,11 @@ export const formatInr = (amount: number) => inr.format(amount);
 
 export const formatGst = (rate: number | undefined) => `+ GST ${formatRate(rate ?? DEFAULT_GST_RATE)}`;
 
-/** "₹77,000 Billed"; empty when the list does not carry the amount. */
+/** "12 Services · Billed In FY 2026–27": the Services screen's eyebrow, naming the year the cards' billed amounts cover. */
+export const servicesEyebrow = (count: number, financialYear: string) =>
+  `${count} ${count === 1 ? 'Service' : 'Services'} · Billed In ${financialYearLabel(financialYear)}`;
+
+/** "₹77,000 Billed" (in the year the list was fetched for); empty when the list does not carry the amount. */
 export const serviceBilledLabel = (totalBilled: number | undefined) =>
   totalBilled != null ? `${formatInr(totalBilled)} Billed` : '';
 

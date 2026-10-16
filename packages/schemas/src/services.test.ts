@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  servicesEyebrow,
   dayLabel,
   filterServices,
   formatGst,
@@ -166,6 +167,13 @@ describe('nextInvoiceDate', () => {
 
   it('has no next invoice for one-off billing', () => {
     expect(nextInvoiceDate('ONE_OFF', undefined)).toBeUndefined();
+  });
+});
+
+describe('servicesEyebrow', () => {
+  it('counts the services and names the year their billed amounts cover', () => {
+    expect(servicesEyebrow(12, '2026-27')).toBe('12 Services · Billed In FY 2026–27');
+    expect(servicesEyebrow(1, '2025-26')).toBe('1 Service · Billed In FY 2025–26');
   });
 });
 

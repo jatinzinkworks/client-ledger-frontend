@@ -12,7 +12,7 @@ export type TopBilledCompaniesParams = {
  */
 financialYear?: string;
 /**
- * Most companies to return, from 1 to 50
+ * Most companies to return, from 1 to 100
  */
 limit?: number;
 };

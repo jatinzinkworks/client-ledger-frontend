@@ -29,8 +29,14 @@ import { awaitingFresh, freshData } from './fresh';
 // The Overview screen: the firm's figures for a financial year, who owes and who was billed
 // most, and the latest payments received. Each is fresh-only, like the client screens.
 
-/** How many clients / companies / managers a ranking lists. */
+/** How many clients / companies / managers a Billed Most ranking lists. */
 export const RANKING_LIMIT = 10;
+/** How many each Who Owes Most panel lists (the backend allows clients and companies 100, managers 50). */
+export const PENDING_RANKING_LIMITS: Readonly<Record<RankSubject, number>> = {
+  clients: 100,
+  companies: 100,
+  managers: 20,
+};
 /** How many of the latest payments the Overview lists. */
 export const RECENT_PAYMENTS_LIMIT = 20;
 /** How many of its most billed services each category lists. */
@@ -142,10 +148,12 @@ const RANKINGS: Readonly<Record<RankMeasure, Readonly<Record<RankSubject, Rankin
 
 /**
  * The clients, companies or managers who owe (pending) or were billed (billed) most, at most
- * RANKING_LIMIT of them: in one financial year, or every year to date when none is given.
+ * PENDING_RANKING_LIMITS / RANKING_LIMIT of them: in one financial year, or every year to date
+ * when none is given.
  */
 export function useOverviewRanking(measure: RankMeasure, subject: RankSubject, financialYear?: string) {
-  const params: RankingParams = financialYear ? { financialYear, limit: RANKING_LIMIT } : { limit: RANKING_LIMIT };
+  const limit = measure === 'pending' ? PENDING_RANKING_LIMITS[subject] : RANKING_LIMIT;
+  const params: RankingParams = financialYear ? { financialYear, limit } : { limit };
   const query = useQuery(RANKINGS[measure][subject](params));
   return {
     entries: freshData(query),

@@ -44,6 +44,8 @@ export interface ClientRequest {
      * @maximum 100
      */
   discountPercent?: number;
+  /** Whether the client has agreed to receive WhatsApp messages from the firm, such as payment reminders. WhatsApp requires this consent before any message is sent. Omit for false. Change it later with PATCH /clients/{id}/whatsapp-opt-in */
+  whatsappOptIn?: boolean;
   /**
      * Companies the client owns or acts for
      * @minItems 0

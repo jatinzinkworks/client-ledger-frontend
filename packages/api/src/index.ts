@@ -20,6 +20,7 @@ export { useManagerCatalog } from './hooks/useManagerCatalog';
 export { useManagerClients } from './hooks/useManagerClients';
 export {
   CATEGORY_TOP_SERVICES,
+  PENDING_RANKING_LIMITS,
   RANKING_LIMIT,
   RECENT_PAYMENTS_LIMIT,
   useBillingByCategory,

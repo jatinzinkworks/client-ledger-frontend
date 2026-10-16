@@ -184,6 +184,7 @@ export const GetManagerResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
   "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
@@ -242,6 +243,7 @@ export const UpdateManagerResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
   "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
@@ -278,6 +280,7 @@ export const GetClientResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companies": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the company'),
   "companyName": zod.string().optional().describe('Registered name of the company'),
@@ -298,7 +301,7 @@ export const GetClientResponse = zod.object({
 
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount. The client's WhatsApp opt-in is left as it is; record it with PATCH /clients/{id}/whatsapp-opt-in.
  * @summary Update a client
  */
 export const UpdateClientParams = zod.object({
@@ -343,6 +346,7 @@ export const UpdateClientResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companies": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the company'),
   "companyName": zod.string().optional().describe('Registered name of the company'),
@@ -790,6 +794,51 @@ export const CreateServiceResponse = zod.object({
 
 
 /**
+ * Takes no input. Sends every client who has opted in to WhatsApp messages (whatsappOptIn) and owes something across every financial year (billed less received across all of their companies, to date, is more than zero) a WhatsApp payment reminder on the phone number in their record, through Meta's WhatsApp Cloud API. Each is the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with the client's first name, the firm's name, the amount pending and today's date. Numbers without a country code get WHATSAPP_DEFAULT_COUNTRY_CODE. Clients not opted in are counted in notOptedInCount; those settled or in credit overall in skippedCount. Each client is sent to on its own, so one that fails, such as a phone number WhatsApp cannot use, is listed under failures and the others are still reminded. The response returns once every client has been tried.
+ * @summary Send a WhatsApp payment reminder to every client with an amount pending
+ */
+export const SendWhatsAppPaymentRemindersResponse = zod.object({
+  "clientCount": zod.int().optional().describe('How many clients there are'),
+  "sentCount": zod.int().optional().describe('How many clients were sent a reminder'),
+  "notOptedInCount": zod.int().optional().describe('How many clients were not messaged because they have not opted in to WhatsApp'),
+  "skippedCount": zod.int().optional().describe('How many opted-in clients were not reminded because nothing is pending across every year: settled, in credit, or never billed'),
+  "sent": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "pending": zod.number().optional().describe('What the client owes across every financial year and all of their companies: the amount the reminder states'),
+  "messageId": zod.string().optional().describe('Identifier WhatsApp gave the message, for tracing its delivery')
+}).describe('A client sent a WhatsApp payment reminder in a run')).optional().describe('The clients reminded, by name, with what each owes'),
+  "failures": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "error": zod.string().optional().describe('Why the reminder was not sent, such as a phone number WhatsApp cannot use, or WhatsApp refusing the message')
+}).describe('A client owing who could not be sent a WhatsApp reminder')).optional().describe('The clients owing who could not be reminded; empty when every reminder was sent. The other clients are reminded regardless')
+}).describe('The outcome of sending WhatsApp payment reminders to every client with an amount pending')
+
+
+/**
+ * Takes no input. Emails every client who owes something across every financial year (billed less received across all of their companies, to date, is more than zero) an individual payment reminder for that whole amount, under the subject "Payment reminder". It carries the same details as the ledger summary email for the current Indian financial year: billed, discount, received, the last payment and each company's figures, with the year's Excel ledger attached; when earlier years left a balance, it is shown alongside the year's so the figures add up to the amount asked for. It goes to the client, copying in their manager. Clients settled or in credit overall are skipped. Each client is emailed on its own, so one that fails is listed under failures and the others are still reminded. The response returns once every client has been tried.
+ * @summary Email a payment reminder to every client with an amount pending
+ */
+export const SendPaymentRemindersResponse = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year whose figures the reminders detail: the current one. The amounts asked for span every year'),
+  "clientCount": zod.int().optional().describe('How many clients there are'),
+  "sentCount": zod.int().optional().describe('How many clients were sent a reminder'),
+  "skippedCount": zod.int().optional().describe('How many clients were not reminded because nothing is pending across every year: settled, in credit, or never billed'),
+  "sent": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "pending": zod.number().optional().describe('What the client owes across every financial year and all of their companies: the amount the reminder asks for')
+}).describe('A client sent a payment reminder in a run')).optional().describe('The clients reminded, by name, with what each owes'),
+  "failures": zod.array(zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "error": zod.string().optional().describe('Why the email was not sent; nothing was sent to the client')
+}).describe('A client whose ledger summary could not be emailed in a run')).optional().describe('The clients owing who could not be reminded; empty when every reminder was sent. The other clients are reminded regardless')
+}).describe('The outcome of sending payment reminders to every client with an amount pending')
+
+
+/**
  * Takes no input. Emails every client, one after another, their ledger summary for the current Indian financial year across all of their companies, exactly as emailing one client does: to the client, copying in their manager, with the year's Excel ledger attached. Each client is emailed on its own, so one that fails is listed under failures and the others are still emailed. Clients with nothing billed or received in the year are emailed too. The response returns once every client has been tried, so it takes longer the more clients there are.
  * @summary Email every client their ledger summary
  */
@@ -831,6 +880,7 @@ export const ListManagersResponseItem = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
   "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
@@ -886,6 +936,7 @@ export const CreateManagerResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
   "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')).optional().describe('Clients assigned to the manager, ordered by last name then first name, as the client list shows them. Returned when fetching a manager by id'),
@@ -1047,6 +1098,7 @@ export const ListClientsResponseItem = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companyNames": zod.array(zod.string()).optional().describe('Names of the companies the client holds, ordered by name'),
   "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed')
 }).describe('A client as shown in the client list')
@@ -1075,6 +1127,7 @@ export const createClientBodyDiscountPercentDefault = 0;
 export const createClientBodyDiscountPercentMin = 0;
 export const createClientBodyDiscountPercentMax = 100;
 
+export const createClientBodyWhatsappOptInDefault = false;
 export const createClientBodyCompaniesItemCompanyNameMin = 0;
 export const createClientBodyCompaniesItemCompanyNameMax = 200;
 
@@ -1096,6 +1149,7 @@ export const CreateClientBody = zod.object({
   "email": zod.email().min(createClientBodyEmailMin).max(createClientBodyEmailMax).describe('Contact email address'),
   "managerId": zod.uuid().describe('Identifier of the manager from the Manager Catalog who looks after the client'),
   "discountPercent": zod.number().min(createClientBodyDiscountPercentMin).max(createClientBodyDiscountPercentMax).default(createClientBodyDiscountPercentDefault).describe('Discount granted to the client, as a percentage. Also applied to every company that does not set its own'),
+  "whatsappOptIn": zod.boolean().default(createClientBodyWhatsappOptInDefault).describe('Whether the client has agreed to receive WhatsApp messages from the firm, such as payment reminders. WhatsApp requires this consent before any message is sent. Omit for false. Change it later with PATCH /clients/{id}/whatsapp-opt-in'),
   "companies": zod.array(zod.object({
   "companyName": zod.string().min(createClientBodyCompaniesItemCompanyNameMin).max(createClientBodyCompaniesItemCompanyNameMax).describe('Registered name of the company'),
   "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).describe('Legal form of the company'),
@@ -1113,6 +1167,7 @@ export const CreateClientResponse = zod.object({
   "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
   "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
   "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
   "companies": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the company'),
   "companyName": zod.string().optional().describe('Registered name of the company'),
@@ -1199,6 +1254,22 @@ export const AddCompanyResponse = zod.object({
   "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
   "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
 }).describe('A company held against a client')
+
+
+/**
+ * Sends the client a WhatsApp payment reminder for what they owe across every financial year and all of their companies, on the phone number in their record, through Meta's WhatsApp Cloud API: the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with their first name, the firm's name, the amount pending and today's date. The client must have opted in to WhatsApp messages (whatsappOptIn) and owe something. The message is sent before the response returns.
+ * @summary Send one client a WhatsApp payment reminder
+ */
+export const SendWhatsAppPaymentReminderParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const SendWhatsAppPaymentReminderResponse = zod.object({
+  "clientId": zod.uuid().optional().describe('Identifier of the client'),
+  "clientName": zod.string().optional().describe('Name of the client'),
+  "pending": zod.number().optional().describe('What the client owes across every financial year and all of their companies: the amount the reminder states'),
+  "messageId": zod.string().optional().describe('Identifier WhatsApp gave the message, for tracing its delivery')
+}).describe('A client sent a WhatsApp payment reminder in a run')
 
 
 /**
@@ -1571,6 +1642,47 @@ export const PostDueServicesResponse = zod.array(PostDueServicesResponseItem)
 
 
 /**
+ * Sets whether the client agrees to receive WhatsApp messages from the firm, such as payment reminders, and changes nothing else. WhatsApp messages are only sent to clients who have opted in. This, and creating a client, are the only ways to change it: updating a client leaves it as it is. When a client changes from opted out to opted in, and the WHATSAPP_OPT_IN_CONFIRMATION_TEMPLATE setting names a template, they are sent a WhatsApp message confirming it in the background once the change is saved. The response does not wait for it and does not depend on it: if it cannot be sent, the opt-in still stands and the failure is logged.
+ * @summary Record a client's WhatsApp opt-in
+ */
+export const UpdateWhatsAppOptInParams = zod.object({
+  "id": zod.uuid().describe('Identifier of the client')
+})
+
+export const UpdateWhatsAppOptInBody = zod.object({
+  "whatsappOptIn": zod.boolean().describe('True when the client has agreed to receive WhatsApp messages from the firm, such as payment reminders; false when they have withdrawn or not given that consent')
+}).describe('Whether a client agrees to receive WhatsApp messages')
+
+export const UpdateWhatsAppOptInResponse = zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "firstName": zod.string().optional().describe('Given name of the client'),
+  "lastName": zod.string().optional().describe('Family name of the client'),
+  "phone": zod.string().optional().describe('Contact phone number'),
+  "email": zod.string().optional().describe('Contact email address'),
+  "managerId": zod.uuid().optional().describe('Identifier of the manager who looks after the client'),
+  "managerName": zod.string().optional().describe('Full name of the manager who looks after the client'),
+  "discountPercent": zod.number().optional().describe('Discount granted to the client, as a percentage'),
+  "whatsappOptIn": zod.boolean().optional().describe('Whether the client has agreed to receive WhatsApp messages from the firm'),
+  "companies": zod.array(zod.object({
+  "id": zod.uuid().optional().describe('Identifier of the company'),
+  "companyName": zod.string().optional().describe('Registered name of the company'),
+  "companyType": zod.enum(['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'PROPRIETORSHIP', 'TRUST', 'HUF', 'INDIVIDUAL']).optional().describe('Legal form of the company'),
+  "address": zod.string().optional().describe('Registered address of the company'),
+  "discountPercent": zod.number().optional().describe('Discount granted on this company\'s work, as a percentage: the company\'s own, or the client\'s current discount when the company has none of its own'),
+  "discountInherited": zod.boolean().optional().describe('True when the company has no discount of its own, so discountPercent is the client\'s and follows any change to it'),
+  "serviceCount": zod.int().optional().describe('Number of services assigned to the company. Only returned when listing a client\'s companies'),
+  "financialYear": zod.string().optional().describe('Financial year the billing figures below cover. Only returned when listing a client\'s companies for a financial year'),
+  "totalBilled": zod.number().optional().describe('Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year'),
+  "totalPaymentReceived": zod.number().optional().describe('Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year'),
+  "pending": zod.number().optional().describe('Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year')
+}).describe('A company held against a client')).optional().describe('Companies the client holds, ordered by name'),
+  "totalPending": zod.number().optional().describe('What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when fetching a client by id'),
+  "createdAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was added'),
+  "updatedAt": zod.iso.datetime({"offset":true}).optional().describe('When the client was last updated')
+}).describe('A client held in the ledger')
+
+
+/**
  * Returns, across every client and one Indian financial year (1 April to 31 March): the total billed, the total payment received, what is pending (billed less received) and the total discount given, worked out as each client's ledger summary does. Charges count in the year they fell due and payments in the year they were received; earlier years' balances are not brought forward. Also returns how many clients, companies and assigned services there are now. previousToDate gives the same figures for the previous year up to the same point in it (today a year earlier while the year is running, the whole previous year once it is over), so this year to date compares fairly with last.
  * @summary Show the firm's position for a financial year
  */
@@ -1635,7 +1747,7 @@ export const topPendingCompaniesQueryLimitDefault = 10;
 
 export const TopPendingCompaniesQueryParams = zod.object({
   "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
-  "limit": zod.int().default(topPendingCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 50')
+  "limit": zod.int().default(topPendingCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 100')
 })
 
 export const TopPendingCompaniesResponse = zod.object({
@@ -1662,7 +1774,7 @@ export const topPendingClientsQueryLimitDefault = 10;
 
 export const TopPendingClientsQueryParams = zod.object({
   "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
-  "limit": zod.int().default(topPendingClientsQueryLimitDefault).describe('Most clients to return, from 1 to 50')
+  "limit": zod.int().default(topPendingClientsQueryLimitDefault).describe('Most clients to return, from 1 to 100')
 })
 
 export const TopPendingClientsResponse = zod.object({
@@ -1715,7 +1827,7 @@ export const topBilledCompaniesQueryLimitDefault = 10;
 
 export const TopBilledCompaniesQueryParams = zod.object({
   "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
-  "limit": zod.int().default(topBilledCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 50')
+  "limit": zod.int().default(topBilledCompaniesQueryLimitDefault).describe('Most companies to return, from 1 to 100')
 })
 
 export const TopBilledCompaniesResponse = zod.object({
@@ -1742,7 +1854,7 @@ export const topBilledClientsQueryLimitDefault = 10;
 
 export const TopBilledClientsQueryParams = zod.object({
   "financialYear": zod.string().optional().describe('Indian financial year to rank by, written as yyyy-yy. Omit to rank by every year to date'),
-  "limit": zod.int().default(topBilledClientsQueryLimitDefault).describe('Most clients to return, from 1 to 50')
+  "limit": zod.int().default(topBilledClientsQueryLimitDefault).describe('Most clients to return, from 1 to 100')
 })
 
 export const TopBilledClientsResponse = zod.object({

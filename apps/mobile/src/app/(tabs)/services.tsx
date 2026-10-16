@@ -1,5 +1,5 @@
 import { errorMessage, useServiceCatalog } from '@cl/api';
-import { filterServices, type CategoryFilter } from '@cl/schemas';
+import { filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
@@ -7,12 +7,15 @@ import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-n
 import { ServiceCard } from '@/components/services/ServiceCard';
 import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { Button } from '@/components/ui/Button';
+import { useFinancialYear } from '@/financialYear/useFinancialYear';
 import { useThemeColors } from '@/theme/useThemeColors';
 import { adjustPricesHref } from '@/utils/routes';
 import { EYEBROW } from '@/utils/typography';
 
 export default function ServicesScreen() {
-  const catalog = useServiceCatalog();
+  const { financialYear } = useFinancialYear();
+  // Each card's billed amount is for the selected year.
+  const catalog = useServiceCatalog(financialYear);
   const colors = useThemeColors();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CategoryFilter>('ALL');
@@ -37,7 +40,7 @@ export default function ServicesScreen() {
       ListHeaderComponent={
         <View className="gap-3 pb-1">
           <Text className={EYEBROW}>
-            {catalog.isLoading ? ' ' : `${count} ${count === 1 ? 'Service' : 'Services'}`}
+            {catalog.isLoading ? ' ' : servicesEyebrow(count, financialYear)}
           </Text>
           <View className="flex-row gap-2">
             <Button variant="outline" label="Adjust Prices" className="flex-1 py-2" disabled={!count} onPress={openAdjust} />
