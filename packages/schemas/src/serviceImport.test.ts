@@ -25,7 +25,7 @@ describe('Import Services', () => {
         { field: 'Services!B3', message: 'Required' },
         { field: 'Services!AA3', message: 'Unknown column value' },
       ],
-    });
+    }, 'The workbook has invalid cells'); // As the fetcher builds it: the body's message.
     const failure = importFailure(error);
     expect(failure.message).toBe('The workbook has invalid cells');
     expect(failure.cells.map((c) => c.cell)).toEqual(['Services!B3', 'Services!AA3', 'Services!G10']);

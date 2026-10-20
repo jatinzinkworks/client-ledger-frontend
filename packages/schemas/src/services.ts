@@ -343,8 +343,10 @@ export function upcomingInvoiceDates(
   return dates;
 }
 
-const longDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-export const formatDate = (date: Date) => longDate.format(date);
+// Spelled out rather than Intl's en-GB, which writes "Sept" on newer engines but "Sep" on others.
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
+/** "7 Oct 2026", the same in every browser and on every device. */
+export const formatDate = (date: Date) => `${date.getDate()} ${SHORT_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 
 // ── Listing ─────────────────────────────────────────────────────────────────────────────
 

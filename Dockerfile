@@ -81,12 +81,17 @@ USER root
 # The last line prints the patched packages into the build log, so a later scan
 # finding can be read against what this layer actually installed (`|| true`
 # because a log line must never be what fails a build).
-ARG APK_PATCH_BUST=3
+#
+# The `apk add 'pkg>=version'` line sets floors for CVEs a scan has flagged: if the
+# index ever serves an older copy, the build fails rather than ship it.
+#   libexpat >= 2.9.0-r0: CVE-2026-77214 (HIGH), CVE-2026-102633 (MEDIUM)
+ARG APK_PATCH_BUST=4
 RUN echo "apk security-patch layer, bust=${APK_PATCH_BUST}" && \
     apk update && \
     apk upgrade --no-cache libcrypto3 libssl3 libexpat p11-kit p11-kit-trust c-ares curl libcurl \
       libpng pcre2 tiff zlib && \
     apk upgrade --no-cache && \
+    apk add --no-cache 'libexpat>=2.9.0-r0' && \
     rm -rf /var/cache/apk/* && \
     { echo ">>> patched packages:"; \
       apk list --installed | grep -E "^(libssl3|libcrypto3|libexpat|libpng|pcre2|tiff|zlib)-[0-9]" || true; }

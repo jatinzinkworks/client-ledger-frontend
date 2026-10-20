@@ -88,7 +88,9 @@ describe('clientFormSchema', () => {
 
 describe('clientFormDefaults', () => {
   it('starts with one blank Private Limited company', () => {
-    expect(clientFormDefaults().companies).toEqual([{ companyName: '', companyType: 'PRIVATE_LIMITED', address: '', discountPercent: '' }]);
+    expect(clientFormDefaults().companies).toEqual([
+      { companyName: '', companyType: 'PRIVATE_LIMITED', address: '', discountPercent: '', openingBalance: '', openingBalanceDate: '' },
+    ]);
   });
 });
 
@@ -335,6 +337,8 @@ describe('Edit Company', () => {
       companyType: 'LLP',
       address: 'Andheri',
       discountPercent: '0',
+      openingBalance: '',
+      openingBalanceDate: '',
     });
     expect(companyFormDefaults({ ...stored, discountPercent: undefined }).discountPercent).toBe('');
   });

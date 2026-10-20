@@ -9,6 +9,13 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '20 Oct 2026, 14:19:54',
+    highlights: [
+      'Fixes: Record Payment now updates the suggested amount each time you pick another company (until you type your own), and dates read the same everywhere ("27 Sep 2026", never "Sept").',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '20 Oct 2026, 13:50:01',
     highlights: [
       'Import Clients (web and mobile): download the Excel template, list clients and their companies, and import them all at once. You see who was added, or exactly which cells need fixing.',

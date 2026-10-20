@@ -68,7 +68,7 @@ export function RecordPaymentForm({
     control,
     handleSubmit,
     setError,
-    setValue,
+    resetField,
     getFieldState,
     formState: { isDirty },
   } = useForm<RecordPaymentFormInput, unknown, RecordPaymentFormValues>({
@@ -85,10 +85,11 @@ export function RecordPaymentForm({
   // The amount suggests the chosen company's balance — also once it arrives after the screen
   // opened — until it is typed in.
   useEffect(() => {
+    // Made the field's default, so it stays not dirty and the next company can replace it too.
     if (!payment && !getFieldState('amountReceived').isDirty) {
-      setValue('amountReceived', suggestedPaymentAmount(pending));
+      resetField('amountReceived', { defaultValue: suggestedPaymentAmount(pending) });
     }
-  }, [payment, pending, getFieldState, setValue]);
+  }, [payment, pending, getFieldState, resetField]);
 
   const submit = handleSubmit(async (v) => {
     setFormError(undefined);

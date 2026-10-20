@@ -62,7 +62,7 @@ describe('OnboardClientForm', () => {
         { companyName: 'Mehta Exports', companyType: 'LLP', address: '14 MG Road', discountPercent: 5 },
       ],
     })
-  })
+  }, 15_000) // Types two whole companies, which takes a while.
 
   it('keeps Onboard Client disabled until every mandatory field is filled', async () => {
     const { onSave, user } = setup()

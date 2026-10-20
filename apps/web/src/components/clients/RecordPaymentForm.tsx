@@ -67,7 +67,7 @@ export function RecordPaymentForm({
     register,
     handleSubmit,
     setError,
-    setValue,
+    resetField,
     getFieldState,
     formState: { errors, isDirty },
   } = useForm<RecordPaymentFormInput, unknown, RecordPaymentFormValues>({
@@ -100,8 +100,9 @@ export function RecordPaymentForm({
   const companyRegistration = register('companyId', {
     // Suggest the newly chosen company's balance, unless the amount was typed in.
     onChange: (event: ChangeEvent<HTMLSelectElement>) => {
+      // Made the field's default, so it stays not dirty and the next company can replace it too.
       if (!getFieldState('amountReceived').isDirty) {
-        setValue('amountReceived', suggestedPaymentAmount(pendingFor(event.target.value)))
+        resetField('amountReceived', { defaultValue: suggestedPaymentAmount(pendingFor(event.target.value)) })
       }
     },
   })

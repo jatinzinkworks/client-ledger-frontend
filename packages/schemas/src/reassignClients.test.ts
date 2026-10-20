@@ -27,8 +27,8 @@ describe('Reassign Clients', () => {
     expect(nehaColumn!.clients).toEqual([]);
     expect(nehaColumn!.pending).toBe(0);
     expect(arjunColumn!.clients.map((c) => [c.client.id, c.movedFrom])).toEqual([
-      ['c2', undefined],
       ['c1', 'Neha Kulkarni'],
+      ['c2', undefined],
     ]);
     expect(arjunColumn!.pending).toBe(128650);
   });

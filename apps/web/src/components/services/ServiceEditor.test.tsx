@@ -7,6 +7,13 @@ import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 import { ServiceEditor } from './ServiceEditor'
 
+// The Category drop-down asks the backend for its list; without one it falls back to the
+// categories this build knows, which is what these tests use.
+vi.mock('@cl/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@cl/api')>()),
+  useServiceCategories: () => ({ categories: undefined, isLoading: false, error: null }),
+}))
+
 const incomeTax: CatalogServiceResponse = {
   id: 'svc-1',
   serviceName: 'Income tax return — individual',

@@ -57,13 +57,14 @@ describe('EditLedgerEntryForm', () => {
 
   it('previews the amounts as the rates change, then saves them', async () => {
     const { onSave, onDone, user } = setup()
-    const summary = within(screen.getByLabelText('Charge Summary'))
-    expect(summary.getByText('₹5,605')).toBeVisible()
+    // Re-found each time: the summary hides while the rates are invalid (a cleared discount).
+    const summary = () => within(screen.getByLabelText('Charge Summary'))
+    expect(summary().getByText('₹5,605')).toBeVisible()
 
     await user.clear(screen.getByLabelText('Discount %'))
     await user.type(screen.getByLabelText('Discount %'), '10')
     await user.selectOptions(screen.getByLabelText('GST Rate'), '12')
-    expect(summary.getByText('₹5,040')).toBeVisible()
+    expect(summary().getByText('₹5,040')).toBeVisible()
 
     await user.click(saveChanges())
     await waitFor(() => expect(onDone).toHaveBeenCalled())
