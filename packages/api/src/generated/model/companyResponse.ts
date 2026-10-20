@@ -23,14 +23,20 @@ export interface CompanyResponse {
   discountPercent?: number;
   /** True when the company has no discount of its own, so discountPercent is the client's and follows any change to it */
   discountInherited?: boolean;
+  /** The balance the company was taken on with, brought over from before: positive when owed, negative when in credit. Left out when the company has none. Unlike openingBalance, returned whatever its financial year */
+  openingBalanceAmount?: number;
+  /** The date the opening balance stood at, which places it in a financial year. Left out when the company has none */
+  openingBalanceDate?: string;
   /** Number of services assigned to the company. Only returned when listing a client's companies */
   serviceCount?: number;
   /** Financial year the billing figures below cover. Only returned when listing a client's companies for a financial year */
   financialYear?: string;
   /** Sum of the service charges falling due in the financial year: taxable amounts plus GST. Only returned when listing for a financial year */
   totalBilled?: number;
+  /** The opening balance the company was taken on with, when dated in the financial year: positive when owed, negative when in credit; zero otherwise. Only returned when listing for a financial year; see openingBalanceAmount for the balance whatever its year */
+  openingBalance?: number;
   /** Sum of the payments received in the financial year, as a positive number. Only returned when listing for a financial year */
   totalPaymentReceived?: number;
-  /** Billed less received in the financial year; negative when more was received. Only returned when listing for a financial year */
+  /** Billed plus opening balance less received in the financial year; negative when more was received. Only returned when listing for a financial year */
   pending?: number;
 }

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CATEGORY_FILTERS,
+  categoryLabel,
+  categoryOptions,
   servicesEyebrow,
   dayLabel,
   filterServices,
@@ -167,6 +170,32 @@ describe('nextInvoiceDate', () => {
 
   it('has no next invoice for one-off billing', () => {
     expect(nextInvoiceDate('ONE_OFF', undefined)).toBeUndefined();
+  });
+});
+
+describe('category options', () => {
+  it('labels known categories and title-cases ones added later', () => {
+    expect(categoryLabel('CERTIFICATION')).toBe('Certification');
+    expect(categoryLabel('NEW_AREA')).toBe('New Area');
+  });
+
+  it("lists the backend's categories A to Z, keeping the current one", () => {
+    expect(categoryOptions(['TAX', 'AUDIT', 'COMPLIANCE']).map((o) => o.label)).toEqual(['Audit', 'Compliance', 'Tax']);
+    expect(categoryOptions(['TAX'], 'ADVISORY').map((o) => o.value)).toEqual(['ADVISORY', 'TAX']);
+  });
+
+  it('falls back to the built-in categories until the list has loaded', () => {
+    expect(categoryOptions(undefined).map((o) => o.label)).toEqual([
+      'Accounting', 'Advisory', 'Audit', 'Certification', 'Compliance', 'Tax',
+    ]);
+  });
+});
+
+describe('CATEGORY_FILTERS', () => {
+  it('keeps All first, then the categories A to Z', () => {
+    expect(CATEGORY_FILTERS.map((f) => f.label)).toEqual([
+      'All', 'Accounting', 'Advisory', 'Audit', 'Certification', 'Compliance', 'Tax',
+    ]);
   });
 });
 

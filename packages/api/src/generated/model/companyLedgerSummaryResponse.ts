@@ -25,9 +25,11 @@ export interface CompanyLedgerSummaryResponse {
   toDate?: string;
   /** Sum of the service charges falling due in the year: taxable amounts plus GST */
   totalBilled?: number;
+  /** The opening balance the company was taken on with, when dated in the year: positive when owed, negative when in credit; zero otherwise. Not part of totalBilled */
+  openingBalance?: number;
   /** Sum of the payments received in the year, as a positive number */
   totalPaymentReceived?: number;
-  /** Billed less received in the year; negative when the year's payments exceed its billing, for example when they settle an earlier year's charges */
+  /** Billed plus opening balance less received in the year; negative when the year's payments exceed them, for example when they settle an earlier year's charges */
   pending?: number;
   /** Sum of the discounts taken off the service fees billed in the year */
   totalDiscount?: number;

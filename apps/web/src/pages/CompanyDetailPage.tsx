@@ -17,6 +17,7 @@ import {
   ledgerEmailTooltip,
   financialYearLabel,
   isPayment,
+  isServiceCharge,
   ledgerEntryName,
   ledgerSummaryCards,
 } from '@cl/schemas'
@@ -70,7 +71,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   const ledgerExport = useCompanyLedgerExport(id, companyId)
   const ledgerEmail = useCompanyLedgerEmail(id, companyId)
   const navigate = useNavigate()
-  const catalog = useServiceCatalog()
+  const catalog = useServiceCatalog(financialYear)
   // Which side sheet is open: none, Edit Company, Add Service, Record Payment, or editing one
   // service or one ledger entry.
   const [sheet, setSheet] = useState<SheetState>(null)
@@ -184,15 +185,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
 
           <Sheet open={sheet !== null} onOpenChange={(open) => !open && closeSheet()}>
             <SheetContent
-              className="flex w-full flex-col gap-0 p-0 outline-none sm:max-w-[500px]"
-              // Editing a ledger entry (a service charge or a payment) opens without a field
-              // focused: focus the panel itself, so keyboard and screen-reader users still start
-              // inside it.
-              onOpenAutoFocus={(event) => {
-                if (!editingEntry) return
-                event.preventDefault()
-                ;(event.currentTarget as HTMLElement | null)?.focus()
-              }}
+              className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]"
             >
               {sheet === 'edit' && (
                 <EditCompanyForm
@@ -246,7 +239,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
                   }
                 />
               )}
-              {editingEntry && !isPayment(editingEntry) && (
+              {editingEntry && isServiceCharge(editingEntry) && (
                 <EditLedgerEntryForm
                   // Re-mount for another entry, so the form starts from its rates.
                   key={editingEntry.id}

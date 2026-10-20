@@ -289,7 +289,7 @@ export const getUpdateEntryUrl = (clientId: string,
 }
 
 /**
- * Replaces the service fee, discount and GST rate of one ledger entry billed to a company of the client. The discount, taxable, GST and total amounts are worked out again from them, rounded the same way as when entries are posted, so the figures always add up. What the entry bills, its due date, financial year and entry date cannot change. Only service charges have rates; update a payment through its payment endpoint instead.
+ * Replaces the service fee, discount and GST rate of one ledger entry billed to a company of the client. The discount, taxable, GST and total amounts are worked out again from them, rounded the same way as when entries are posted, so the figures always add up. What the entry bills, its due date, financial year and entry date cannot change. Only service charges have rates; update a payment through its payment endpoint instead. An opening balance cannot be changed; delete it if it is wrong.
  * @summary Correct the rates of a ledger entry
  */
 export const updateEntry = async (clientId: string,
@@ -1187,7 +1187,7 @@ export const getExportClientUrl = (clientId: string,
 }
 
 /**
- * Downloads an .xlsx workbook for the client and one Indian financial year (1 April to 31 March), named after both, such as Rohan_Mehta_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the client's ledger summary for the year; its Ledger sheet lists every service charge and payment of the year across all of the client's companies, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. One sheet per company follows, by company name, listing only that company's entries with its own running balance and totals; a company with no entries in the year gets headings and zero totals. As in the summary, charges count in the year they fell due and payments in the year they were received, and each balance starts from zero.
+ * Downloads an .xlsx workbook for the client and one Indian financial year (1 April to 31 March), named after both, such as Rohan_Mehta_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the client's ledger summary for the year; its Ledger sheet lists every service charge and payment of the year across all of the client's companies, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. One sheet per company follows, by company name, listing only that company's entries with its own running balance and totals; a company with no entries in the year gets headings and zero totals. Above its entries, each company sheet shows the company's opening balance and the date it stood at, whatever the year it falls in, or None; it is counted in the balances only when dated in the year exported, as an opening balance entry. As in the summary, charges count in the year they fell due and payments in the year they were received, and each balance starts from zero.
  * @summary Export a client's ledger for a financial year as an Excel workbook
  */
 export const exportClient = async (clientId: string,
@@ -1544,7 +1544,7 @@ export const getExportCompanyUrl = (clientId: string,
 }
 
 /**
- * Downloads an .xlsx workbook for one company of the client and one Indian financial year (1 April to 31 March), named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the company's ledger summary for the year; its Ledger sheet lists every service charge and payment of the company in the year, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. As in the summary, charges count in the year they fell due and payments in the year they were received, and the balance starts from zero.
+ * Downloads an .xlsx workbook for one company of the client and one Indian financial year (1 April to 31 March), named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.xlsx. Its Summary sheet holds the figures of the company's ledger summary for the year; its Ledger sheet lists every service charge and payment of the company in the year, earliest first, with charges as debits, payments as credits, a running balance, and a totals row. Above its entries, the Ledger sheet shows the company's opening balance and the date it stood at, whatever the year it falls in, or None; it is counted in the balance only when dated in the year exported, as an opening balance entry. As in the summary, charges count in the year they fell due and payments in the year they were received, and the balance starts from zero.
  * @summary Export a company's ledger for a financial year as an Excel workbook
  */
 export const exportCompany = async (clientId: string,

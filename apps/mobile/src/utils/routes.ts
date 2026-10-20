@@ -3,6 +3,7 @@
 
 export const clientsHref = '/clients' as const;
 export const newClientHref = '/client/new' as const;
+export const importClientsHref = '/client/import' as const;
 
 export const clientHref = (clientId: string) => ({ pathname: '/client/[clientId]', params: { clientId } }) as const;
 
@@ -39,3 +40,5 @@ export const recordPaymentHref = (clientId: string, companyId?: string) =>
   ({ pathname: '/client/[clientId]/payment', params: companyId ? { clientId, companyId } : { clientId } }) as const;
 
 export const adjustPricesHref = '/service/adjust' as const;
+export const importServicesHref = '/service/import' as const;
+export const reassignClientsHref = '/manager/reassign' as const;

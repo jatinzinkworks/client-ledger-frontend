@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { isNotFound } from '../errors';
 import {
-  getListCompaniesQueryKey,
   useAddCompany,
   useDeleteCompany,
   useListCompanies,
@@ -16,6 +15,7 @@ import {
 } from '../generated/clients/clients';
 import type { ClientUpdateRequest, CompanyRequest } from '../generated/model';
 import { awaitingFresh, freshData } from './fresh';
+import { refreshClientData } from './refreshClientData';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /**
@@ -34,10 +34,10 @@ export function useClient(id: string, financialYear?: string) {
   const update = useUpdateClient({
     mutation: {
       onSuccess: (saved) => {
-        // The PUT returns the client in full, so show it straight away; the list (names,
-        // manager) refreshes in the background.
+        // The PUT returns the client in full, so show it straight away; then everything shown
+        // about the client — companies, summaries, ledgers — and the lists and Overview refresh.
         queryClient.setQueryData(getGetClientQueryKey(encodedId), saved);
-        return queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        return refreshClientData(queryClient, encodedId);
       },
     },
   });
@@ -47,13 +47,9 @@ export function useClient(id: string, financialYear?: string) {
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }) },
   });
 
-  // Company changes alter this client, their companies and the list's company names.
-  const refreshClient = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: getGetClientQueryKey(encodedId) }),
-      queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey(encodedId) }),
-      queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }),
-    ]);
+  // Adding (perhaps with an opening balance) or deleting a company changes the client, their
+  // companies, summaries and pending, and the lists and Overview built from them.
+  const refreshClient = () => refreshClientData(queryClient, encodedId);
   const addCompany = useAddCompany({ mutation: { onSuccess: refreshClient } });
   const deleteCompany = useDeleteCompany({ mutation: { onSuccess: refreshClient } });
 

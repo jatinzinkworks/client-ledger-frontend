@@ -14,10 +14,10 @@ import {
   useRemoveService,
   useUpdateService1,
 } from '../generated/client-services/client-services';
-import { getGetClientQueryKey, getListClientsQueryKey } from '../generated/clients/clients';
 import type { CompanyRequest, ServiceAssignmentRequest, ServiceAssignmentUpdateRequest } from '../generated/model';
 import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
 import { awaitingFresh, freshData } from './fresh';
+import { refreshClientData } from './refreshClientData';
 import { retryUnlessNotFound } from './singletonSetting';
 
 /**
@@ -36,13 +36,10 @@ export function useCompany(clientId: string, companyId: string) {
   const update = useUpdateCompany({
     mutation: {
       onSuccess: (saved) => {
-        // Show the saved company at once; the client page and list (names) refresh behind it.
+        // Show the saved company at once; then everything shown about the client refreshes —
+        // an opening balance or discount change moves the summaries, ledgers and pending.
         queryClient.setQueryData(getGetCompanyQueryKey(...ids), saved);
-        return Promise.all([
-          queryClient.invalidateQueries({ queryKey: getGetClientQueryKey(ids[0]) }),
-          queryClient.invalidateQueries({ queryKey: getListCompaniesQueryKey(ids[0]) }),
-          queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }),
-        ]);
+        return refreshClientData(queryClient, ids[0]);
       },
     },
   });

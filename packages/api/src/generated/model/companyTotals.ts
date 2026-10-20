@@ -24,10 +24,12 @@ export interface CompanyTotals {
   totalTaxableAmount?: number;
   /** Sum of the GST charged */
   totalGstAmount?: number;
-  /** Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid */
+  /** Sum of the amounts charged for services: taxable amounts plus GST. Payments and the opening balance are not included; see totalPaid and openingBalance */
   totalAmount?: number;
+  /** The opening balance the company was taken on with, when it is listed: positive when owed, negative when in credit; zero otherwise */
+  openingBalance?: number;
   /** Sum of the payments received, as a positive number */
   totalPaid?: number;
-  /** Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged */
+  /** Amount still owed: totalAmount plus openingBalance less totalPaid; negative when in credit */
   balance?: number;
 }

@@ -6,7 +6,10 @@ import {
   formatInr,
   generatedEntriesMessage,
   gstRateLabel,
+  isOpeningBalance,
   isPayment,
+  ledgerEntryTitle,
+  openingBalanceDetail,
   ledgerEntryCountLabel,
   noLedgerEntries,
   pageRangeLabel,
@@ -43,6 +46,7 @@ const amount = (value: number | undefined) => (value != null ? formatInr(value) 
 
 /** The lines under an entry's name: a charge's rates, or how a payment came and its comment. */
 function entryDetails(e: LedgerEntryResponse): string[] {
+  if (isOpeningBalance(e)) return [openingBalanceDetail(e)];
   if (isPayment(e)) {
     return [[paymentMethodLabel(e.paymentMethod), e.paymentReference].filter(Boolean).join(' · '), e.comment ?? ''].filter(
       Boolean,
@@ -53,14 +57,14 @@ function entryDetails(e: LedgerEntryResponse): string[] {
   ];
 }
 
-/** One charge or payment; tapping it opens its editor. */
+/** One charge, payment or opening balance; tapping it opens its screen (an editor, or Delete). */
 function LedgerRow({ entry: e, onPress }: { entry: LedgerEntryResponse; onPress: () => void }) {
   const payment = isPayment(e);
-  const name = payment ? 'Payment' : (e.serviceName ?? 'Ledger Entry');
+  const name = ledgerEntryTitle(e);
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Edit ${name}, ${formatApiDate(e.dueDate)}`}
+      accessibilityLabel={`${isOpeningBalance(e) ? 'Open' : 'Edit'} ${name}, ${formatApiDate(e.dueDate)}`}
       onPress={onPress}
       className="flex-row gap-3 border-t border-border px-4 py-3 active:opacity-80"
     >

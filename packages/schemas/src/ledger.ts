@@ -86,14 +86,33 @@ export const ledgerEntryFieldFromApi = (path: string): LedgerEntryField | undefi
 
 /** "GST Return Filing · Due 7 Oct 2026" — names an entry in titles and dialogs. */
 /** "Payment · 27 Sep 2026" for a payment (its due date is the date received). */
+/** "Opening Balance · As Of 31 Mar 2026" for an opening balance (its due date is the date it stood at). */
 export function ledgerEntryName(e: Pick<LedgerEntryResponse, 'serviceName' | 'dueDate' | 'entryType'>): string {
   const date = formatApiDate(e.dueDate);
   if (isPayment(e)) return ['Payment', date].filter(Boolean).join(' · ');
+  if (isOpeningBalance(e)) return [OPENING_BALANCE_LABEL, date && `As Of ${date}`].filter(Boolean).join(' · ');
   return [e.serviceName ?? 'Ledger Entry', date && `Due ${date}`].filter(Boolean).join(' · ');
 }
 
 /** A payment received, rather than a charge for a service. */
 export const isPayment = (e: Pick<LedgerEntryResponse, 'entryType'>) => e.entryType === LedgerEntryResponseEntryType.PAYMENT;
+
+/** The balance a company was taken on with (positive owed, negative in credit). Cannot be edited, only deleted. */
+export const isOpeningBalance = (e: Pick<LedgerEntryResponse, 'entryType'>) =>
+  e.entryType === LedgerEntryResponseEntryType.OPENING_BALANCE;
+
+/** A charge for a service: the only entry with fee, discount and GST, and the only one Edit Ledger Entry changes. */
+export const isServiceCharge = (e: Pick<LedgerEntryResponse, 'entryType'>) => !isPayment(e) && !isOpeningBalance(e);
+
+export const OPENING_BALANCE_LABEL = 'Opening Balance';
+
+/** The short name of an entry in a ledger row: the service, "Payment" or "Opening Balance". */
+export const ledgerEntryTitle = (e: Pick<LedgerEntryResponse, 'serviceName' | 'entryType'>) =>
+  isPayment(e) ? 'Payment' : isOpeningBalance(e) ? OPENING_BALANCE_LABEL : (e.serviceName ?? 'Ledger Entry');
+
+/** The line under an opening balance: what it is, and that it cannot be edited. */
+export const openingBalanceDetail = (e: Pick<LedgerEntryResponse, 'totalAmount'>) =>
+  `${(e.totalAmount ?? 0) < 0 ? 'In Credit, ' : ''}Brought Over From Before · Delete It If It Is Wrong`;
 
 /** What deleting a service charge does: the service is not billed again for that date. */
 export const DELETE_LEDGER_ENTRY_WARNING =
@@ -103,8 +122,12 @@ export const DELETE_LEDGER_ENTRY_WARNING =
 export const DELETE_PAYMENT_WARNING =
   'The Payment Is Removed From The Ledger, So Its Amount Counts As Owed Again. This Cannot Be Undone.';
 
+/** What deleting an opening balance does: it no longer counts towards what the company owes. */
+export const DELETE_OPENING_BALANCE_WARNING =
+  'The Opening Balance Is Removed From The Ledger And No Longer Counts Towards What The Company Owes. This Cannot Be Undone.';
+
 export const deleteEntryWarning = (e: Pick<LedgerEntryResponse, 'entryType'>) =>
-  isPayment(e) ? DELETE_PAYMENT_WARNING : DELETE_LEDGER_ENTRY_WARNING;
+  isPayment(e) ? DELETE_PAYMENT_WARNING : isOpeningBalance(e) ? DELETE_OPENING_BALANCE_WARNING : DELETE_LEDGER_ENTRY_WARNING;
 
 // ── Year summary cards ──────────────────────────────────────────────────────────────────
 

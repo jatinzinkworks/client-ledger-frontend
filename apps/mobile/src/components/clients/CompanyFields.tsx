@@ -1,9 +1,9 @@
-import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, type AddCompanyFormInput } from '@cl/schemas';
+import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, EDIT_OPENING_BALANCE_HINTS, type AddCompanyFormInput } from '@cl/schemas';
 import { X } from 'lucide-react-native';
 import { useFormContext } from 'react-hook-form';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
-import { SelectControl, TextControl } from '@/components/ui/FormControls';
+import { DateControl, SelectControl, TextControl } from '@/components/ui/FormControls';
 import { useThemeColors } from '@/theme/useThemeColors';
 import { EYEBROW } from '@/utils/typography';
 
@@ -13,13 +13,18 @@ interface CompanyFieldsProps {
   onRemove?: () => void;
   /** Shows "Company N" above the block (the onboarding list numbers its companies). */
   numbered?: boolean;
+  /** Edit Company: the opening balance fields say that blank keeps the stored balance. */
+  editing?: boolean;
 }
+
+/** iOS's decimal pad has no minus key, and an opening balance in credit is negative. */
+const SIGNED_KEYBOARD = Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric';
 
 /**
  * One company block. Must render inside a FormProvider whose values hold a `companies` array —
  * Onboard Client, Add Company and Edit Company all do.
  */
-export function CompanyFields({ index, onRemove, numbered = false }: CompanyFieldsProps) {
+export function CompanyFields({ index, onRemove, numbered = false, editing = false }: CompanyFieldsProps) {
   const { control } = useFormContext<AddCompanyFormInput>();
   const colors = useThemeColors();
   const name = <F extends keyof typeof COMPANY_FIELDS>(field: F) => `companies.${index}.${field}` as const;
@@ -69,6 +74,21 @@ export function CompanyFields({ index, onRemove, numbered = false }: CompanyFiel
         label={COMPANY_FIELDS.discountPercent.label}
         hint={COMPANY_FIELDS.discountPercent.hint}
         keyboardType="decimal-pad"
+      />
+      <TextControl
+        control={control}
+        name={name('openingBalance')}
+        label={COMPANY_FIELDS.openingBalance.label}
+        placeholder={COMPANY_FIELDS.openingBalance.placeholder}
+        hint={editing ? EDIT_OPENING_BALANCE_HINTS.openingBalance : COMPANY_FIELDS.openingBalance.hint}
+        keyboardType={SIGNED_KEYBOARD}
+      />
+      <DateControl
+        control={control}
+        name={name('openingBalanceDate')}
+        label={COMPANY_FIELDS.openingBalanceDate.label}
+        hint={editing ? EDIT_OPENING_BALANCE_HINTS.openingBalanceDate : COMPANY_FIELDS.openingBalanceDate.hint}
+        maximumDate={new Date()}
       />
     </View>
   );

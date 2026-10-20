@@ -18,9 +18,11 @@ export interface PeriodTotals {
   toDate?: string;
   /** Sum of the service charges falling due in the period: taxable amounts plus GST, after discount */
   totalBilled?: number;
+  /** Sum of the opening balances dated in the period: positive when owed, negative when in credit. Not part of totalBilled */
+  openingBalance?: number;
   /** Sum of the payments received in the period */
   totalPaymentReceived?: number;
-  /** Billed less received in the period; negative when more was received */
+  /** Billed plus opening balance less received in the period; negative when more was received */
   pending?: number;
   /** Sum of the discounts given on the period's service charges */
   totalDiscount?: number;

@@ -12,7 +12,7 @@ import type { FinancialYearTotals } from './financialYearTotals';
  * Totals of every ledger entry matching the filters, across all pages, not just the page returned
  */
 export interface LedgerSummary {
-  /** Number of entries matching the filters, service charges and payments alike */
+  /** Number of entries matching the filters, service charges, payments and opening balances alike */
   entryCount?: number;
   /** Sum of the service fees, before discount and excluding GST; service charges only */
   totalServiceFee?: number;
@@ -22,11 +22,13 @@ export interface LedgerSummary {
   totalTaxableAmount?: number;
   /** Sum of the GST charged */
   totalGstAmount?: number;
-  /** Sum of the amounts charged for services: taxable amounts plus GST. Payments are not included; see totalPaid */
+  /** Sum of the amounts charged for services: taxable amounts plus GST. Payments and opening balances are not included; see totalPaid and openingBalance */
   totalAmount?: number;
+  /** Sum of the opening balances companies were taken on with: positive when owed, negative when in credit; zero when there are none */
+  openingBalance?: number;
   /** Sum of the payments received, as a positive number */
   totalPaid?: number;
-  /** Amount still owed: totalAmount less totalPaid; negative when more has been paid than charged */
+  /** Amount still owed: totalAmount plus openingBalance less totalPaid; negative when in credit */
   balance?: number;
   /** The same totals for each financial year the entries fall in, earliest year first; empty when there are no entries */
   byFinancialYear?: FinancialYearTotals[];

@@ -1,4 +1,4 @@
-import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, type AddCompanyFormInput } from '@cl/schemas'
+import { COMPANY_FIELDS, COMPANY_TYPE_OPTIONS, EDIT_OPENING_BALANCE_HINTS, type AddCompanyFormInput } from '@cl/schemas'
 import { X } from 'lucide-react'
 import { useFormContext } from 'react-hook-form'
 
@@ -10,13 +10,15 @@ interface CompanyFieldsProps {
   index: number
   /** Omitted for the only company — a client must keep at least one. */
   onRemove?: () => void
+  /** Edit Company: the opening balance fields say that blank keeps the stored balance. */
+  editing?: boolean
 }
 
 /**
  * One company block. Must render inside a FormProvider whose values hold a `companies` array —
  * Onboard Client and Add Company both do.
  */
-export function CompanyFields({ index, onRemove }: CompanyFieldsProps) {
+export function CompanyFields({ index, onRemove, editing = false }: CompanyFieldsProps) {
   const {
     register,
     formState: { errors },
@@ -70,6 +72,25 @@ export function CompanyFields({ index, onRemove }: CompanyFieldsProps) {
         error={fieldErrors?.discountPercent?.message}
         registration={register(`companies.${index}.discountPercent`)}
       />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <TextField
+          id={id('openingBalance')}
+          label={COMPANY_FIELDS.openingBalance.label}
+          placeholder={COMPANY_FIELDS.openingBalance.placeholder}
+          hint={editing ? EDIT_OPENING_BALANCE_HINTS.openingBalance : COMPANY_FIELDS.openingBalance.hint}
+          type="number"
+          error={fieldErrors?.openingBalance?.message}
+          registration={register(`companies.${index}.openingBalance`)}
+        />
+        <TextField
+          id={id('openingBalanceDate')}
+          label={COMPANY_FIELDS.openingBalanceDate.label}
+          hint={editing ? EDIT_OPENING_BALANCE_HINTS.openingBalanceDate : COMPANY_FIELDS.openingBalanceDate.hint}
+          type="date"
+          error={fieldErrors?.openingBalanceDate?.message}
+          registration={register(`companies.${index}.openingBalanceDate`)}
+        />
+      </div>
     </fieldset>
   )
 }

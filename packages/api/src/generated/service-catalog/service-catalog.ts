@@ -28,7 +28,10 @@ import type {
   CatalogServiceRequest,
   CatalogServiceResponse,
   ErrorResponse,
+  ImportServicesBody,
+  ListCategories200Item,
   ListServicesParams,
+  ServiceCatalogImportResponse,
   ServiceFeeBulkUpdateRequest
 } from '../model';
 
@@ -603,3 +606,283 @@ export const useCreateService = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getCreateServiceMutationOptions(options), queryClient);
     }
+    export const getImportServicesUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/services/import`
+}
+
+/**
+ * Creates every service on a filled-in import template (GET /services/import/template), as POST /services would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, or a name is already in the catalog or repeated on the sheet, nothing is created and each cell at fault is listed under errors, by reference such as Services!G3. Names are compared ignoring case. The invoice schedule columns must match the billing frequency, as on create. Up to 500 services may be imported at once.
+ * @summary Import services into the catalog from an Excel workbook
+ */
+export const importServices = async (importServicesBody?: ImportServicesBody, options?: Parameters<typeof apiFetch>[1]): Promise<ServiceCatalogImportResponse> => {
+    const formData = new FormData();
+if(importServicesBody?.file !== undefined) {
+ formData.append(`file`, importServicesBody.file);
+ }
+
+  return apiFetch<ServiceCatalogImportResponse>(getImportServicesUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getImportServicesMutationKey = () => ['importServices'] as const;
+
+export const getImportServicesMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importServices>>, TError,ImportServicesMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importServices>>, TError,ImportServicesMutationVariables, TContext> => {
+
+const mutationKey = getImportServicesMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importServices>>, ImportServicesMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  importServices(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportServicesMutationResult = NonNullable<Awaited<ReturnType<typeof importServices>>>
+    export type ImportServicesMutationBody = ImportServicesBody | undefined
+    export type ImportServicesMutationError = ErrorType<ErrorResponse>
+    export type ImportServicesMutationVariables = {data?: ImportServicesBody}
+
+    /**
+ * @summary Import services into the catalog from an Excel workbook
+ */
+export const useImportServices = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importServices>>, TError,ImportServicesMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importServices>>,
+        TError,
+        ImportServicesMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportServicesMutationOptions(options), queryClient);
+    }
+    export const getDownloadTemplateUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/services/import/template`
+}
+
+/**
+ * Returns the Excel workbook to fill in for POST /services/import. Its Services sheet takes one row per service: Service Name, Description, Category, Billing Frequency, Standard Fee, GST %, Invoice Day, Invoice Month of Quarter and Invoice Month. An Instructions sheet describes every column with an example, and which schedule columns each billing frequency needs.
+ * @summary Download the service catalog import template
+ */
+export const downloadTemplate = async ( options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getDownloadTemplateUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadTemplateQueryKey = () => {
+    return [
+    `/psc/cl/v1/services/import/template`
+    ] as const;
+    }
+
+
+export const getDownloadTemplateQueryOptions = <TData = Awaited<ReturnType<typeof downloadTemplate>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadTemplateQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadTemplate>>> = ({ signal }) => downloadTemplate({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof downloadTemplate>>>
+export type DownloadTemplateQueryError = ErrorType<ErrorResponse>
+
+
+export function useDownloadTemplate<TData = Awaited<ReturnType<typeof downloadTemplate>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof downloadTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadTemplate<TData = Awaited<ReturnType<typeof downloadTemplate>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadTemplate>>,
+          TError,
+          Awaited<ReturnType<typeof downloadTemplate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadTemplate<TData = Awaited<ReturnType<typeof downloadTemplate>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download the service catalog import template
+ */
+
+export function useDownloadTemplate<TData = Awaited<ReturnType<typeof downloadTemplate>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadTemplateQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getListCategoriesUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/services/categories`
+}
+
+/**
+ * Returns every category a service can belong to, in their declared order. These are the values accepted for a service's category.
+ * @summary List service categories
+ */
+export const listCategories = async ( options?: Parameters<typeof apiFetch>[1]): Promise<ListCategories200Item[]> => {
+
+  return apiFetch<ListCategories200Item[]>(getListCategoriesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCategoriesQueryKey = () => {
+    return [
+    `/psc/cl/v1/services/categories`
+    ] as const;
+    }
+
+
+export const getListCategoriesQueryOptions = <TData = Awaited<ReturnType<typeof listCategories>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCategoriesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCategories>>> = ({ signal }) => listCategories({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListCategoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listCategories>>>
+export type ListCategoriesQueryError = ErrorType<ErrorResponse>
+
+
+export function useListCategories<TData = Awaited<ReturnType<typeof listCategories>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCategories<TData = Awaited<ReturnType<typeof listCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listCategories>>,
+          TError,
+          Awaited<ReturnType<typeof listCategories>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListCategories<TData = Awaited<ReturnType<typeof listCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List service categories
+ */
+
+export function useListCategories<TData = Awaited<ReturnType<typeof listCategories>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCategories>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListCategoriesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

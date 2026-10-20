@@ -18,4 +18,5 @@ export const CatalogServiceResponseCategory = {
   AUDIT: 'AUDIT',
   ACCOUNTING: 'ACCOUNTING',
   ADVISORY: 'ADVISORY',
+  CERTIFICATION: 'CERTIFICATION',
 } as const;

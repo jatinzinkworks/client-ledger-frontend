@@ -28,9 +28,11 @@ export interface FinancialYearStatus {
   billed?: number;
   /** Discount given on those charges */
   discount?: number;
+  /** Opening balances dated in the year, which companies were taken on with: positive when owed, negative when in credit; zero when none was */
+  openingBalance?: number;
   /** Payments received in the year */
   received?: number;
-  /** Billed less discount less received: what the year's activity left owing; negative when more was received. Each year stands alone; an earlier year's balance is not brought forward into it */
+  /** Billed less discount plus opening balance less received: what the year's activity left owing; negative when more was received. Each year stands alone; an earlier year's balance is not brought forward into it */
   closingBalance?: number;
   /** Where the year stands */
   status?: FinancialYearStatusStatus;

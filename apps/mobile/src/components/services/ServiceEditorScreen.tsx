@@ -3,6 +3,7 @@ import { CATEGORIES, type Category } from '@cl/schemas';
 import { Stack, router } from 'expo-router';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
 
+import { useFinancialYear } from '@/financialYear/useFinancialYear';
 import { useThemeColors } from '@/theme/useThemeColors';
 
 import { ServiceEditor } from './ServiceEditor';
@@ -16,7 +17,9 @@ interface ServiceEditorScreenProps {
 
 /** Full-screen create / edit, pushed over the tabs. Reads the service from the cached catalog list. */
 export function ServiceEditorScreen({ id, category }: ServiceEditorScreenProps) {
-  const catalog = useServiceCatalog();
+  const { financialYear } = useFinancialYear();
+  // The same year as the Services tab, so the record is read from the list already loaded.
+  const catalog = useServiceCatalog(financialYear);
   const colors = useThemeColors();
   const service = id ? catalog.services.find((s) => s.id === id) : undefined;
   const defaultCategory = CATEGORIES.includes(category as Category) ? (category as Category) : undefined;

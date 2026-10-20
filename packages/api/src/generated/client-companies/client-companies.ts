@@ -173,7 +173,7 @@ export const getUpdateCompanyUrl = (id: string,
 }
 
 /**
- * Replaces one company of the client wholesale; it keeps its identifier. Every field except the discount is mandatory, and an omitted discount gives the company the client's. A company that exists but belongs to a different client is reported as not found.
+ * Replaces one company of the client wholesale; it keeps its identifier. Every field except the discount and the opening balance is mandatory, and an omitted discount gives the company the client's. The opening balance, a ledger entry, is kept when omitted: send 0 to remove it, or another amount to record it, or replace the one the company has, keeping its date unless openingBalanceDate is given. A company that exists but belongs to a different client is reported as not found.
  * @summary Update a company of a client
  */
 export const updateCompany = async (id: string,
@@ -264,7 +264,7 @@ export const useUpdateCompany = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first.
+ * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first. Nor can a company with ledger entries, such as payments or an opening balance: a ledger is a financial record and is never deleted along with its company.
  * @summary Delete a company of a client
  */
 export const deleteCompany = async (id: string,
@@ -455,7 +455,7 @@ export const getAddCompanyUrl = (id: string,) => {
 }
 
 /**
- * Adds one company to an existing client. Every field except the discount is mandatory, and a company without a discount of its own takes the client's. A client holds at most 50 companies.
+ * Adds one company to an existing client. Every field except the discount and the opening balance is mandatory, and a company without a discount of its own takes the client's. A company may bring an opening balance: what it owes as it is taken on, brought over from before, dated openingBalanceDate or the day it is added. It is recorded in the company's ledger. A client holds at most 50 companies.
  * @summary Add a company to a client
  */
 export const addCompany = async (id: string,

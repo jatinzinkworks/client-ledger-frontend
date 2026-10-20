@@ -10,6 +10,7 @@ import { useState } from 'react';
 
 import { FormScreen } from '@/components/ui/FormScreen';
 import { EmptyState, LoadError, Loading } from '@/components/ui/LoadState';
+import { useFinancialYear } from '@/financialYear/useFinancialYear';
 import { companyHref } from '@/utils/routes';
 
 import { goBack } from './formHelpers';
@@ -25,7 +26,8 @@ interface ServiceAssignmentScreenProps {
 /** Add Service (assign a catalog service) or Edit Service, full screen over the company page. */
 export function ServiceAssignmentScreen({ clientId, companyId, assignmentId }: ServiceAssignmentScreenProps) {
   const page = useCompany(clientId, companyId);
-  const catalog = useServiceCatalog();
+  const { financialYear } = useFinancialYear();
+  const catalog = useServiceCatalog(financialYear);
   const { company } = page;
   const editing = !!assignmentId;
   const assignment = editing ? page.services.find((s) => s.id === assignmentId) : undefined;

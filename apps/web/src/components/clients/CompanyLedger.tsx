@@ -7,7 +7,11 @@ import {
   formatInr,
   generatedEntriesMessage,
   gstRateLabel,
+  isOpeningBalance,
   isPayment,
+  isServiceCharge,
+  ledgerEntryTitle,
+  openingBalanceDetail,
   ledgerEntryCountLabel,
   ledgerEntryName,
   noLedgerEntries,
@@ -56,11 +60,11 @@ const amountWithRate = (value: number | undefined, rate: string) => (
   </div>
 )
 
-/** A service charge's own figure; a payment has none. */
+/** A service charge's own figure; a payment or an opening balance has none. */
 const chargeOnly =
   (render: (e: LedgerEntryResponse) => ReactNode) =>
   (e: LedgerEntryResponse): ReactNode =>
-    isPayment(e) ? '—' : render(e)
+    isServiceCharge(e) ? render(e) : '—'
 
 /** "Bank Transfer · UTR123" under a payment. */
 const paymentDetails = (e: LedgerEntryResponse) =>
@@ -77,18 +81,26 @@ const columns = ({
     header: 'Description',
     render: (e) => (
       <div className="flex flex-col">
-        {/* The name is the row's keyboard target. */}
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            onEdit(e)
-          }}
-          aria-label={`Edit ${ledgerEntryName(e)}`}
-          className="text-left text-base font-bold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
-        >
-          {isPayment(e) ? 'Payment' : e.serviceName}
-        </button>
+        {isOpeningBalance(e) ? (
+          // An opening balance cannot be edited (only deleted), so it is plain text.
+          <>
+            <span className="text-base font-bold text-foreground">{ledgerEntryTitle(e)}</span>
+            <span className="text-sm whitespace-normal text-muted-foreground">{openingBalanceDetail(e)}</span>
+          </>
+        ) : (
+          /* The name is the row's keyboard target. */
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onEdit(e)
+            }}
+            aria-label={`Edit ${ledgerEntryName(e)}`}
+            className="text-left text-base font-bold text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+          >
+            {ledgerEntryTitle(e)}
+          </button>
+        )}
         {isPayment(e) && (
           <>
             <span className="text-sm text-muted-foreground">{paymentDetails(e)}</span>
@@ -215,7 +227,9 @@ export function CompanyLedger({
               columns={columns({ onEdit, onDelete, deleting })}
               rows={entries}
               rowKey={(e) => e.id ?? `${e.companyServiceId}-${e.dueDate}`}
-              onRowClick={onEdit}
+              onRowClick={(e) => {
+                if (!isOpeningBalance(e)) onEdit(e)
+              }}
             />
             <nav
               aria-label="Ledger Pages"

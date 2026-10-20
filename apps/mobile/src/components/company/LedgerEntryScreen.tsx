@@ -7,7 +7,7 @@ import {
   type LedgerEntryResponse,
   type LedgerListResponse,
 } from '@cl/api';
-import { clientName, isPayment } from '@cl/schemas';
+import { OPENING_BALANCE_LABEL, clientName, isOpeningBalance, isPayment } from '@cl/schemas';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -17,6 +17,7 @@ import { companyHref } from '@/utils/routes';
 
 import { EditLedgerEntryForm } from './EditLedgerEntryForm';
 import { goBack } from './formHelpers';
+import { OpeningBalanceView } from './OpeningBalanceView';
 import { RecordPaymentForm } from './RecordPaymentForm';
 
 interface LedgerEntryScreenProps {
@@ -27,7 +28,7 @@ interface LedgerEntryScreenProps {
 
 /**
  * One ledger entry, full screen: a service charge opens Edit Ledger Entry, a payment opens Edit
- * Payment. The entry is the row just tapped on the company page (its ledger page, fetched since
+ * Payment, an opening balance is shown read-only with Delete. The entry is the row just tapped on the company page (its ledger page, fetched since
  * that page opened); opened any other way it is fetched.
  */
 export function LedgerEntryScreen({ clientId, companyId, entryId }: LedgerEntryScreenProps) {
@@ -51,6 +52,7 @@ export function LedgerEntryScreen({ clientId, companyId, entryId }: LedgerEntryS
   const company = owner.companies.find((c) => c.id === companyId);
   const close = () => goBack(companyHref(clientId, companyId));
   const payment = entry && isPayment(entry);
+  const opening = entry && isOpeningBalance(entry);
 
   const body = () => {
     if (!entry && fetched.error) {
@@ -61,6 +63,16 @@ export function LedgerEntryScreen({ clientId, companyId, entryId }: LedgerEntryS
       );
     }
     if (!entry || (payment && owner.isLoading)) return <Loading />;
+    if (opening) {
+      return (
+        <OpeningBalanceView
+          entry={entry}
+          onDelete={() => ledger.deleteEntry(entry.id ?? '')}
+          deleting={ledger.deletingEntry}
+          onDone={close}
+        />
+      );
+    }
     if (payment) {
       return (
         <RecordPaymentForm
@@ -90,5 +102,6 @@ export function LedgerEntryScreen({ clientId, companyId, entryId }: LedgerEntryS
     );
   };
 
-  return <FormScreen title={!entry ? 'Ledger Entry' : payment ? 'Edit Payment' : 'Edit Ledger Entry'}>{body()}</FormScreen>;
+  const title = !entry ? 'Ledger Entry' : opening ? OPENING_BALANCE_LABEL : payment ? 'Edit Payment' : 'Edit Ledger Entry';
+  return <FormScreen title={title}>{body()}</FormScreen>;
 }

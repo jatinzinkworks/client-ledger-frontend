@@ -25,11 +25,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ClientImportResponse,
+  ClientManagerBulkUpdateRequest,
   ClientRequest,
   ClientResponse,
   ClientSummaryResponse,
   ClientUpdateRequest,
   ErrorResponse,
+  ImportClientsBody,
   ListClientsParams,
   WhatsAppOptInRequest
 } from '../model';
@@ -256,7 +259,7 @@ export const useUpdateClient = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first.
+ * Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first. Nor can a client with ledger entries, such as payments or an opening balance, on any company: a ledger is a financial record and is never deleted along with its client.
  * @summary Delete a client
  */
 export const deleteClient = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
@@ -320,6 +323,94 @@ export const useDeleteClient = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteClientMutationOptions(options), queryClient);
+    }
+    export const getUpdateManager1Url = () => {
+
+
+
+
+  return `/psc/cl/v1/clients/manager`
+}
+
+/**
+ * Assigns every client named to one manager, in one go, and changes nothing else about them. The update is all or nothing: if the manager or any client is unknown, no client is reassigned. A client named more than once is assigned once. Up to 200 clients may be assigned at once.
+ * @summary Assign several clients to a manager
+ */
+export const updateManager1 = async (clientManagerBulkUpdateRequest: ClientManagerBulkUpdateRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ClientSummaryResponse[]> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return apiFetch<ClientSummaryResponse[]>(getUpdateManager1Url(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(clientManagerBulkUpdateRequest)
+  }
+);}
+
+
+
+
+
+export const getUpdateManager1MutationKey = () => ['updateManager1'] as const;
+
+export const getUpdateManager1MutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateManager1>>, TError,UpdateManager1MutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateManager1>>, TError,UpdateManager1MutationVariables, TContext> => {
+
+const mutationKey = getUpdateManager1MutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateManager1>>, UpdateManager1MutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateManager1(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateManager1MutationResult = NonNullable<Awaited<ReturnType<typeof updateManager1>>>
+    export type UpdateManager1MutationBody = ClientManagerBulkUpdateRequest
+    export type UpdateManager1MutationError = ErrorType<ErrorResponse>
+    export type UpdateManager1MutationVariables = {data: ClientManagerBulkUpdateRequest}
+
+    /**
+ * @summary Assign several clients to a manager
+ */
+export const useUpdateManager1 = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateManager1>>, TError,UpdateManager1MutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateManager1>>,
+        TError,
+        UpdateManager1MutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateManager1MutationOptions(options), queryClient);
     }
     export const getListClientsUrl = (params?: ListClientsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -438,7 +529,7 @@ export const getCreateClientUrl = () => {
 }
 
 /**
- * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog.
+ * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog. A company may bring an opening balance: what it owed (positive) or was owed (negative) when taken on, dated openingBalanceDate or the day the client is added. It is recorded in the company's ledger as an OPENING_BALANCE entry, counted in what is pending but not as billed. Nothing is created when any of it cannot be.
  * @summary Create a client
  */
 export const createClient = async (clientRequest: ClientRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ClientResponse> => {
@@ -516,6 +607,84 @@ export const useCreateClient = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCreateClientMutationOptions(options), queryClient);
+    }
+    export const getImportClientsUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/clients/import`
+}
+
+/**
+ * Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. Clients opted in to WhatsApp are sent the confirmation message as on create. The response counts and adds up the opening balances recorded, per client and overall, so they can be checked against the workbook.
+ * @summary Import clients and their companies from an Excel workbook
+ */
+export const importClients = async (importClientsBody?: ImportClientsBody, options?: Parameters<typeof apiFetch>[1]): Promise<ClientImportResponse> => {
+    const formData = new FormData();
+if(importClientsBody?.file !== undefined) {
+ formData.append(`file`, importClientsBody.file);
+ }
+
+  return apiFetch<ClientImportResponse>(getImportClientsUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getImportClientsMutationKey = () => ['importClients'] as const;
+
+export const getImportClientsMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importClients>>, TError,ImportClientsMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importClients>>, TError,ImportClientsMutationVariables, TContext> => {
+
+const mutationKey = getImportClientsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importClients>>, ImportClientsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  importClients(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportClientsMutationResult = NonNullable<Awaited<ReturnType<typeof importClients>>>
+    export type ImportClientsMutationBody = ImportClientsBody | undefined
+    export type ImportClientsMutationError = ErrorType<ErrorResponse>
+    export type ImportClientsMutationVariables = {data?: ImportClientsBody}
+
+    /**
+ * @summary Import clients and their companies from an Excel workbook
+ */
+export const useImportClients = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importClients>>, TError,ImportClientsMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importClients>>,
+        TError,
+        ImportClientsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportClientsMutationOptions(options), queryClient);
     }
     export const getUpdateWhatsAppOptInUrl = (id: string,) => {
 
@@ -606,3 +775,104 @@ export const useUpdateWhatsAppOptIn = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getUpdateWhatsAppOptInMutationOptions(options), queryClient);
     }
+    export const getDownloadTemplate1Url = () => {
+
+
+
+
+  return `/psc/cl/v1/clients/import/template`
+}
+
+/**
+ * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Email, Discount % and WhatsApp Opt-In. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
+ * @summary Download the client import template
+ */
+export const downloadTemplate1 = async ( options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getDownloadTemplate1Url(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadTemplate1QueryKey = () => {
+    return [
+    `/psc/cl/v1/clients/import/template`
+    ] as const;
+    }
+
+
+export const getDownloadTemplate1QueryOptions = <TData = Awaited<ReturnType<typeof downloadTemplate1>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadTemplate1QueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadTemplate1>>> = ({ signal }) => downloadTemplate1({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadTemplate1QueryResult = NonNullable<Awaited<ReturnType<typeof downloadTemplate1>>>
+export type DownloadTemplate1QueryError = ErrorType<ErrorResponse>
+
+
+export function useDownloadTemplate1<TData = Awaited<ReturnType<typeof downloadTemplate1>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadTemplate1>>,
+          TError,
+          Awaited<ReturnType<typeof downloadTemplate1>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadTemplate1<TData = Awaited<ReturnType<typeof downloadTemplate1>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadTemplate1>>,
+          TError,
+          Awaited<ReturnType<typeof downloadTemplate1>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadTemplate1<TData = Awaited<ReturnType<typeof downloadTemplate1>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download the client import template
+ */
+
+export function useDownloadTemplate1<TData = Awaited<ReturnType<typeof downloadTemplate1>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadTemplate1>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadTemplate1QueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

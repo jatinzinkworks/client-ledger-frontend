@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  DELETE_OPENING_BALANCE_WARNING,
+  isServiceCharge,
+  ledgerEntryTitle,
+  openingBalanceDetail,
   generatedEntriesMessage,
   ledgerEntryCountLabel,
   ledgerEntryDefaults,
@@ -156,5 +160,17 @@ describe('ledgerExportFileName', () => {
   it('drops characters a file name should not carry', () => {
     expect(ledgerExportFileName(" D'Souza / Sons ", '2025-26')).toBe('D_Souza_Sons_Ledger_FY2025-26.xlsx');
     expect(ledgerExportFileName('', '2025-26')).toBe('Client_Ledger_FY2025-26.xlsx');
+  });
+});
+
+describe('opening balance entries', () => {
+  const opening = { entryType: 'OPENING_BALANCE', dueDate: '2026-03-31', totalAmount: -5000 } as const;
+
+  it('is named and described as an opening balance, not a service charge', () => {
+    expect(isServiceCharge(opening)).toBe(false);
+    expect(ledgerEntryTitle(opening)).toBe('Opening Balance');
+    expect(ledgerEntryName(opening)).toBe('Opening Balance · As Of 31 Mar 2026');
+    expect(openingBalanceDetail(opening)).toMatch(/^In Credit, /);
+    expect(deleteEntryWarning(opening)).toBe(DELETE_OPENING_BALANCE_WARNING);
   });
 });

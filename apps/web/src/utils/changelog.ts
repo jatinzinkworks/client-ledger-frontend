@@ -9,6 +9,57 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '20 Oct 2026, 13:50:01',
+    highlights: [
+      'Import Clients (web and mobile): download the Excel template, list clients and their companies, and import them all at once. You see who was added, or exactly which cells need fixing.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 13:42:50',
+    highlights: [
+      'After editing a client or a company (or adding or deleting a company), everything on the page refreshes, including the year summary, the ledger and what is pending.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 13:37:51',
+    highlights: [
+      "Edit Company now shows the company's opening balance and its date, to change or clear.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 13:00:30',
+    highlights: [
+      'Companies can carry an opening balance (what they already owed, or a credit) with its date, when onboarding a client, adding a company or editing one. It appears in the company ledger as an Opening Balance, which can be deleted if wrong.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 12:33:43',
+    highlights: [
+      'Import Services (web and mobile): download the Excel template, fill it in and import many services at once. You see what was added, or exactly which cells need fixing.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 12:23:21',
+    highlights: [
+      'Reassign Clients on the Managers page: drag client cards between managers (on mobile, tap a client and pick a manager), then save all the moves at once.',
+      'The Services category filters are now in alphabetical order, with All first.',
+      'Side panels on the web now open without jumping into the first field.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '20 Oct 2026, 12:09:13',
+    highlights: [
+      'When creating or editing a service (web and mobile), the Category list now comes from the server, sorted A to Z, and includes the new Certification category.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '16 Oct 2026, 13:29:07',
     highlights: [
       'On the Services screen (web and mobile), each service now shows what it billed in the selected financial year, rather than across every year.',

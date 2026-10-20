@@ -23,7 +23,8 @@ import {
 } from '@cl/api/zod';
 import { z } from 'zod';
 
-import { optionalPercent, requiredEmail, requiredPhone, requiredText } from './fields';
+import { todayApiDate } from './assignments';
+import { blankToUndefined, hasAtMostTwoDecimals, optionalPercent, requiredEmail, requiredPhone, requiredText } from './fields';
 import { accountStatus } from './ledger';
 import { managerName, roleLabel } from './managers';
 
@@ -53,13 +54,35 @@ export const COMPANY_TYPE_OPTIONS = COMPANY_TYPES.map((value) => ({ value, label
 /** Most companies the backend accepts on one client. */
 export const MAX_COMPANIES = COMPANIES_MAX;
 
-export const companyFormSchema = z.object({
-  companyName: requiredText(COMPANY_NAME_MAX, 'Enter The Company Name.'),
-  companyType: z.enum(COMPANY_TYPES, 'Choose A Company Type.'),
-  address: requiredText(ADDRESS_MAX, 'Enter The Registered Address.'),
-  /** Optional: left blank, the company takes the client's discount. */
-  discountPercent: optionalPercent(COMPANY_DISCOUNT_MAX, `Enter A Discount From 0 To ${COMPANY_DISCOUNT_MAX}%.`),
-});
+const API_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const OPENING_BALANCE_MESSAGE = 'Enter An Amount — Negative If The Company Is In Credit.';
+
+/**
+ * One company: Onboard Client's blocks, Add Company and Edit Company. The opening balance mirrors
+ * the backend: any amount (negative = in credit, such as an advance), optional, with an optional
+ * date that is not after today. The date is ignored without a balance other than 0 (rather than
+ * refused, so clearing a pre-filled balance on Edit Company removes it in one step). What blank
+ * means differs between adding and editing — see `toCompanyRequest`.
+ */
+export const companyFormSchema = z
+  .object({
+    companyName: requiredText(COMPANY_NAME_MAX, 'Enter The Company Name.'),
+    companyType: z.enum(COMPANY_TYPES, 'Choose A Company Type.'),
+    address: requiredText(ADDRESS_MAX, 'Enter The Registered Address.'),
+    /** Optional: left blank, the company takes the client's discount. */
+    discountPercent: optionalPercent(COMPANY_DISCOUNT_MAX, `Enter A Discount From 0 To ${COMPANY_DISCOUNT_MAX}%.`),
+    openingBalance: z.preprocess(
+      blankToUndefined,
+      z.number({ error: OPENING_BALANCE_MESSAGE }).refine(hasAtMostTwoDecimals, 'Use At Most 2 Decimal Places.').optional(),
+    ),
+    // `<input type="date">` yields "2026-03-31", or "" when blank.
+    openingBalanceDate: z
+      .string()
+      .trim()
+      .optional()
+      .refine((d) => !d || API_DATE.test(d), 'Enter A Date Such As 2026-03-31.')
+      .refine((d) => !d || d <= todayApiDate(), 'The Date Cannot Be In The Future.'),
+  });
 
 /** The client's own details — what Edit Client changes. */
 export const clientDetailsSchema = z.object({
@@ -132,13 +155,27 @@ export const COMPANY_FIELDS: Readonly<Record<CompanyField, FieldCopy>> = {
   companyType: { label: 'Company Type' },
   address: { label: 'Address', placeholder: 'Registered Office Address' },
   discountPercent: { label: 'Company Discount % (Optional)', hint: "Leave Blank To Use The Client's Discount." },
+  openingBalance: {
+    label: 'Opening Balance ₹ (Optional)',
+    placeholder: '0',
+    hint: 'What The Company Already Owes You. Use A Negative Amount If It Is In Credit, Such As An Advance.',
+  },
+  openingBalanceDate: { label: 'Balance As Of (Optional)', hint: 'Defaults To Today. Places The Balance In Its Financial Year.' },
 };
+
+/** Edit Company's opening balance hints: the fields show the stored balance; clearing it removes it. */
+export const EDIT_OPENING_BALANCE_HINTS = {
+  openingBalance: 'Use A Negative Amount If The Company Is In Credit. Clear It, Or Enter 0, To Remove The Opening Balance.',
+  openingBalanceDate: 'Places The Balance In Its Financial Year. Today When Left Blank.',
+} as const;
 
 export const emptyCompany = (): CompanyFormInput => ({
   companyName: '',
   companyType: COMPANY_TYPE.PRIVATE_LIMITED,
   address: '',
   discountPercent: '',
+  openingBalance: '',
+  openingBalanceDate: '',
 });
 
 /**
@@ -150,6 +187,9 @@ export const companyFormDefaults = (company: CompanyResponse): CompanyFormInput 
   companyType: company.companyType ?? COMPANY_TYPE.PRIVATE_LIMITED,
   address: company.address ?? '',
   discountPercent: company.discountPercent != null ? String(company.discountPercent) : '',
+  // The stored opening balance, whatever its year (absent when the company has none).
+  openingBalance: company.openingBalanceAmount != null ? String(company.openingBalanceAmount) : '',
+  openingBalanceDate: company.openingBalanceDate ?? '',
 });
 
 /** A blank onboarding form: one company, since every client needs at least one. */
@@ -197,7 +237,7 @@ export function isClientFormComplete(values: PartialClientForm): boolean {
 export const toClientRequest = ({ companies, discountPercent, ...client }: ClientFormValues): ClientRequest => ({
   ...client,
   ...(discountPercent !== undefined && { discountPercent }),
-  companies: companies.map(toCompanyRequest),
+  companies: companies.map((company) => toCompanyRequest(company)),
 });
 
 /** Edit Client's starting values: the client as stored. A zero discount shows as blank. */
@@ -222,12 +262,28 @@ export const toClientUpdateRequest = ({ discountPercent, ...details }: ClientDet
 
 /**
  * The request body for one company. A blank discount is omitted, so the backend gives the
- * company the client's discount.
+ * company the client's discount. The opening balance, when adding (Onboard Client, Add Company),
+ * is sent only when there is one — blank and 0 both mean none. When `editing` (the form shows the
+ * stored balance), an amount is sent as is; blank or 0 removes a balance the company
+ * `hadOpeningBalance` (sent as 0, which the backend takes as "remove"), and is left out when it
+ * had none (omitted = unchanged). Its date goes only with a balance other than 0, when given.
  */
-export const toCompanyRequest = ({ discountPercent, ...company }: CompanyFormValues): CompanyRequest => ({
-  ...company,
-  ...(discountPercent !== undefined && { discountPercent }),
-});
+export const toCompanyRequest = (
+  { discountPercent, openingBalance, openingBalanceDate, ...company }: CompanyFormValues,
+  { editing = false, hadOpeningBalance = false } = {},
+): CompanyRequest => {
+  const balance = openingBalance || (editing && hadOpeningBalance ? 0 : undefined);
+  return {
+    ...company,
+    ...(discountPercent !== undefined && { discountPercent }),
+    ...(balance !== undefined && { openingBalance: balance }),
+    ...(balance && openingBalanceDate && { openingBalanceDate }),
+  };
+};
+
+/** Whether Edit Company's starting values hold a stored opening balance (see `toCompanyRequest`). */
+export const hasOpeningBalance = (defaults: Pick<CompanyFormInput, 'openingBalance'>) =>
+  defaults.openingBalance != null && defaults.openingBalance !== '' && Number(defaults.openingBalance) !== 0;
 
 /** How many more companies a client may hold (the backend allows at most MAX_COMPANIES). */
 export const companiesLeft = (held: number) => Math.max(0, MAX_COMPANIES - held);

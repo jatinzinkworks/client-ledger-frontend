@@ -1,5 +1,5 @@
 import { useClients, useManagerCatalog } from '@cl/api';
-import { ALL_MANAGERS, clientCountLabel, filterClients } from '@cl/schemas';
+import { ALL_MANAGERS, IMPORT_CLIENTS_LABEL, clientCountLabel, filterClients } from '@cl/schemas';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
@@ -9,7 +9,7 @@ import { ClientFilters } from '@/components/clients/ClientFilters';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, LoadError, Loading } from '@/components/ui/LoadState';
 import { useThemeColors } from '@/theme/useThemeColors';
-import { clientHref, newClientHref } from '@/utils/routes';
+import { clientHref, importClientsHref, newClientHref } from '@/utils/routes';
 import { EYEBROW } from '@/utils/typography';
 
 export default function ClientsScreen() {
@@ -45,6 +45,7 @@ export default function ClientsScreen() {
             <Text className={`${EYEBROW} flex-shrink`}>{clients.isLoading ? ' ' : clientCountLabel(clients.clients)}</Text>
             <Button label="+ Onboard Client" className="py-2" onPress={onboard} />
           </View>
+          <Button variant="outline" label={IMPORT_CLIENTS_LABEL} className="py-2" onPress={() => router.push(importClientsHref)} />
           <ClientFilters
             query={query}
             onQueryChange={setQuery}

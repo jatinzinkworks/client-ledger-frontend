@@ -1,12 +1,13 @@
 import { useServiceCatalog, type CatalogServiceResponse } from '@cl/api'
-import { filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas'
-import { Plus, SlidersHorizontal } from 'lucide-react'
+import { IMPORT_SERVICES_LABEL, filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas'
+import { FileSpreadsheet, Plus, SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { LoadError } from '@/components/LoadError'
 import { PageHeader } from '@/components/PageHeader'
 import { RefreshButton } from '@/components/RefreshButton'
 import { AdjustPricesForm } from '@/components/services/AdjustPricesForm'
+import { ImportServicesForm } from '@/components/services/ImportServicesForm'
 import { ServiceCard } from '@/components/services/ServiceCard'
 import { ServiceEditor } from '@/components/services/ServiceEditor'
 import { ServiceFilters } from '@/components/services/ServiceFilters'
@@ -15,8 +16,13 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { useFinancialYear } from '@/financialYear/useFinancialYear'
 
-/** What the side sheet is showing: nothing, a new service, an existing one, or Adjust Prices. */
-type Editing = { kind: 'closed' } | { kind: 'new' } | { kind: 'edit'; service: CatalogServiceResponse } | { kind: 'adjust' }
+/** What the side sheet is showing: nothing, a new service, an existing one, Adjust Prices, or Import Services. */
+type Editing =
+  | { kind: 'closed' }
+  | { kind: 'new' }
+  | { kind: 'edit'; service: CatalogServiceResponse }
+  | { kind: 'adjust' }
+  | { kind: 'import' }
 
 export function ServicesPage() {
   const { financialYear } = useFinancialYear()
@@ -47,6 +53,14 @@ export function ServicesPage() {
               disabled={!count}
             >
               <SlidersHorizontal /> Adjust Prices
+            </Button>
+            <Button
+              variant="outline"
+              size="touch"
+              className="border-primary/50 bg-card"
+              onClick={() => setEditing({ kind: 'import' })}
+            >
+              <FileSpreadsheet /> {IMPORT_SERVICES_LABEL}
             </Button>
             <Button size="touch" onClick={() => setEditing({ kind: 'new' })}>
               <Plus /> New Service
@@ -84,6 +98,7 @@ export function ServicesPage() {
 
       <Sheet open={editing.kind !== 'closed'} onOpenChange={(open) => !open && close()}>
         <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
+          {editing.kind === 'import' && <ImportServicesForm />}
           {editing.kind === 'adjust' && (
             <AdjustPricesForm
               services={catalog.services}

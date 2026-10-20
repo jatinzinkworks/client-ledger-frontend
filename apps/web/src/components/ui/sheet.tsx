@@ -46,6 +46,7 @@ function SheetContent({
   children,
   side = "right",
   showCloseButton = true,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
@@ -56,8 +57,17 @@ function SheetContent({
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        // Project choice: a panel opens with no field selected. Focus the panel itself instead,
+        // so keyboard and screen-reader users still start inside it.
+        onOpenAutoFocus={
+          onOpenAutoFocus ??
+          ((event) => {
+            event.preventDefault()
+            ;(event.currentTarget as HTMLElement | null)?.focus()
+          })
+        }
         className={cn(
-          "fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500",
+          "fixed z-50 flex flex-col outline-none gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500",
           side === "right" &&
             "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
           side === "left" &&

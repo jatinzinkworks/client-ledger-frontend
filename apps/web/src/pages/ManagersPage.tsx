@@ -1,15 +1,17 @@
 import { useManagerCatalog, type ManagerResponse } from '@cl/api'
-import { managerCountLabel } from '@cl/schemas'
-import { Plus } from 'lucide-react'
+import { REASSIGN_CLIENTS_LABEL, managerCountLabel } from '@cl/schemas'
+import { ArrowRightLeft, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 import { LoadError } from '@/components/LoadError'
 import { ManagerClientsSection } from '@/components/managers/ManagerClients'
 import { ManagerEditor } from '@/components/managers/ManagerEditor'
 import { ManagersTable } from '@/components/managers/ManagersTable'
+import { ReassignClients } from '@/components/managers/ReassignClients'
 import { PageHeader } from '@/components/PageHeader'
 import { RefreshButton } from '@/components/RefreshButton'
 import { Spinner } from '@/components/Spinner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 
@@ -19,11 +21,26 @@ type Editing = { kind: 'closed' } | { kind: 'new' } | { kind: 'edit'; manager: M
 export function ManagersPage() {
   const catalog = useManagerCatalog()
   const [editing, setEditing] = useState<Editing>({ kind: 'closed' })
+  const [reassigning, setReassigning] = useState(false)
+  /** What the last Reassign Clients save did, shown above the table. */
+  const [notice, setNotice] = useState<string>()
 
   const count = catalog.managers.length
   const close = () => setEditing({ kind: 'closed' })
   const add = () => setEditing({ kind: 'new' })
   const editingManager = editing.kind === 'edit' ? editing.manager : undefined
+
+  if (reassigning) {
+    return (
+      <ReassignClients
+        managers={catalog.managers}
+        onDone={(saved) => {
+          setReassigning(false)
+          setNotice(saved)
+        }}
+      />
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,12 +50,30 @@ export function ManagersPage() {
         actions={
           <>
             <RefreshButton onRefresh={() => catalog.refetch()} refreshing={catalog.isRefreshing} />
+            <Button
+              variant="outline"
+              size="touch"
+              className="border-primary/50 bg-card"
+              onClick={() => {
+                setNotice(undefined)
+                setReassigning(true)
+              }}
+              disabled={count < 2}
+            >
+              <ArrowRightLeft /> {REASSIGN_CLIENTS_LABEL}
+            </Button>
             <Button size="touch" onClick={add}>
               <Plus /> Add Manager
             </Button>
           </>
         }
       />
+
+      {notice && (
+        <Alert>
+          <AlertDescription>{notice}</AlertDescription>
+        </Alert>
+      )}
 
       {catalog.isLoading && <Spinner />}
       {catalog.loadError && <LoadError error={catalog.loadError} onRetry={() => catalog.refetch()} />}

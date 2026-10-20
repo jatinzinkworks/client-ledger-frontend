@@ -19,9 +19,11 @@ export interface CompanyYearStatus {
   billed?: number;
   /** Discount given on those charges */
   discount?: number;
+  /** The opening balance the company was taken on with, when dated in the year: positive when owed, negative when in credit; zero otherwise */
+  openingBalance?: number;
   /** Payments received in the year */
   received?: number;
-  /** Billed less discount less received: what the year's activity left owing; negative when more was received */
+  /** Billed less discount plus opening balance less received: what the year's activity left owing; negative when more was received */
   closingBalance?: number;
   /** Where the company's year stands */
   status?: CompanyYearStatusStatus;

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasOpeningBalance,
   ALL_MANAGERS,
   addCompanyTitle,
   areCompaniesComplete,
@@ -275,6 +276,54 @@ describe('Add Company', () => {
       companyType: 'LLP',
       address: '14 MG Road',
     });
+  });
+});
+
+describe('Opening balance', () => {
+  const base = { companyName: 'Mehta Textiles Pvt Ltd', companyType: 'PRIVATE_LIMITED', address: '12 MG Road' } as const;
+  const parse = (extra: Record<string, unknown>) => companyFormSchema.parse({ ...base, ...extra });
+
+  it('sends a balance (negative when in credit) with its date when adding', () => {
+    expect(toCompanyRequest(parse({ openingBalance: '25000', openingBalanceDate: '2026-03-31' }))).toEqual({
+      ...base,
+      openingBalance: 25000,
+      openingBalanceDate: '2026-03-31',
+    });
+    expect(toCompanyRequest(parse({ openingBalance: '-5000', openingBalanceDate: '' }))).toEqual({ ...base, openingBalance: -5000 });
+  });
+
+  it('omits a blank or zero balance when adding', () => {
+    expect(toCompanyRequest(parse({ openingBalance: '', openingBalanceDate: '' }))).toEqual(base);
+    expect(toCompanyRequest(parse({ openingBalance: '0', openingBalanceDate: '' }))).toEqual(base);
+  });
+
+  it('when editing, removes a stored balance cleared or set to 0, and leaves none alone', () => {
+    const editing = { editing: true, hadOpeningBalance: true };
+    expect(toCompanyRequest(parse({ openingBalance: '', openingBalanceDate: '2026-03-31' }), editing)).toEqual({ ...base, openingBalance: 0 });
+    expect(toCompanyRequest(parse({ openingBalance: '0', openingBalanceDate: '' }), editing)).toEqual({ ...base, openingBalance: 0 });
+    expect(toCompanyRequest(parse({ openingBalance: '', openingBalanceDate: '' }), { editing: true })).toEqual(base);
+    expect(toCompanyRequest(parse({ openingBalance: '30000', openingBalanceDate: '2026-03-31' }), editing)).toEqual({
+      ...base,
+      openingBalance: 30000,
+      openingBalanceDate: '2026-03-31',
+    });
+  });
+
+  it('pre-fills Edit Company with the stored opening balance, whatever its year', () => {
+    const defaults = companyFormDefaults({ ...base, openingBalanceAmount: 25000, openingBalanceDate: '2026-03-31' });
+    expect([defaults.openingBalance, defaults.openingBalanceDate]).toEqual(['25000', '2026-03-31']);
+    expect(hasOpeningBalance(defaults)).toBe(true);
+    expect(hasOpeningBalance(companyFormDefaults(base))).toBe(false);
+  });
+
+  it('refuses a future date or more than 2 decimals, and ignores a date without a balance', () => {
+    expect(companyFormSchema.safeParse({ ...base, openingBalance: '100', openingBalanceDate: '2999-01-01' }).success).toBe(false);
+    expect(companyFormSchema.safeParse({ ...base, openingBalance: '10.555', openingBalanceDate: '' }).success).toBe(false);
+    expect(toCompanyRequest(parse({ openingBalance: '', openingBalanceDate: '2026-03-31' }))).toEqual(base);
+  });
+
+  it("maps backend errors on a company's opening balance to its field", () => {
+    expect(clientFieldFromApi('companies[0].openingBalanceDate')).toBe('companies.0.openingBalanceDate');
   });
 });
 

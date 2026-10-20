@@ -7,7 +7,7 @@
  */
 
 /**
- * SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received
+ * SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received, OPENING_BALANCE for the balance the company was taken on with
  */
 export type LedgerEntryResponseEntryType = typeof LedgerEntryResponseEntryType[keyof typeof LedgerEntryResponseEntryType];
 
@@ -15,4 +15,5 @@ export type LedgerEntryResponseEntryType = typeof LedgerEntryResponseEntryType[k
 export const LedgerEntryResponseEntryType = {
   SERVICE_CHARGE: 'SERVICE_CHARGE',
   PAYMENT: 'PAYMENT',
+  OPENING_BALANCE: 'OPENING_BALANCE',
 } as const;

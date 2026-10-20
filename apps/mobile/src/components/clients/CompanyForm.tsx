@@ -3,6 +3,7 @@ import {
   COMPANY_FIELDS,
   addCompanyFormSchema,
   areCompaniesComplete,
+  hasOpeningBalance,
   toCompanyRequest,
   type AddCompanyFormInput,
   type AddCompanyFormValues,
@@ -26,6 +27,8 @@ interface CompanyFormProps {
   onDone: () => void;
   /** Editing: keep the submit disabled until something changes. */
   requireChange?: boolean;
+  /** Edit Company: a blank opening balance keeps the stored one (0 removes it). */
+  editing?: boolean;
   /** Shown instead of the backend's message when it refuses with 409. */
   conflictMessage?: string;
   /** Replaces the fields, e.g. when the client can hold no more companies. */
@@ -45,6 +48,7 @@ export function CompanyForm({
   saving,
   onDone,
   requireChange = false,
+  editing = false,
   conflictMessage,
   unavailable,
   footer,
@@ -64,7 +68,7 @@ export function CompanyForm({
   const submit = form.handleSubmit(async ({ companies: [company] }) => {
     setFormError(undefined);
     try {
-      await onSave(toCompanyRequest(company));
+      await onSave(toCompanyRequest(company, { editing, hadOpeningBalance: hasOpeningBalance(defaults) }));
       onDone();
     } catch (error) {
       if (conflictMessage && error instanceof ApiError && error.status === 409) {
@@ -81,7 +85,7 @@ export function CompanyForm({
 
   return (
     <FormProvider {...form}>
-      {unavailable ?? <CompanyFields index={0} />}
+      {unavailable ?? <CompanyFields index={0} editing={editing} />}
       {formError && <Text className="text-sm text-destructive">{formError}</Text>}
       <Button label={saving ? 'Saving…' : submitLabel} disabled={blocked} onPress={submit} />
       {footer}

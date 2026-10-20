@@ -1,10 +1,11 @@
 import { useClients, useManagerCatalog } from '@cl/api'
-import { ALL_MANAGERS, clientCountLabel, filterClients } from '@cl/schemas'
-import { Plus } from 'lucide-react'
+import { ALL_MANAGERS, IMPORT_CLIENTS_LABEL, clientCountLabel, filterClients } from '@cl/schemas'
+import { FileSpreadsheet, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { ClientCard } from '@/components/clients/ClientCard'
 import { ClientFilters } from '@/components/clients/ClientFilters'
+import { ImportClientsForm } from '@/components/clients/ImportClientsForm'
 import { OnboardClientForm } from '@/components/clients/OnboardClientForm'
 import { LoadError } from '@/components/LoadError'
 import { PageHeader } from '@/components/PageHeader'
@@ -20,6 +21,7 @@ export function ClientsPage() {
   const [managerId, setManagerId] = useState(ALL_MANAGERS)
   const [overdueOnly, setOverdueOnly] = useState(false)
   const [onboarding, setOnboarding] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const visible = useMemo(
     () => filterClients(clients.clients, query, managerId, overdueOnly),
@@ -41,6 +43,9 @@ export function ClientsPage() {
         actions={
           <>
             <RefreshButton onRefresh={refresh} refreshing={clients.isRefreshing || managers.isRefreshing} />
+            <Button variant="outline" size="touch" className="border-primary/50 bg-card" onClick={() => setImporting(true)}>
+              <FileSpreadsheet /> {IMPORT_CLIENTS_LABEL}
+            </Button>
             <Button size="touch" onClick={onboard}>
               <Plus /> Onboard Client
             </Button>
@@ -94,6 +99,12 @@ export function ClientsPage() {
               onDone={() => setOnboarding(false)}
             />
           )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={importing} onOpenChange={setImporting}>
+        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-[500px]">
+          {importing && <ImportClientsForm />}
         </SheetContent>
       </Sheet>
     </div>

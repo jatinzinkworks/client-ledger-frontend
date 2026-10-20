@@ -1,8 +1,8 @@
-import { ApiError, errorMessage, fieldErrors, type CatalogServiceRequest, type CatalogServiceResponse } from '@cl/api'
+import { ApiError, errorMessage, fieldErrors, useServiceCategories, type CatalogServiceRequest, type CatalogServiceResponse } from '@cl/api'
 import {
   BILLING_OPTIONS,
-  CATEGORY_OPTIONS,
   SERVICE_FIELD_LABELS,
+  categoryOptions,
   gstRateOptions,
   scheduleDefaultsFor,
   serviceFieldFromApi,
@@ -44,6 +44,9 @@ interface ServiceEditorProps {
 /** The create / edit form shown in the side sheet. */
 export function ServiceEditor({ service, defaultCategory, onSave, onDelete, saving, deleting, onDone }: ServiceEditorProps) {
   const isNew = !service
+  // Category choices come from GET /services/categories.
+  const { categories } = useServiceCategories()
+  const categoryChoices = categoryOptions(categories, service?.category ?? defaultCategory)
   const form = useForm<ServiceFormInput, unknown, ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: serviceFormDefaults(service, defaultCategory),
@@ -116,7 +119,7 @@ export function ServiceEditor({ service, defaultCategory, onSave, onDelete, savi
             <SelectField
               id="service-category"
               label={SERVICE_FIELD_LABELS.category}
-              options={CATEGORY_OPTIONS}
+              options={categoryChoices}
               error={errors.category?.message}
               registration={register('category')}
             />

@@ -31,4 +31,8 @@ export interface CompanyRequest {
      * @maximum 100
      */
   discountPercent?: number;
+  /** The balance the company is taken on with, brought over from before: positive when the company owes it, negative when it starts in credit, such as an advance. It is recorded in the company's ledger as an opening balance, counted in what is pending but not as billed. When adding a company, omit it, or send 0, for none. When updating one, omit it to leave the company's opening balance as it is, send 0 to remove it, or send another amount to record it, or replace the one the company has */
+  openingBalance?: number;
+  /** The date the opening balance stood at, which places it in a financial year; not after today. Only with an openingBalance other than 0. Defaults to the day the company is added, or, when updating a company that has an opening balance, to that balance's date */
+  openingBalanceDate?: string;
 }

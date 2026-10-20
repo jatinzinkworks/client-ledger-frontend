@@ -19,7 +19,7 @@ export interface LedgerEntryResponse {
   clientId?: string;
   /** Identifier of the company billed */
   companyId?: string;
-  /** SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received */
+  /** SERVICE_CHARGE for an amount owed for a service, PAYMENT for an amount received, OPENING_BALANCE for the balance the company was taken on with */
   entryType?: LedgerEntryResponseEntryType;
   /** Identifier of the service as assigned to the company */
   companyServiceId?: string;
@@ -29,7 +29,7 @@ export interface LedgerEntryResponse {
   serviceName?: string;
   /** How the service is billed */
   serviceType?: LedgerEntryResponseServiceType;
-  /** For a service charge, the date the service fell due, which it bills; for a payment, the date it was received */
+  /** For a service charge, the date the service fell due, which it bills; for a payment, the date it was received; for an opening balance, the date it stood at */
   dueDate?: string;
   /** Indian financial year (1 April to 31 March) the due date falls in */
   financialYear?: string;
@@ -47,7 +47,7 @@ export interface LedgerEntryResponse {
   gstRatePercent?: number;
   /** GST charged on the taxable amount */
   gstAmount?: number;
-  /** For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number */
+  /** For a service charge, the amount owed: the taxable amount plus GST. For a payment, the amount received as a negative number. For an opening balance, the balance brought over: positive when owed, negative when in credit */
   totalAmount?: number;
   /** How a payment was received */
   paymentMethod?: LedgerEntryResponsePaymentMethod;

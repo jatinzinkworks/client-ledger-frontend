@@ -40,7 +40,13 @@ export const CATEGORY_LABELS: Readonly<Record<Category, string>> = {
   AUDIT: 'Audit',
   ACCOUNTING: 'Accounting',
   ADVISORY: 'Advisory',
+  CERTIFICATION: 'Certification',
 };
+
+/** A category's label; one the backend added after this build is title-cased ("NEW_AREA" → "New Area"). */
+export const categoryLabel = (category: string): string =>
+  CATEGORY_LABELS[category as Category] ??
+  category.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const BILLING_LABELS: Readonly<Record<BillingFrequency, string>> = {
   ONE_OFF: 'One-Off',
@@ -90,7 +96,22 @@ export const DAY_OPTIONS: readonly Option[] = Array.from({ length: DAY_MAX }, (_
 const optionsFrom = <T extends string>(labels: Readonly<Record<T, string>>): Option[] =>
   (Object.entries(labels) as [T, string][]).map(([value, label]) => ({ value, label }));
 
-export const CATEGORY_OPTIONS = optionsFrom(CATEGORY_LABELS);
+/** Every category, A to Z by label: the Services filters (after All) and Adjust Prices' scope. */
+export const CATEGORY_OPTIONS = optionsFrom(CATEGORY_LABELS).sort((a, b) => a.label.localeCompare(b.label));
+
+/**
+ * The service editor's Category options: the backend's list (GET /services/categories) once it
+ * has loaded, else the categories this build knows (same values, from the spec), so the field
+ * works while loading or if the request fails. The service's current category is always kept.
+ * Sorted by label, A to Z.
+ */
+export function categoryOptions(fromApi: readonly string[] | undefined, current?: string): Option[] {
+  const categories = fromApi?.length ? [...fromApi] : [...CATEGORIES];
+  if (current && !categories.includes(current)) categories.push(current);
+  return categories
+    .map((value) => ({ value, label: categoryLabel(value) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
 export const BILLING_OPTIONS = optionsFrom(BILLING_LABELS);
 export const MONTH_OPTIONS = optionsFrom(MONTH_LABELS);
 export const MONTH_OF_QUARTER_OPTIONS = optionsFrom(MONTH_OF_QUARTER_LABELS);

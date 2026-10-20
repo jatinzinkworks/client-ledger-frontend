@@ -19,9 +19,11 @@ export interface OverviewResponse {
   toDate?: string;
   /** Sum of the service charges falling due in the year across every client: taxable amounts plus GST, after discount */
   totalBilled?: number;
+  /** Sum of the opening balances dated in the year, which companies were taken on with: positive when owed, negative when in credit. Not part of totalBilled */
+  openingBalance?: number;
   /** Sum of the payments received in the year across every client */
   totalPaymentReceived?: number;
-  /** Billed less received in the year; negative when more was received. Earlier years' balances are not brought forward */
+  /** Billed plus opening balance less received in the year; negative when more was received. Earlier years' balances are not brought forward */
   pending?: number;
   /** Sum of the discounts given on the year's service charges */
   totalDiscount?: number;

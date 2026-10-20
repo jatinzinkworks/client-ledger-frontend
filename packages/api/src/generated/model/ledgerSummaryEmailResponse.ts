@@ -22,7 +22,7 @@ export interface LedgerSummaryEmailResponse {
   cc?: string[];
   /** Subject of the email */
   subject?: string;
-  /** Name of the Excel ledger attached */
+  /** Name of the PDF ledger statement attached */
   attachmentName?: string;
   /** When the email was handed to the SMTP server */
   sentAt?: string;

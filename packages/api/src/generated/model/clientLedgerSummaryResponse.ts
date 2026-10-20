@@ -23,9 +23,11 @@ export interface ClientLedgerSummaryResponse {
   toDate?: string;
   /** Sum of the service charges falling due in the year, across every company */
   totalBilled?: number;
+  /** Sum of the opening balances dated in the year, which companies were taken on with: positive when owed, negative when in credit; zero when none was. Not part of totalBilled */
+  openingBalance?: number;
   /** Sum of the payments received in the year from every company, as a positive number */
   totalPaymentReceived?: number;
-  /** Billed less received in the year, across every company; negative when the year's payments exceed its billing */
+  /** Billed plus opening balance less received in the year, across every company; negative when the year's payments exceed them */
   pending?: number;
   /** Sum of the discounts taken off the service fees billed in the year, across every company */
   totalDiscount?: number;

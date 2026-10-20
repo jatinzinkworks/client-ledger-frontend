@@ -1,5 +1,5 @@
 import { errorMessage, useServiceCatalog } from '@cl/api';
-import { filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas';
+import { IMPORT_SERVICES_LABEL, filterServices, servicesEyebrow, type CategoryFilter } from '@cl/schemas';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
@@ -9,7 +9,7 @@ import { ServiceFilters } from '@/components/services/ServiceFilters';
 import { Button } from '@/components/ui/Button';
 import { useFinancialYear } from '@/financialYear/useFinancialYear';
 import { useThemeColors } from '@/theme/useThemeColors';
-import { adjustPricesHref } from '@/utils/routes';
+import { adjustPricesHref, importServicesHref } from '@/utils/routes';
 import { EYEBROW } from '@/utils/typography';
 
 export default function ServicesScreen() {
@@ -46,6 +46,7 @@ export default function ServicesScreen() {
             <Button variant="outline" label="Adjust Prices" className="flex-1 py-2" disabled={!count} onPress={openAdjust} />
             <Button label="+ New Service" className="flex-1 py-2" onPress={openNew} />
           </View>
+          <Button variant="outline" label={IMPORT_SERVICES_LABEL} className="py-2" onPress={() => router.push(importServicesHref)} />
           <ServiceFilters query={query} onQueryChange={setQuery} category={category} onCategoryChange={setCategory} />
         </View>
       }

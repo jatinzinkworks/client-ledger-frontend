@@ -39,6 +39,7 @@ export function EditCompanyForm({
       saving={saving}
       onDone={onDone}
       requireChange
+      editing
       footer={
         <DeleteButton
           label="Delete Company"

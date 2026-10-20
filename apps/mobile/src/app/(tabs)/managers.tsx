@@ -1,11 +1,12 @@
 import { errorMessage, useManagerCatalog } from '@cl/api';
-import { managerCountLabel } from '@cl/schemas';
+import { REASSIGN_CLIENTS_LABEL, managerCountLabel } from '@cl/schemas';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { ManagerCard } from '@/components/managers/ManagerCard';
 import { Button } from '@/components/ui/Button';
 import { useThemeColors } from '@/theme/useThemeColors';
+import { reassignClientsHref } from '@/utils/routes';
 import { EYEBROW } from '@/utils/typography';
 
 export default function ManagersScreen() {
@@ -23,11 +24,20 @@ export default function ManagersScreen() {
         <RefreshControl refreshing={false} onRefresh={() => catalog.refetch()} tintColor={colors.mutedForeground} />
       }
       ListHeaderComponent={
-        <View className="flex-row items-center justify-between pb-1">
+        <View className="gap-3 pb-1">
           <Text className={EYEBROW}>
             {catalog.isLoading ? ' ' : managerCountLabel(count)}
           </Text>
-          <Button label="+ Add Manager" className="py-2" onPress={openNew} />
+          <View className="flex-row gap-2">
+            <Button
+              variant="outline"
+              label={REASSIGN_CLIENTS_LABEL}
+              className="flex-1 py-2"
+              disabled={count < 2}
+              onPress={() => router.push(reassignClientsHref)}
+            />
+            <Button label="+ Add Manager" className="flex-1 py-2" onPress={openNew} />
+          </View>
         </View>
       }
       renderItem={({ item }) => (

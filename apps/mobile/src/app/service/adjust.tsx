@@ -5,10 +5,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { AdjustPricesForm } from '@/components/services/AdjustPricesForm';
 import { FormScreen } from '@/components/ui/FormScreen';
 import { LoadError, Loading } from '@/components/ui/LoadState';
+import { useFinancialYear } from '@/financialYear/useFinancialYear';
 
 export default function AdjustPricesScreen() {
   const { category } = useLocalSearchParams<{ category?: string }>();
-  const catalog = useServiceCatalog();
+  const { financialYear } = useFinancialYear();
+  const catalog = useServiceCatalog(financialYear);
   const scope = CATEGORY_FILTERS.some((f) => f.value === category) ? (category as CategoryFilter) : undefined;
   const close = () => (router.canGoBack() ? router.back() : router.replace('/services'));
   return (

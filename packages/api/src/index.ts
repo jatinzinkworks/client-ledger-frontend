@@ -18,6 +18,7 @@ export { useClients } from './hooks/useClients';
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { useManagerCatalog } from './hooks/useManagerCatalog';
 export { useManagerClients } from './hooks/useManagerClients';
+export { useReassignClients, type ReassignOutcome } from './hooks/useReassignClients';
 export {
   CATEGORY_TOP_SERVICES,
   PENDING_RANKING_LIMITS,
@@ -35,4 +36,8 @@ export {
   type RankSubject,
 } from './hooks/useOverview';
 export { usePaymentTerms } from './hooks/usePaymentTerms';
+export { useServiceCategories } from './hooks/useServiceCategories';
+export { useServiceImport } from './hooks/useServiceImport';
+export { useClientImport } from './hooks/useClientImport';
+export { useWorkbookImport, type WorkbookImport, type WorkbookUpload } from './hooks/useWorkbookImport';
 export { useServiceCatalog } from './hooks/useServiceCatalog';
