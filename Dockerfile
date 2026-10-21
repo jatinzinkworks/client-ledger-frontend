@@ -30,11 +30,10 @@ RUN pnpm --filter "@cl/web..." test
 
 # Baked into the JS bundle at build time: Vite inlines import.meta.env.VITE_*.
 #
-# VITE_API_BASE_URL is normally left unset: .env keeps it empty, so the browser calls the
-# app's own origin and nginx (stage 3) proxies /psc to the backend. The backend sends no
-# CORS headers, so a full URL only works for a backend that allows this origin.
+# VITE_API_BASE_URL is the backend origin the browser calls directly (build.sh passes it).
+# The backend must allow this app's origin via CORS.
 #
-#   docker build --build-arg VITE_IDP_LOGOUT_URL=https://login.microsoftonline.com/<tenant>/oauth2/v2.0/logout .
+#   docker build --build-arg VITE_API_BASE_URL=https://<backend> .
 #
 # ARG without a matching ENV is deliberate. `ARG X` + `ENV X=${X}` sets X to the
 # empty string when no --build-arg is passed, and an empty value *overrides*
@@ -42,12 +41,8 @@ RUN pnpm --filter "@cl/web..." test
 # variable is simply unset, so .env remains the fallback, while a value that is
 # passed still reaches the build.
 ARG VITE_API_BASE_URL
-ARG VITE_IDP_LOGOUT_URL
-ARG VITE_LOGOUT_URL
 
-RUN echo ">>> VITE_API_BASE_URL   : ${VITE_API_BASE_URL:-(unset — using .env)}" && \
-    echo ">>> VITE_IDP_LOGOUT_URL : ${VITE_IDP_LOGOUT_URL:-(unset — using .env)}" && \
-    echo ">>> VITE_LOGOUT_URL     : ${VITE_LOGOUT_URL:-(unset — using .env)}"
+RUN echo ">>> VITE_API_BASE_URL   : ${VITE_API_BASE_URL:-(unset — using .env)}"
 
 # These values cannot be changed after this point, so a wrong one ships to
 # production unnoticed. Check the built output rather than the build args: the
@@ -56,7 +51,7 @@ RUN echo ">>> VITE_API_BASE_URL   : ${VITE_API_BASE_URL:-(unset — using .env)}
 RUN pnpm --filter @cl/web build && \
     if grep -rq "localhost:8080" apps/web/dist/assets/*.js; then \
       echo "ERROR: the built bundle points at localhost:8080."; \
-      echo "Leave VITE_API_BASE_URL empty (same-origin via the nginx proxy) or pass a deployed URL."; \
+      echo "Pass the deployed backend as --build-arg VITE_API_BASE_URL=https://<backend>."; \
       exit 1; \
     fi
 
@@ -99,20 +94,11 @@ RUN echo "apk security-patch layer, bust=${APK_PATCH_BUST}" && \
 USER 101
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
-COPY nginx.conf.template /etc/nginx/nginx.conf.template
-COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
 
-# API_UPSTREAM is read at container start: docker-entrypoint.sh substitutes it into
-# nginx.conf.template as the target of the /psc proxy, e.g.
-#
-#   docker run -e API_UPSTREAM=https://client-ledger-backend-xxxx.a.run.app -p 8080:8080 <image>
-#
-# The VITE_* values are not runtime settings — they were fixed in the bundle above.
-ENV API_UPSTREAM=""
-
-ENTRYPOINT ["docker-entrypoint.sh"]
+# No runtime settings: the VITE_* values were fixed in the bundle above.
 CMD ["nginx", "-g", "daemon off;"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

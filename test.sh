@@ -7,13 +7,17 @@ VERSION="test"
 echo "Version: ${VERSION}"
 echo "Image:   ${IMAGE}"
 
+# The backend the browser calls, fixed into the bundle at build time.
+VITE_API_BASE_URL="https://136-82-161-4.nip.io"
+echo "Backend: ${VITE_API_BASE_URL}"
+
 
 # ---------- Step 1: Build ---------------------------------------------------
 echo ""
 echo "=========================================="
 echo "[1/2] Building Docker image"
 echo "=========================================="
-docker build --pull -t "${IMAGE}" .
+docker build --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL}" --pull -t "${IMAGE}" .
 echo "Build OK: ${IMAGE}"
 
 # ---------- Step 3: Trivy security scan -------------------------------------
