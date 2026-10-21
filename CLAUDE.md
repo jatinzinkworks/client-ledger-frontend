@@ -22,6 +22,7 @@ packages/
 - `pnpm dev` / `pnpm dev:web` — Vite dev server for the web app (http://localhost:5173)
 - `pnpm dev:mobile` — `expo start` for the mobile app (press `a` / `i` / `w`, or scan with Expo Go)
 - `pnpm dev:mobile:usb` — Android phone over USB: `adb reverse` for 8081/8080, then Expo with the API pointed at `localhost:8080` (no Wi-Fi/firewall needed). `--no-start` only re-applies the reverse routes after re-plugging. Script: [apps/mobile/scripts/usb.mjs](apps/mobile/scripts/usb.mjs)
+- `pnpm build:apk` — release Android APK, built locally with Gradle (Android SDK + JDK 17+, no EAS), pointed at the deployed backend `https://136-82-161-4.nip.io` (`API_BASE_URL` overrides). Regenerates `android/` (`expo prebuild --clean`), builds arm64-v8a only (`--abi=all` for every ABI), writes `apps/mobile/dist/client-ledger-<version>.apk`; `--install` also installs it over adb. Debug-signed: sideload only, not Play Store. Script: [apps/mobile/scripts/build-apk.mjs](apps/mobile/scripts/build-apk.mjs)
 - `pnpm build` · `pnpm typecheck` · `pnpm lint` — Turborepo across all workspaces
 - `pnpm test` — Vitest across the workspaces that have tests
 - `pnpm api:fetch-spec` — refresh `packages/api/openapi.json` from a running backend (`API_SPEC_URL` overrides `http://localhost:8080/v3/api-docs`)
