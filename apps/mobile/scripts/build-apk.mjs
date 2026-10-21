@@ -17,6 +17,9 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://136-82-161-4.nip.io'
+// IAP's OAuth client (type Web): the app asks Google for ID tokens issued to it, which IAP
+// accepts. The Android OAuth client (package + signing SHA-1) must exist in the same project.
+const GOOGLE_WEB_CLIENT_ID = '919674490230-mp4jc71ocg6n1ue26n4vuatrvu0g7pkd.apps.googleusercontent.com'
 const ALL_ABIS = 'armeabi-v7a,arm64-v8a,x86,x86_64'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -49,6 +52,20 @@ function fail(message) {
 step(1, 'Checking the toolchain')
 const sdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT
 if (!sdk || !existsSync(sdk)) fail('ANDROID_HOME is not set to the Android SDK folder')
+// pnpm's node_modules paths run past 260 characters, which ninja only handles from 1.12 —
+// older ones loop with "manifest 'build.ninja' still dirty after 100 tries". The SDK's
+// CMake 3.22.1 (the Android Gradle plugin's default) ships ninja 1.10.
+const sdkNinja = join(sdk, 'cmake', '3.22.1', 'bin', 'ninja.exe')
+if (isWindows && existsSync(sdkNinja)) {
+  const ninja = spawnSync(sdkNinja, ['--version'], { encoding: 'utf8' }).stdout.trim()
+  const [major, minor] = ninja.split('.').map(Number)
+  if (major === 1 && minor < 12) {
+    fail(
+      `${sdkNinja} is ninja ${ninja}, which cannot read long Windows paths.\n` +
+        '  Replace it with ninja 1.12+ from https://github.com/ninja-build/ninja/releases (ninja-win.zip).',
+    )
+  }
+}
 if (!/^https:\/\//.test(API_BASE_URL)) {
   fail(`API_BASE_URL must be https:// (release builds block cleartext http): ${API_BASE_URL}`)
 }
@@ -61,6 +78,7 @@ console.log(`App version: ${version}`)
 // Expo inlines EXPO_PUBLIC_* into the JS bundle when Gradle bundles it. A variable already
 // in the environment wins over .env, so the dev value there (10.0.2.2) is not used.
 process.env.EXPO_PUBLIC_API_BASE_URL = API_BASE_URL
+process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = GOOGLE_WEB_CLIENT_ID
 process.env.NODE_ENV = 'production'
 
 // ---------- Step 2: Generate the native project ----------------------------
@@ -71,7 +89,8 @@ run('npx', ['expo', 'prebuild', '--platform', 'android', '--clean', '--no-instal
 step(3, 'Building the release APK')
 const androidDir = join(root, 'android')
 run(
-  isWindows ? 'gradlew.bat' : './gradlew',
+  // Full path: cmd.exe may not search the working directory (NoDefaultCurrentDirectoryInExePath).
+  join(androidDir, isWindows ? 'gradlew.bat' : 'gradlew'),
   ['assembleRelease', `-PreactNativeArchitectures=${abis}`, '--no-daemon'],
   androidDir,
 )

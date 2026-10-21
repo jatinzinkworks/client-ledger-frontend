@@ -2,15 +2,16 @@
   "expo": {
     "name": "Client Ledger",
     "slug": "client-ledger",
-    "version": "0.1.0",
+    "version": "1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "clientledger",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.zinkworks.clientledger"
     },
     "android": {
+      "package": "com.anonymous.clientledger",
       "adaptiveIcon": {
         "backgroundColor": "#04224C",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -35,7 +36,14 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-sharing"
+      "expo-sharing",
+      "./plugins/withShortNativeBuildPaths",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.REPLACE-WITH-IOS-CLIENT-ID"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

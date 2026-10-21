@@ -7,6 +7,7 @@ import {
 } from '@cl/schemas';
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
+import { AccountCard } from '@/components/settings/AccountCard';
 import { FirmDetailsForm } from '@/components/settings/FirmDetailsForm';
 import { PaymentTermsForm } from '@/components/settings/PaymentTermsForm';
 import { SettingsCard } from '@/components/settings/SettingsCard';
@@ -18,6 +19,8 @@ export default function SettingsScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
       <ScrollView contentContainerClassName="gap-4 p-4" keyboardShouldPersistTaps="handled">
+        <AccountCard />
+
         <SettingsCard {...PAYMENT_TERMS_SECTION} setting={paymentTerms} savedMessage="Payment Terms Saved.">
           <PaymentTermsForm
             // Re-seed the form whenever a different stored version arrives (including after a save).

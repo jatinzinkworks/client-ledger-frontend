@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# CMake build cache (plugins/withShortNativeBuildPaths.js)
+/.cxx

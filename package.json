@@ -11,6 +11,7 @@
     "dev:mobile": "pnpm --filter @cl/mobile start",
     "dev:mobile:usb": "pnpm --filter @cl/mobile usb",
     "build:apk": "pnpm --filter @cl/mobile build:apk",
+    "build:ios": "pnpm --filter @cl/mobile build:ios",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",

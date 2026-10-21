@@ -9,6 +9,7 @@
     "@cl/tokens": "workspace:*",
     "@hookform/resolvers": "^5.9.1",
     "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-google-signin/google-signin": "^16.1.5",
     "@tanstack/react-query": "catalog:",
     "expo": "~57.0.25",
     "expo-constants": "~57.0.19",
@@ -38,6 +39,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@babel/plugin-transform-react-jsx": "^7.29.7",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "catalog:",
     "babel-preset-expo": "~57.0.13",
     "tailwindcss": "^3.4.19",
@@ -47,8 +50,10 @@
     "start": "expo start",
     "usb": "node scripts/usb.mjs",
     "build:apk": "node scripts/build-apk.mjs",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "build:ios": "node scripts/build-ios.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "doctor": "expo-doctor"
