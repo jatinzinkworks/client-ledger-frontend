@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   managerClientsLabel,
   managerCountLabel,
+  managerEmailLabel,
   managerFieldFromApi,
   managerFormDefaults,
   managerFormSchema,
@@ -32,14 +33,19 @@ describe('managerFormSchema', () => {
     expect(toManagerRequest(parsed)).toEqual(valid);
   });
 
-  it('requires every field', () => {
+  it('requires every field but the email', () => {
     const issues = issuesFor({ firstName: ' ', lastName: '', email: '', role: 'MANAGER', mobileNumber: '' });
-    expect(issues).toMatchObject({
+    expect(issues).toEqual({
       firstName: 'Enter The First Name.',
       lastName: 'Enter The Last Name.',
-      email: 'Enter The Email Address.',
       mobileNumber: 'Enter The Mobile Number.',
     });
+  });
+
+  it('omits a blank email from the request', () => {
+    const parsed = managerFormSchema.parse({ ...valid, email: '   ' });
+    const { email: _email, ...withoutEmail } = valid;
+    expect(toManagerRequest(parsed)).toEqual(withoutEmail);
   });
 
   it('rejects a malformed email and phone number', () => {
@@ -63,6 +69,8 @@ describe('display helpers', () => {
     expect(managerName(valid)).toBe('Neha Kulkarni');
     expect(managerInitials({ firstName: 'arjun', lastName: 'Iyer' })).toBe('AI');
     expect(roleLabel('SENIOR_MANAGER')).toBe('Senior Manager');
+    expect(managerEmailLabel(valid)).toBe('neha@pranaysinghal.in');
+    expect(managerEmailLabel({})).toBe('No Email');
     expect(managerCountLabel(1)).toBe('1 Manager');
     expect(managerCountLabel(4)).toBe('4 Managers');
   });

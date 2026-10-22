@@ -50,6 +50,10 @@
     {
       "name": "Ledger",
       "description": "Amounts client companies owe for the services delivered to them"
+    },
+    {
+      "name": "Birthdays",
+      "description": "Clients' birthdays, to greet them on the day"
     }
   ],
   "paths": {
@@ -618,7 +622,7 @@
           "Clients"
         ],
         "summary": "Update a client",
-        "description": "Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount. The client's WhatsApp opt-in is left as it is; record it with PATCH /clients/{id}/whatsapp-opt-in.",
+        "description": "Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.",
         "operationId": "updateClient",
         "parameters": [
           {
@@ -692,7 +696,7 @@
           "Clients"
         ],
         "summary": "Delete a client",
-        "description": "Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first. Nor can a client with ledger entries, such as payments or an opening balance, on any company: a ledger is a financial record and is never deleted along with its client.",
+        "description": "Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first. Nor can a client with payments or service charges in the ledger of any company: a ledger is a financial record and is never deleted along with its client. Opening balances alone do not stop it; they are deleted with the client.",
         "operationId": "deleteClient",
         "parameters": [
           {
@@ -732,7 +736,7 @@
             }
           },
           "409": {
-            "description": "Services are still assigned to, or ledger entries recorded against, one or more of the client's companies; the message says which",
+            "description": "Services are still assigned to, or payments or service charges recorded against, one or more of the client's companies; the message says which",
             "content": {
               "application/json": {
                 "schema": {
@@ -919,7 +923,7 @@
           "Client Companies"
         ],
         "summary": "Delete a company of a client",
-        "description": "Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first. Nor can a company with ledger entries, such as payments or an opening balance: a ledger is a financial record and is never deleted along with its company.",
+        "description": "Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first. Nor can a company with payments or service charges in its ledger: a ledger is a financial record and is never deleted along with its company. An opening balance alone does not stop it; it is deleted with the company.",
         "operationId": "deleteCompany",
         "parameters": [
           {
@@ -970,7 +974,7 @@
             }
           },
           "409": {
-            "description": "It is the client's only company (BUSINESS_RULE_VIOLATION), or services are still assigned to it or ledger entries recorded against it (RESOURCE_IN_USE)",
+            "description": "It is the client's only company (BUSINESS_RULE_VIOLATION), or services are still assigned to it or payments or service charges recorded against it (RESOURCE_IN_USE)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1887,48 +1891,6 @@
         }
       }
     },
-    "/psc/cl/v1/notifications/whatsapp-payment-reminders": {
-      "post": {
-        "tags": [
-          "Notifications"
-        ],
-        "summary": "Send a WhatsApp payment reminder to every client with an amount pending",
-        "description": "Takes no input. Sends every client who has opted in to WhatsApp messages (whatsappOptIn) and owes something across every financial year (billed less received across all of their companies, to date, is more than zero) a WhatsApp payment reminder on the phone number in their record, through Meta's WhatsApp Cloud API. Each is the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with the client's first name, the firm's name, the amount pending and today's date. Numbers without a country code get WHATSAPP_DEFAULT_COUNTRY_CODE. Clients not opted in are counted in notOptedInCount; those settled or in credit overall in skippedCount. Each client is sent to on its own, so one that fails, such as a phone number WhatsApp cannot use, is listed under failures and the others are still reminded. The response returns once every client has been tried.",
-        "operationId": "sendWhatsAppPaymentReminders",
-        "responses": {
-          "200": {
-            "description": "The run's outcome, including any clients that could not be reminded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WhatsAppReminderResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "502": {
-            "description": "WhatsApp is not configured; no client was sent a message",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/psc/cl/v1/notifications/payment-reminders": {
       "post": {
         "tags": [
@@ -2637,91 +2599,6 @@
           },
           "500": {
             "description": "Unexpected server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/psc/cl/v1/clients/{clientId}/whatsapp-payment-reminder": {
-      "post": {
-        "tags": [
-          "Notifications"
-        ],
-        "summary": "Send one client a WhatsApp payment reminder",
-        "description": "Sends the client a WhatsApp payment reminder for what they owe across every financial year and all of their companies, on the phone number in their record, through Meta's WhatsApp Cloud API: the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with their first name, the firm's name, the amount pending and today's date. The client must have opted in to WhatsApp messages (whatsappOptIn) and owe something. The message is sent before the response returns.",
-        "operationId": "sendWhatsAppPaymentReminder",
-        "parameters": [
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Identifier of the client",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The reminder was accepted by WhatsApp",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientWhatsAppResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The identifier is not a valid UUID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No client carries this identifier",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The client has not opted in to WhatsApp messages, owes nothing, or has a phone number WhatsApp cannot use; nothing was sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "502": {
-            "description": "WhatsApp is not configured, or refused the message or could not be reached; nothing was sent",
             "content": {
               "application/json": {
                 "schema": {
@@ -3560,7 +3437,7 @@
           "Clients"
         ],
         "summary": "Import clients and their companies from an Excel workbook",
-        "description": "Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. Clients opted in to WhatsApp are sent the confirmation message as on create. The response counts and adds up the opening balances recorded, per client and overall, so they can be checked against the workbook.",
+        "description": "Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. The response lists each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.",
         "operationId": "importClients",
         "requestBody": {
           "content": {
@@ -3614,82 +3491,6 @@
           },
           "413": {
             "description": "The file is larger than the server accepts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/psc/cl/v1/clients/{id}/whatsapp-opt-in": {
-      "patch": {
-        "tags": [
-          "Clients"
-        ],
-        "summary": "Record a client's WhatsApp opt-in",
-        "description": "Sets whether the client agrees to receive WhatsApp messages from the firm, such as payment reminders, and changes nothing else. WhatsApp messages are only sent to clients who have opted in. This, and creating a client, are the only ways to change it: updating a client leaves it as it is. When a client changes from opted out to opted in, and the WHATSAPP_OPT_IN_CONFIRMATION_TEMPLATE setting names a template, they are sent a WhatsApp message confirming it in the background once the change is saved. The response does not wait for it and does not depend on it: if it cannot be sent, the opt-in still stands and the failure is logged.",
-        "operationId": "updateWhatsAppOptIn",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Identifier of the client",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
-          }
-        ],
-        "requestBody": {
-          "description": "Whether the client agrees to receive WhatsApp messages",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WhatsAppOptInRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Opt-in recorded; the client as now stored",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "whatsappOptIn is missing, or the identifier is not a valid UUID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No client carries this identifier",
             "content": {
               "application/json": {
                 "schema": {
@@ -5042,7 +4843,7 @@
           "Clients"
         ],
         "summary": "Download the client import template",
-        "description": "Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Email, Discount % and WhatsApp Opt-In. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.",
+        "description": "Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.",
         "operationId": "downloadTemplate_1",
         "responses": {
           "200": {
@@ -5062,6 +4863,65 @@
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/psc/cl/v1/birthdays": {
+      "get": {
+        "tags": [
+          "Birthdays"
+        ],
+        "summary": "List the clients with a birthday in a month",
+        "description": "Returns every client whose birthday falls in the given month, whatever the year they were born, ordered by day of the month, then first and last name. Clients without a birthday recorded are left out. The list is returned whole; it is not paged.",
+        "operationId": "listBirthdays",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "query",
+            "description": "Month of the year, 1 for January to 12 for December",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1
+            },
+            "example": 7
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The clients with a birthday in the month, empty when there are none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientBirthdayResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "month is missing, not a whole number, or not between 1 and 12",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5399,9 +5259,12 @@
             "minLength": 0
           },
           "email": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "email",
-            "description": "Work email address, unique across the catalog",
+            "description": "Work email address, unique across the catalog when given. Optional; without one, the manager is not copied into client emails",
             "example": "pranay.singhal@pranaysinghal.in",
             "maxLength": 254,
             "minLength": 0
@@ -5426,7 +5289,6 @@
           }
         },
         "required": [
-          "email",
           "firstName",
           "lastName",
           "mobileNumber",
@@ -5474,15 +5336,16 @@
             "description": "Full name of the manager who looks after the client",
             "example": "Pranay Singhal"
           },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth of the client. Left out when not recorded",
+            "example": "1985-07-23"
+          },
           "discountPercent": {
             "type": "number",
             "description": "Discount granted to the client, as a percentage",
             "example": 10
-          },
-          "whatsappOptIn": {
-            "type": "boolean",
-            "description": "Whether the client has agreed to receive WhatsApp messages from the firm",
-            "example": true
           },
           "companyNames": {
             "type": "array",
@@ -5520,8 +5383,11 @@
             "example": "Singhal"
           },
           "email": {
-            "type": "string",
-            "description": "Work email address",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Work email address; absent when the manager has none",
             "example": "pranay.singhal@pranaysinghal.in"
           },
           "role": {
@@ -5611,6 +5477,12 @@
             "description": "Identifier of the manager from the Manager Catalog who looks after the client",
             "example": "e9b2c4d1-7f35-4a68-91c0-3d8a5e2f6b47"
           },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth of the client; not after today. Optional; omitting it clears any stored before",
+            "example": "1985-07-23"
+          },
           "discountPercent": {
             "type": "number",
             "default": 0,
@@ -5669,15 +5541,16 @@
             "description": "Full name of the manager who looks after the client",
             "example": "Pranay Singhal"
           },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth of the client. Left out when not recorded",
+            "example": "1985-07-23"
+          },
           "discountPercent": {
             "type": "number",
             "description": "Discount granted to the client, as a percentage",
             "example": 10
-          },
-          "whatsappOptIn": {
-            "type": "boolean",
-            "description": "Whether the client has agreed to receive WhatsApp messages from the firm",
-            "example": true
           },
           "companies": {
             "type": "array",
@@ -6253,99 +6126,6 @@
           }
         }
       },
-      "ClientWhatsAppResult": {
-        "type": "object",
-        "description": "A client sent a WhatsApp payment reminder in a run",
-        "properties": {
-          "clientId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the client",
-            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
-          },
-          "clientName": {
-            "type": "string",
-            "description": "Name of the client",
-            "example": "Rohan Mehta"
-          },
-          "pending": {
-            "type": "number",
-            "description": "What the client owes across every financial year and all of their companies: the amount the reminder states",
-            "example": 24235
-          },
-          "messageId": {
-            "type": "string",
-            "description": "Identifier WhatsApp gave the message, for tracing its delivery",
-            "example": "wamid.HBgMOTE5ODIwMDEyMzQ1FQIAERgSMzQ1RjA5QkE3RTY4QzlEMEFDAA=="
-          }
-        }
-      },
-      "WhatsAppReminderResponse": {
-        "type": "object",
-        "description": "The outcome of sending WhatsApp payment reminders to every client with an amount pending",
-        "properties": {
-          "clientCount": {
-            "type": "integer",
-            "format": "int32",
-            "description": "How many clients there are",
-            "example": 42
-          },
-          "sentCount": {
-            "type": "integer",
-            "format": "int32",
-            "description": "How many clients were sent a reminder",
-            "example": 17
-          },
-          "notOptedInCount": {
-            "type": "integer",
-            "format": "int32",
-            "description": "How many clients were not messaged because they have not opted in to WhatsApp",
-            "example": 8
-          },
-          "skippedCount": {
-            "type": "integer",
-            "format": "int32",
-            "description": "How many opted-in clients were not reminded because nothing is pending across every year: settled, in credit, or never billed",
-            "example": 17
-          },
-          "sent": {
-            "type": "array",
-            "description": "The clients reminded, by name, with what each owes",
-            "items": {
-              "$ref": "#/components/schemas/ClientWhatsAppResult"
-            }
-          },
-          "failures": {
-            "type": "array",
-            "description": "The clients owing who could not be reminded; empty when every reminder was sent. The other clients are reminded regardless",
-            "items": {
-              "$ref": "#/components/schemas/ClientWhatsAppFailure"
-            }
-          }
-        }
-      },
-      "ClientWhatsAppFailure": {
-        "type": "object",
-        "description": "A client owing who could not be sent a WhatsApp reminder",
-        "properties": {
-          "clientId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Identifier of the client",
-            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
-          },
-          "clientName": {
-            "type": "string",
-            "description": "Name of the client",
-            "example": "Rohan Mehta"
-          },
-          "error": {
-            "type": "string",
-            "description": "Why the reminder was not sent, such as a phone number WhatsApp cannot use, or WhatsApp refusing the message",
-            "example": "The client's phone number cannot be used for WhatsApp"
-          }
-        }
-      },
       "ClientReminderResult": {
         "type": "object",
         "description": "A client sent a payment reminder in a run",
@@ -6816,6 +6596,12 @@
             "description": "Identifier of the manager from the Manager Catalog who looks after the client",
             "example": "e9b2c4d1-7f35-4a68-91c0-3d8a5e2f6b47"
           },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth of the client; not after today. Optional",
+            "example": "1985-07-23"
+          },
           "discountPercent": {
             "type": "number",
             "default": 0,
@@ -6823,12 +6609,6 @@
             "example": 10,
             "maximum": 100,
             "minimum": 0
-          },
-          "whatsappOptIn": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether the client has agreed to receive WhatsApp messages from the firm, such as payment reminders. WhatsApp requires this consent before any message is sent. Omit for false. Change it later with PATCH /clients/{id}/whatsapp-opt-in",
-            "example": true
           },
           "companies": {
             "type": "array",
@@ -7067,22 +6847,43 @@
             "type": "number",
             "description": "The opening balances recorded for the client's companies, added up: positive when owed on the whole, negative when in credit; 0.00 when none were",
             "example": 25000
+          },
+          "companies": {
+            "type": "array",
+            "description": "Each company created for the client, by name, with the opening balance recorded for it",
+            "items": {
+              "$ref": "#/components/schemas/ImportedCompany"
+            }
           }
         }
       },
-      "WhatsAppOptInRequest": {
+      "ImportedCompany": {
         "type": "object",
-        "description": "Whether a client agrees to receive WhatsApp messages",
+        "description": "A company created by an import",
         "properties": {
-          "whatsappOptIn": {
-            "type": "boolean",
-            "description": "True when the client has agreed to receive WhatsApp messages from the firm, such as payment reminders; false when they have withdrawn or not given that consent",
-            "example": true
+          "companyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier given to the new company",
+            "example": "4c1f8a52-2d6b-4e93-b7a0-9e5d3c1f6a28"
+          },
+          "companyName": {
+            "type": "string",
+            "description": "Registered name of the company",
+            "example": "Mehta Textiles Pvt Ltd"
+          },
+          "openingBalanceAmount": {
+            "type": "number",
+            "description": "The opening balance recorded for the company: positive when owed, negative when in credit. Left out when the company brought none",
+            "example": 25000
+          },
+          "openingBalanceDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the opening balance stood at. Left out when the company brought none",
+            "example": "2026-03-31"
           }
-        },
-        "required": [
-          "whatsappOptIn"
-        ]
+        }
       },
       "OverviewResponse": {
         "type": "object",
@@ -8530,6 +8331,61 @@
           "lastPayment": {
             "$ref": "#/components/schemas/LastPayment",
             "description": "The most recent payment received in the year; absent when none was received"
+          }
+        }
+      },
+      "ClientBirthdayResponse": {
+        "type": "object",
+        "description": "A client's birthday",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the client",
+            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "Given name of the client",
+            "example": "Rohan"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Family name of the client",
+            "example": "Mehta"
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of birth of the client",
+            "example": "1985-07-23"
+          },
+          "dayOfMonth": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Day of the month the birthday falls on",
+            "example": 23
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number",
+            "example": "+91 98200 12345"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email address",
+            "example": "rohan.mehta@example.com"
+          },
+          "managerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the manager who looks after the client",
+            "example": "e9b2c4d1-7f35-4a68-91c0-3d8a5e2f6b47"
+          },
+          "managerName": {
+            "type": "string",
+            "description": "Full name of the manager who looks after the client",
+            "example": "Pranay Singhal"
           }
         }
       }

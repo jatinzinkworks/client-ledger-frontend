@@ -8,13 +8,15 @@ import { useThemeColors } from '@/theme/useThemeColors';
 import { cn } from '@/utils/cn';
 import { EYEBROW } from '@/utils/typography';
 
+import { ClientBirthday } from './ClientBirthday';
+
 interface ClientCardProps {
   client: ClientSummaryResponse;
   onPress: () => void;
 }
 
 /**
- * One client, as the web ClientCard: name, email and status, their companies, what they still
+ * One client, as the web ClientCard: name, email, phone, birthday (when recorded) and status, their companies, what they still
  * owe (across all years) and their manager. Tapping it opens the client.
  */
 export function ClientCard({ client, onPress }: ClientCardProps) {
@@ -42,6 +44,7 @@ export function ClientCard({ client, onPress }: ClientCardProps) {
               <Text className="text-[13px] text-muted-foreground">{client.phone}</Text>
             </View>
           ) : null}
+          <ClientBirthday birthday={client.birthday} className="text-[13px]" />
         </View>
         <AccountStatusBadge pending={pending} />
       </View>

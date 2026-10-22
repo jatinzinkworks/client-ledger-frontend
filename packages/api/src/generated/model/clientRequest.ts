@@ -38,14 +38,14 @@ export interface ClientRequest {
   email: string;
   /** Identifier of the manager from the Manager Catalog who looks after the client */
   managerId: string;
+  /** Date of birth of the client; not after today. Optional */
+  birthday?: string;
   /**
      * Discount granted to the client, as a percentage. Also applied to every company that does not set its own
      * @minimum 0
      * @maximum 100
      */
   discountPercent?: number;
-  /** Whether the client has agreed to receive WhatsApp messages from the firm, such as payment reminders. WhatsApp requires this consent before any message is sent. Omit for false. Change it later with PATCH /clients/{id}/whatsapp-opt-in */
-  whatsappOptIn?: boolean;
   /**
      * Companies the client owns or acts for, each with any balance it is taken on with
      * @minItems 0

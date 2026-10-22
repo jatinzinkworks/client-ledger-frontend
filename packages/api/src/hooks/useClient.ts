@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { isNotFound } from '../errors';
+import { getListBirthdaysQueryKey } from '../generated/birthdays/birthdays';
 import {
   useAddCompany,
   useDeleteCompany,
@@ -44,7 +45,12 @@ export function useClient(id: string, financialYear?: string) {
 
   // The screen leaves the client page once this resolves; a later visit refetches into a 404.
   const remove = useDeleteClient({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }) },
+    mutation: {
+      onSuccess: () =>
+        Promise.all(
+          [getListClientsQueryKey(), getListBirthdaysQueryKey()].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        ),
+    },
   });
 
   // Adding (perhaps with an opening balance) or deleting a company changes the client, their

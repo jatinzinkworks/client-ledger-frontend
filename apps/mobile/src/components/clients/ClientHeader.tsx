@@ -1,5 +1,5 @@
 import type { ClientResponse } from '@cl/api';
-import { clientName, clientSinceLabel, discountLabel } from '@cl/schemas';
+import { clientHeaderDetails, clientName } from '@cl/schemas';
 import { Pencil } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
@@ -7,15 +7,7 @@ import { LEVEL_ACCENT, LevelBadge } from '@/components/LevelBadge';
 import { useThemeColors } from '@/theme/useThemeColors';
 import { EYEBROW } from '@/utils/typography';
 
-/** The details under the client's name, as on web: email, phone, manager, discount, client since. */
-const clientDetails = (client: ClientResponse) =>
-  [
-    client.email,
-    client.phone,
-    client.managerName && `Manager: ${client.managerName}`,
-    discountLabel(client.discountPercent),
-    clientSinceLabel(client.createdAt),
-  ].filter((detail): detail is string => !!detail);
+import { ClientBirthday } from './ClientBirthday';
 
 interface ClientHeaderProps {
   client: ClientResponse;
@@ -45,11 +37,12 @@ export function ClientHeader({ client, yearLabel, onEdit }: ClientHeaderProps) {
           <Pencil size={16} color={colors.foreground} />
         </Pressable>
       </View>
-      {clientDetails(client).map((detail) => (
+      {clientHeaderDetails(client).map((detail) => (
         <Text key={detail} className="text-sm text-muted-foreground">
           {detail}
         </Text>
       ))}
+      <ClientBirthday birthday={client.birthday} iconSize={14} className="text-sm" />
     </View>
   );
 }

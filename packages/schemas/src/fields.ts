@@ -15,6 +15,14 @@ export const requiredText = (max: number, message: string) =>
 export const requiredEmail = (max: number) =>
   requiredText(max, 'Enter The Email Address.').pipe(z.email('Enter A Valid Email Address.'));
 
+/** An optional email address: blank means "not set", anything else must be valid. */
+export const optionalEmail = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, tooLong(max))
+    .refine((v) => v === '' || z.email().safeParse(v).success, 'Enter A Valid Email Address.');
+
 /** A mandatory phone number matching the backend's `^[+]?[0-9 ()-]{min,max}$` pattern. */
 export const requiredPhone = (max: number, pattern: RegExp, message = 'Enter The Phone Number.') =>
   requiredText(max, message).regex(pattern, `Use 6 To ${max} Digits, Spaces, Brackets Or Hyphens, With An Optional Leading +.`);

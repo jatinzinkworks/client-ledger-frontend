@@ -5,13 +5,14 @@ import { Link } from 'react-router'
 import { cn } from '@/lib/utils'
 
 import { AccountStatusBadge } from './AccountStatusBadge'
+import { ClientBirthday } from './ClientBirthday'
 import { clientPath } from '@/utils/routes'
 import { EYEBROW } from '@/utils/typography'
 
 // The mock's "₹N Billed · ₹N Received" line joins here once the list carries those figures.
 
 /**
- * One client: name, email and status, their companies, what they still owe (across all years)
+ * One client: name, email, birthday (when recorded) and status, their companies, what they still owe (across all years)
  * and their manager. The whole card opens the client page.
  */
 export function ClientCard({ client }: { client: ClientSummaryResponse }) {
@@ -26,6 +27,7 @@ export function ClientCard({ client }: { client: ClientSummaryResponse }) {
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="truncate text-xl font-bold">{clientName(client)}</h2>
           <p className="truncate text-sm text-muted-foreground">{client.email}</p>
+          <ClientBirthday birthday={client.birthday} className="text-sm text-muted-foreground" />
         </div>
         {status && <AccountStatusBadge status={status} className="px-3.5 text-[13px]" />}
       </div>

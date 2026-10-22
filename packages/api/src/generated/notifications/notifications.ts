@@ -17,11 +17,9 @@ import type {
 
 import type {
   BulkLedgerSummaryEmailResponse,
-  ClientWhatsAppResult,
   ErrorResponse,
   LedgerSummaryEmailResponse,
-  PaymentReminderResponse,
-  WhatsAppReminderResponse
+  PaymentReminderResponse
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -32,81 +30,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export const getSendWhatsAppPaymentRemindersUrl = () => {
-
-
-
-
-  return `/psc/cl/v1/notifications/whatsapp-payment-reminders`
-}
-
-/**
- * Takes no input. Sends every client who has opted in to WhatsApp messages (whatsappOptIn) and owes something across every financial year (billed less received across all of their companies, to date, is more than zero) a WhatsApp payment reminder on the phone number in their record, through Meta's WhatsApp Cloud API. Each is the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with the client's first name, the firm's name, the amount pending and today's date. Numbers without a country code get WHATSAPP_DEFAULT_COUNTRY_CODE. Clients not opted in are counted in notOptedInCount; those settled or in credit overall in skippedCount. Each client is sent to on its own, so one that fails, such as a phone number WhatsApp cannot use, is listed under failures and the others are still reminded. The response returns once every client has been tried.
- * @summary Send a WhatsApp payment reminder to every client with an amount pending
- */
-export const sendWhatsAppPaymentReminders = async ( options?: Parameters<typeof apiFetch>[1]): Promise<WhatsAppReminderResponse> => {
-
-  return apiFetch<WhatsAppReminderResponse>(getSendWhatsAppPaymentRemindersUrl(),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getSendWhatsAppPaymentRemindersMutationKey = () => ['sendWhatsAppPaymentReminders'] as const;
-
-export const getSendWhatsAppPaymentRemindersMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>, TError,void, TContext> => {
-
-const mutationKey = getSendWhatsAppPaymentRemindersMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>, void> = () => {
-
-
-          return  sendWhatsAppPaymentReminders(requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendWhatsAppPaymentRemindersMutationResult = NonNullable<Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>>
-
-    export type SendWhatsAppPaymentRemindersMutationError = ErrorType<ErrorResponse>
-
-
-    /**
- * @summary Send a WhatsApp payment reminder to every client with an amount pending
- */
-export const useSendWhatsAppPaymentReminders = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof sendWhatsAppPaymentReminders>>,
-        TError,
-        void,
-        TContext
-      > => {
-      return useMutation(getSendWhatsAppPaymentRemindersMutationOptions(options), queryClient);
-    }
-    export const getSendPaymentRemindersUrl = () => {
+export const getSendPaymentRemindersUrl = () => {
 
 
 
@@ -253,80 +177,6 @@ export const useSendAllClientLedgerSummaries = <TError = ErrorType<ErrorResponse
         TContext
       > => {
       return useMutation(getSendAllClientLedgerSummariesMutationOptions(options), queryClient);
-    }
-    export const getSendWhatsAppPaymentReminderUrl = (clientId: string,) => {
-
-
-
-
-  return `/psc/cl/v1/clients/${clientId}/whatsapp-payment-reminder`
-}
-
-/**
- * Sends the client a WhatsApp payment reminder for what they owe across every financial year and all of their companies, on the phone number in their record, through Meta's WhatsApp Cloud API: the approved template set in WHATSAPP_PAYMENT_REMINDER_TEMPLATE, filled with their first name, the firm's name, the amount pending and today's date. The client must have opted in to WhatsApp messages (whatsappOptIn) and owe something. The message is sent before the response returns.
- * @summary Send one client a WhatsApp payment reminder
- */
-export const sendWhatsAppPaymentReminder = async (clientId: string, options?: Parameters<typeof apiFetch>[1]): Promise<ClientWhatsAppResult> => {
-
-  return apiFetch<ClientWhatsAppResult>(getSendWhatsAppPaymentReminderUrl(clientId),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getSendWhatsAppPaymentReminderMutationKey = () => ['sendWhatsAppPaymentReminder'] as const;
-
-export const getSendWhatsAppPaymentReminderMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>, TError,SendWhatsAppPaymentReminderMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>, TError,SendWhatsAppPaymentReminderMutationVariables, TContext> => {
-
-const mutationKey = getSendWhatsAppPaymentReminderMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>, SendWhatsAppPaymentReminderMutationVariables> = (props) => {
-          const {clientId} = props ?? {};
-
-          return  sendWhatsAppPaymentReminder(clientId,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendWhatsAppPaymentReminderMutationResult = NonNullable<Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>>
-
-    export type SendWhatsAppPaymentReminderMutationError = ErrorType<ErrorResponse>
-    export type SendWhatsAppPaymentReminderMutationVariables = {clientId: string}
-
-    /**
- * @summary Send one client a WhatsApp payment reminder
- */
-export const useSendWhatsAppPaymentReminder = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>, TError,SendWhatsAppPaymentReminderMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof sendWhatsAppPaymentReminder>>,
-        TError,
-        SendWhatsAppPaymentReminderMutationVariables,
-        TContext
-      > => {
-      return useMutation(getSendWhatsAppPaymentReminderMutationOptions(options), queryClient);
     }
     export const getSendClientLedgerSummaryUrl = (clientId: string,) => {
 

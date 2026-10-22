@@ -1,5 +1,6 @@
 import { ApiError, errorMessage, fieldErrors, type ManagerRequest, type ManagerResponse } from '@cl/api'
 import {
+  MANAGER_EMAIL_HINT,
   MANAGER_FIELD_LABELS,
   ROLE_OPTIONS,
   managerClientsLabel,
@@ -67,12 +68,18 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
     }
   })
 
-  const textField = (field: Exclude<keyof ManagerFormInput, 'role'>, type = 'text', autoComplete?: string) => (
+  const textField = (
+    field: Exclude<keyof ManagerFormInput, 'role'>,
+    type = 'text',
+    autoComplete?: string,
+    hint?: string,
+  ) => (
     <TextField
       id={`manager-${field}`}
       label={MANAGER_FIELD_LABELS[field]}
       type={type}
       autoComplete={autoComplete}
+      hint={hint}
       error={errors[field]?.message}
       registration={register(field)}
     />
@@ -98,7 +105,7 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
           {textField('firstName', 'text', 'off')}
           {textField('lastName', 'text', 'off')}
         </div>
-        {textField('email', 'email', 'off')}
+        {textField('email', 'email', 'off', MANAGER_EMAIL_HINT)}
         <div className="grid grid-cols-2 gap-4">
           <SelectField
             id="manager-role"

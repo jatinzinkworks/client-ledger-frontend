@@ -24,6 +24,7 @@ import {
 import { z } from 'zod';
 
 import { todayApiDate } from './assignments';
+import { formatApiDate } from './companies';
 import { blankToUndefined, hasAtMostTwoDecimals, optionalPercent, requiredEmail, requiredPhone, requiredText } from './fields';
 import { accountStatus } from './ledger';
 import { managerName, roleLabel } from './managers';
@@ -57,6 +58,15 @@ export const MAX_COMPANIES = COMPANIES_MAX;
 const API_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const OPENING_BALANCE_MESSAGE = 'Enter An Amount — Negative If The Company Is In Credit.';
 
+/** An optional date not after today. `<input type="date">` yields "2026-03-31", or "" when blank. */
+const optionalPastDate = (futureMessage: string) =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .refine((d) => !d || API_DATE.test(d), 'Enter A Date Such As 2026-03-31.')
+    .refine((d) => !d || d <= todayApiDate(), futureMessage);
+
 /**
  * One company: Onboard Client's blocks, Add Company and Edit Company. The opening balance mirrors
  * the backend: any amount (negative = in credit, such as an advance), optional, with an optional
@@ -75,13 +85,7 @@ export const companyFormSchema = z
       blankToUndefined,
       z.number({ error: OPENING_BALANCE_MESSAGE }).refine(hasAtMostTwoDecimals, 'Use At Most 2 Decimal Places.').optional(),
     ),
-    // `<input type="date">` yields "2026-03-31", or "" when blank.
-    openingBalanceDate: z
-      .string()
-      .trim()
-      .optional()
-      .refine((d) => !d || API_DATE.test(d), 'Enter A Date Such As 2026-03-31.')
-      .refine((d) => !d || d <= todayApiDate(), 'The Date Cannot Be In The Future.'),
+    openingBalanceDate: optionalPastDate('The Date Cannot Be In The Future.'),
   });
 
 /** The client's own details — what Edit Client changes. */
@@ -91,6 +95,8 @@ export const clientDetailsSchema = z.object({
   phone: requiredPhone(PHONE_MAX, PHONE_PATTERN),
   email: requiredEmail(EMAIL_MAX),
   managerId: z.string().min(1, 'Choose A Manager.'),
+  /** Optional: blank is omitted, which on Edit Client clears a stored birthday. */
+  birthday: optionalPastDate('The Birthday Cannot Be In The Future.'),
   discountPercent: optionalPercent(DISCOUNT_MAX, `Enter A Discount From 0 To ${DISCOUNT_MAX}%.`),
 });
 
@@ -138,6 +144,7 @@ export const CLIENT_FIELDS: Readonly<Record<ClientField, FieldCopy>> = {
     placeholder: 'Select A Manager',
     hint: "The Manager Handles All Of This Client's Companies.",
   },
+  birthday: { label: 'Birthday (Optional)' },
   discountPercent: {
     label: 'Discount % (Optional)',
     hint: "Applied To This Client's Companies.",
@@ -199,6 +206,7 @@ export const clientFormDefaults = (): ClientFormInput => ({
   phone: '',
   email: '',
   managerId: '',
+  birthday: '',
   discountPercent: '',
   companies: [emptyCompany()],
 });
@@ -233,9 +241,10 @@ export function isClientFormComplete(values: PartialClientForm): boolean {
   return isClientDetailsComplete(values) && areCompaniesComplete(values.companies);
 }
 
-/** The request body for a parsed form; a blank discount is omitted rather than sent. */
-export const toClientRequest = ({ companies, discountPercent, ...client }: ClientFormValues): ClientRequest => ({
+/** The request body for a parsed form; a blank birthday or discount is omitted rather than sent. */
+export const toClientRequest = ({ companies, birthday, discountPercent, ...client }: ClientFormValues): ClientRequest => ({
   ...client,
+  ...(birthday && { birthday }),
   ...(discountPercent !== undefined && { discountPercent }),
   companies: companies.map((company) => toCompanyRequest(company)),
 });
@@ -247,16 +256,18 @@ export const clientDetailsDefaults = (client: ClientResponse): ClientDetailsInpu
   phone: client.phone ?? '',
   email: client.email ?? '',
   managerId: client.managerId ?? '',
+  birthday: client.birthday ?? '',
   discountPercent: client.discountPercent ? String(client.discountPercent) : '',
 });
 
 /**
  * The PUT body for Edit Client: the client's own fields. The endpoint leaves companies as they
  * are (they have their own add / delete endpoints). A blank discount is omitted, which the
- * backend stores as zero.
+ * backend stores as zero; a blank birthday is omitted, which clears a stored one.
  */
-export const toClientUpdateRequest = ({ discountPercent, ...details }: ClientDetailsValues): ClientUpdateRequest => ({
+export const toClientUpdateRequest = ({ birthday, discountPercent, ...details }: ClientDetailsValues): ClientUpdateRequest => ({
   ...details,
+  ...(birthday && { birthday }),
   ...(discountPercent !== undefined && { discountPercent }),
 });
 
@@ -390,8 +401,30 @@ export const companyTypeLabel = (type: CompanyType | undefined) => (type ? COMPA
 
 const monthYear = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' });
 
+/**
+ * "23 Jul 1985": the client's birthday, shown after a cake icon (with `BIRTHDAY_LABEL` for screen
+ * readers); empty when none is recorded.
+ */
+export const clientBirthdayLabel = (birthday: string | undefined) => formatApiDate(birthday);
+
+/** What the cake icon stands for, read out by screen readers. */
+export const BIRTHDAY_LABEL = 'Birthday';
+
 /** "Client Since Oct 2026", from when the client was added; empty when unknown. */
 export const clientSinceLabel = (createdAt: string | undefined) => {
   const date = createdAt ? new Date(createdAt) : undefined;
   return date && !Number.isNaN(date.getTime()) ? `Client Since ${monthYear.format(date)}` : '';
 };
+
+/**
+ * The text details under the client page's name: email, phone, manager, discount, client since.
+ * The birthday follows them, with its icon, so each app renders it.
+ */
+export const clientHeaderDetails = (client: ClientResponse): string[] =>
+  [
+    client.email,
+    client.phone,
+    client.managerName && `Manager: ${client.managerName}`,
+    discountLabel(client.discountPercent),
+    clientSinceLabel(client.createdAt),
+  ].filter((detail): detail is string => !!detail);

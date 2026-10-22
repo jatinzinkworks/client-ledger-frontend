@@ -24,10 +24,10 @@ export interface ClientSummaryResponse {
   managerId?: string;
   /** Full name of the manager who looks after the client */
   managerName?: string;
+  /** Date of birth of the client. Left out when not recorded */
+  birthday?: string;
   /** Discount granted to the client, as a percentage */
   discountPercent?: number;
-  /** Whether the client has agreed to receive WhatsApp messages from the firm */
-  whatsappOptIn?: boolean;
   /** Names of the companies the client holds, ordered by name */
   companyNames?: string[];
   /** What the client still owes: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed */

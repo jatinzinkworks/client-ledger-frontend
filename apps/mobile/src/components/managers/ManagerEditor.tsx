@@ -1,5 +1,6 @@
 import { ApiError, errorMessage, fieldErrors, type ManagerRequest, type ManagerResponse } from '@cl/api';
 import {
+  MANAGER_EMAIL_HINT,
   MANAGER_FIELD_LABELS,
   ROLE_OPTIONS,
   managerFieldFromApi,
@@ -86,6 +87,7 @@ export function ManagerEditor({ manager, onSave, onDelete, saving, deleting, onD
         control={control}
         name="email"
         label={label.email}
+        hint={MANAGER_EMAIL_HINT}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="off"

@@ -1,4 +1,5 @@
 export * from './assignments';
+export * from './birthdays';
 export * from './clients';
 export * from './companies';
 export * from './fields';

@@ -8,11 +8,10 @@ import {
   useManagerCatalog,
 } from '@cl/api'
 import {
+  clientHeaderDetails,
   clientName,
-  clientSinceLabel,
   clientLedgerEmailDescription,
   clientSummaryCards,
-  discountLabel,
   financialYearLabel,
   ledgerEmailTooltip,
 } from '@cl/schemas'
@@ -21,6 +20,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { AddCompanyForm } from '@/components/clients/AddCompanyForm'
+import { ClientBirthday } from '@/components/clients/ClientBirthday'
 import { CompaniesTable } from '@/components/clients/CompaniesTable'
 import { EditClientForm } from '@/components/clients/EditClientForm'
 import { EmailLedgerButton } from '@/components/clients/EmailLedgerButton'
@@ -73,15 +73,7 @@ export function ClientDetailPage() {
   const exportLedger = saveLedgerExport(ledgerExport.exportLedger, name, financialYear)
   // The client's services, for the Billed card's note: a sum over their companies' counts.
   const serviceCount = page.companies.reduce((total, c) => total + (c.serviceCount ?? 0), 0)
-  const details = client
-    ? [
-        client.email,
-        client.phone,
-        client.managerName && `Manager: ${client.managerName}`,
-        discountLabel(client.discountPercent),
-        clientSinceLabel(client.createdAt),
-      ].filter((detail): detail is string => !!detail)
-    : []
+  const details = client ? clientHeaderDetails(client) : []
 
   return (
     <div className="flex flex-col gap-6">
@@ -95,6 +87,13 @@ export function ClientDetailPage() {
             level="client"
             title={name}
             details={details}
+            extraDetails={
+              client.birthday && (
+                <li>
+                  <ClientBirthday birthday={client.birthday} />
+                </li>
+              )
+            }
             onEdit={() => setSheet('edit')}
             editLabel="Edit Client"
             actions={

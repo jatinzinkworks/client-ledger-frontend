@@ -5,6 +5,7 @@
  * REST API for the PSC Client Ledger backend service.
  * OpenAPI spec version: v1
  */
+import type { ImportedCompany } from './importedCompany';
 
 /**
  * A client created by an import
@@ -22,4 +23,6 @@ export interface ImportedClient {
   openingBalanceCount?: number;
   /** The opening balances recorded for the client's companies, added up: positive when owed on the whole, negative when in credit; 0.00 when none were */
   openingBalanceTotal?: number;
+  /** Each company created for the client, by name, with the opening balance recorded for it */
+  companies?: ImportedCompany[];
 }

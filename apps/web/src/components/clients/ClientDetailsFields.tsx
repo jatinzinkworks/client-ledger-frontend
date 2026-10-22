@@ -14,7 +14,7 @@ interface ClientDetailsFieldsProps {
 }
 
 /**
- * The client's own fields — name, phone, email, manager and discount — shared by Onboard Client
+ * The client's own fields — name, phone, email, manager, birthday and discount — shared by Onboard Client
  * and Edit Client. Must render inside a FormProvider whose values include these fields.
  */
 export function ClientDetailsFields({ managers, managersLoading, discountHint }: ClientDetailsFieldsProps) {
@@ -62,7 +62,10 @@ export function ClientDetailsFields({ managers, managersLoading, discountHint }:
           To Assign One.
         </p>
       )}
-      {textField('discountPercent', 'number', discountHint ?? CLIENT_FIELDS.discountPercent.hint)}
+      <div className="grid grid-cols-2 gap-4">
+        {textField('birthday', 'date')}
+        {textField('discountPercent', 'number', discountHint ?? CLIENT_FIELDS.discountPercent.hint)}
+      </div>
     </>
   )
 }

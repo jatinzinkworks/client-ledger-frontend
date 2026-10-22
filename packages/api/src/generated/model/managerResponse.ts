@@ -18,8 +18,11 @@ export interface ManagerResponse {
   firstName?: string;
   /** Family name of the manager */
   lastName?: string;
-  /** Work email address */
-  email?: string;
+  /**
+     * Work email address; absent when the manager has none
+     * @nullable
+     */
+  email?: string | null;
   /** Seniority the manager holds */
   role?: ManagerResponseRole;
   /** Mobile contact number */

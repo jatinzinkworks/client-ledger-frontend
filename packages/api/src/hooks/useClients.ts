@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 
+import { getListBirthdaysQueryKey } from '../generated/birthdays/birthdays';
 import { getListClientsQueryKey, useCreateClient, useListClients } from '../generated/clients/clients';
 import type { ClientRequest, ClientSummaryResponse } from '../generated/model';
 
@@ -19,8 +20,14 @@ export function useClients() {
   const queryClient = useQueryClient();
   // Every client; the screens filter by manager in memory (the endpoint's managerId param is unused).
   const query = useListClients(undefined, { query: { select: sortClientsByName } });
+  // A new client may have a birthday, so the Birthdays lists refresh too.
   const create = useCreateClient({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }) },
+    mutation: {
+      onSuccess: () =>
+        Promise.all(
+          [getListClientsQueryKey(), getListBirthdaysQueryKey()].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        ),
+    },
   });
 
   return {

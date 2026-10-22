@@ -24,11 +24,12 @@ export interface ManagerRequest {
      */
   lastName: string;
   /**
-     * Work email address, unique across the catalog
+     * Work email address, unique across the catalog when given. Optional; without one, the manager is not copied into client emails
      * @minLength 0
      * @maxLength 254
+     * @nullable
      */
-  email: string;
+  email?: string | null;
   /** Seniority the manager holds */
   role: ManagerRequestRole;
   /**

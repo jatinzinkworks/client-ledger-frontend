@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useFormContext } from 'react-hook-form';
 import { Text, type TextInputProps } from 'react-native';
 
-import { SelectControl, TextControl } from '@/components/ui/FormControls';
+import { DateControl, SelectControl, TextControl } from '@/components/ui/FormControls';
 
 interface ClientDetailsFieldsProps {
   managers: readonly ManagerResponse[];
@@ -13,7 +13,7 @@ interface ClientDetailsFieldsProps {
   discountHint?: string;
 }
 
-type TextFieldName = Exclude<ClientField, 'managerId'>;
+type TextFieldName = Exclude<ClientField, 'managerId' | 'birthday'>;
 
 // Keyboard and capitalisation per field — the web's input types.
 const INPUT_HINTS: Readonly<Record<TextFieldName, Pick<TextInputProps, 'keyboardType' | 'autoCapitalize'>>> = {
@@ -25,7 +25,7 @@ const INPUT_HINTS: Readonly<Record<TextFieldName, Pick<TextInputProps, 'keyboard
 };
 
 /**
- * The client's own fields — name, phone, email, manager and discount — shared by Onboard Client
+ * The client's own fields — name, phone, email, manager, birthday and discount — shared by Onboard Client
  * and Edit Client. Must render inside a FormProvider whose values include these fields.
  */
 export function ClientDetailsFields({ managers, managersLoading, discountHint }: ClientDetailsFieldsProps) {
@@ -67,6 +67,7 @@ export function ClientDetailsFields({ managers, managersLoading, discountHint }:
           To Assign One.
         </Text>
       )}
+      <DateControl control={control} name="birthday" label={CLIENT_FIELDS.birthday.label} maximumDate={new Date()} />
       {textField('discountPercent', discountHint ?? CLIENT_FIELDS.discountPercent.hint)}
     </>
   );

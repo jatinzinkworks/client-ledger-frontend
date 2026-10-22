@@ -1,3 +1,4 @@
+export * from './birthdays/birthdays';
 export * from './client-companies/client-companies';
 export * from './client-services/client-services';
 export * from './clients/clients';

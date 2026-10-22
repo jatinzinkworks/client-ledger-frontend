@@ -66,6 +66,22 @@ describe('ManagerEditor', () => {
     })
   })
 
+  it('adds a manager without an email', async () => {
+    const { onSave, onDone, user } = setup()
+    await user.type(screen.getByLabelText('First Name'), 'Arjun')
+    await user.type(screen.getByLabelText('Last Name'), 'Iyer')
+    await user.type(screen.getByLabelText('Phone'), '+91 98335 20418')
+    await user.click(screen.getByRole('button', { name: 'Add Manager' }))
+
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    expect(onSave).toHaveBeenCalledWith({
+      firstName: 'Arjun',
+      lastName: 'Iyer',
+      role: 'ASSOCIATE',
+      mobileNumber: '+91 98335 20418',
+    })
+  })
+
   it('blocks saving until required fields are filled', async () => {
     const { onSave, user } = setup()
     await user.click(screen.getByRole('button', { name: 'Add Manager' }))

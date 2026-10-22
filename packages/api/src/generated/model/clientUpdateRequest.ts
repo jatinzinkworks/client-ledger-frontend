@@ -37,6 +37,8 @@ export interface ClientUpdateRequest {
   email: string;
   /** Identifier of the manager from the Manager Catalog who looks after the client */
   managerId: string;
+  /** Date of birth of the client; not after today. Optional; omitting it clears any stored before */
+  birthday?: string;
   /**
      * Discount granted to the client, as a percentage. Also applied to every company that does not set its own
      * @minimum 0

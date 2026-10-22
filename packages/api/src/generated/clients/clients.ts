@@ -33,8 +33,7 @@ import type {
   ClientUpdateRequest,
   ErrorResponse,
   ImportClientsBody,
-  ListClientsParams,
-  WhatsAppOptInRequest
+  ListClientsParams
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -170,7 +169,7 @@ export const getUpdateClientUrl = (id: string,) => {
 }
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount. The client's WhatsApp opt-in is left as it is; record it with PATCH /clients/{id}/whatsapp-opt-in.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
  * @summary Update a client
  */
 export const updateClient = async (id: string,
@@ -259,7 +258,7 @@ export const useUpdateClient = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first. Nor can a client with ledger entries, such as payments or an opening balance, on any company: a ledger is a financial record and is never deleted along with its client.
+ * Removes a client together with their companies. A client with services assigned to any of their companies cannot be deleted; remove those services first. Nor can a client with payments or service charges in the ledger of any company: a ledger is a financial record and is never deleted along with its client. Opening balances alone do not stop it; they are deleted with the client.
  * @summary Delete a client
  */
 export const deleteClient = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
@@ -617,7 +616,7 @@ export const useCreateClient = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. Clients opted in to WhatsApp are sent the confirmation message as on create. The response counts and adds up the opening balances recorded, per client and overall, so they can be checked against the workbook.
+ * Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. The response lists each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.
  * @summary Import clients and their companies from an Excel workbook
  */
 export const importClients = async (importClientsBody?: ImportClientsBody, options?: Parameters<typeof apiFetch>[1]): Promise<ClientImportResponse> => {
@@ -686,95 +685,6 @@ export const useImportClients = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getImportClientsMutationOptions(options), queryClient);
     }
-    export const getUpdateWhatsAppOptInUrl = (id: string,) => {
-
-
-
-
-  return `/psc/cl/v1/clients/${id}/whatsapp-opt-in`
-}
-
-/**
- * Sets whether the client agrees to receive WhatsApp messages from the firm, such as payment reminders, and changes nothing else. WhatsApp messages are only sent to clients who have opted in. This, and creating a client, are the only ways to change it: updating a client leaves it as it is. When a client changes from opted out to opted in, and the WHATSAPP_OPT_IN_CONFIRMATION_TEMPLATE setting names a template, they are sent a WhatsApp message confirming it in the background once the change is saved. The response does not wait for it and does not depend on it: if it cannot be sent, the opt-in still stands and the failure is logged.
- * @summary Record a client's WhatsApp opt-in
- */
-export const updateWhatsAppOptIn = async (id: string,
-    whatsAppOptInRequest: WhatsAppOptInRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ClientResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return apiFetch<ClientResponse>(getUpdateWhatsAppOptInUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(whatsAppOptInRequest)
-  }
-);}
-
-
-
-
-
-export const getUpdateWhatsAppOptInMutationKey = () => ['updateWhatsAppOptIn'] as const;
-
-export const getUpdateWhatsAppOptInMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext> => {
-
-const mutationKey = getUpdateWhatsAppOptInMutationKey();
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, UpdateWhatsAppOptInMutationVariables> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateWhatsAppOptIn(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateWhatsAppOptInMutationResult = NonNullable<Awaited<ReturnType<typeof updateWhatsAppOptIn>>>
-    export type UpdateWhatsAppOptInMutationBody = WhatsAppOptInRequest
-    export type UpdateWhatsAppOptInMutationError = ErrorType<ErrorResponse>
-    export type UpdateWhatsAppOptInMutationVariables = {id: string;data: WhatsAppOptInRequest}
-
-    /**
- * @summary Record a client's WhatsApp opt-in
- */
-export const useUpdateWhatsAppOptIn = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateWhatsAppOptIn>>, TError,UpdateWhatsAppOptInMutationVariables, TContext>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof updateWhatsAppOptIn>>,
-        TError,
-        UpdateWhatsAppOptInMutationVariables,
-        TContext
-      > => {
-      return useMutation(getUpdateWhatsAppOptInMutationOptions(options), queryClient);
-    }
     export const getDownloadTemplate1Url = () => {
 
 
@@ -784,7 +694,7 @@ export const useUpdateWhatsAppOptIn = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Email, Discount % and WhatsApp Opt-In. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
+ * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
  * @summary Download the client import template
  */
 export const downloadTemplate1 = async ( options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {

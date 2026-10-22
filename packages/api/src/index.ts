@@ -6,6 +6,7 @@ export { ApiError, apiDownload, apiFetch, configureApi, fileNameFrom, type ApiCo
 export { errorMessage, fieldErrors, isNotFound } from './errors';
 
 // Hand-written hooks composing the generated ones — shared screen logic for both apps.
+export { useBirthdays } from './hooks/useBirthdays';
 export { useClient } from './hooks/useClient';
 export { useClientLedgerExport, useCompanyLedgerExport } from './hooks/useLedgerExport';
 export { useClientLedgerEmail, useCompanyLedgerEmail } from './hooks/useLedgerEmail';

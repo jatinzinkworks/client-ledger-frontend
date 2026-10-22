@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router'
 
 import { AppLayout } from './components/AppLayout'
+import { BirthdaysPage } from './pages/BirthdaysPage'
 import { ClientDetailPage } from './pages/ClientDetailPage'
 import { ClientsPage } from './pages/ClientsPage'
 import { CompanyDetailPage } from './pages/CompanyDetailPage'
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="clients/:id/companies/:companyId" element={<CompanyDetailPage />} />
         <Route path="managers" element={<ManagersPage />} />
+        <Route path="birthdays" element={<BirthdaysPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/payment-terms" element={<Navigate to="/settings" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

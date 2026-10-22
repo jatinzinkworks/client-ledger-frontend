@@ -1,5 +1,5 @@
 import type { ManagerResponse } from '@cl/api'
-import { formatInr, managerInitials, managerName, roleLabel } from '@cl/schemas'
+import { formatInr, managerEmailLabel, managerInitials, managerName, roleLabel } from '@cl/schemas'
 
 import { DataTable, type DataColumn } from '@/components/DataTable'
 import { cn } from '@/lib/utils'
@@ -33,7 +33,7 @@ const columns = (onSelect: (manager: ManagerResponse) => void): readonly DataCol
           >
             {managerName(manager)}
           </button>
-          <span className="truncate text-[13px] text-muted-foreground">{manager.email}</span>
+          <span className="truncate text-[13px] text-muted-foreground">{managerEmailLabel(manager)}</span>
         </div>
       </div>
     ),

@@ -1,3 +1,4 @@
+import { getListBirthdaysQueryKey } from '../generated/birthdays/birthdays';
 import { getDownloadTemplate1Url, getListClientsQueryKey, importClients } from '../generated/clients/clients';
 import { getListManagersQueryKey } from '../generated/manager-catalog/manager-catalog';
 import { refreshOverview } from './useOverview';
@@ -16,6 +17,7 @@ export const useClientImport = () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: getListClientsQueryKey() }),
         queryClient.invalidateQueries({ queryKey: getListManagersQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListBirthdaysQueryKey() }),
         refreshOverview(queryClient),
       ]),
   });

@@ -1,5 +1,5 @@
 import type { ManagerResponse } from '@cl/api';
-import { formatInr, managerClientsLabel, managerInitials, managerName, roleLabel } from '@cl/schemas';
+import { formatInr, managerClientsLabel, managerEmailLabel, managerInitials, managerName, roleLabel } from '@cl/schemas';
 import { Phone } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
@@ -32,7 +32,7 @@ export function ManagerCard({ manager, onPress }: ManagerCardProps) {
             {name}
           </Text>
           <Text numberOfLines={1} className="text-[13px] text-muted-foreground">
-            {manager.email}
+            {managerEmailLabel(manager)}
           </Text>
         </View>
       </View>

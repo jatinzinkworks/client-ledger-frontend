@@ -16,6 +16,8 @@ interface DetailHeaderProps {
   title: string
   /** Short facts shown in a row under the title, e.g. email, phone, manager. */
   details: readonly string[]
+  /** Facts that need markup (an icon), shown after `details` in the same row. */
+  extraDetails?: ReactNode
   /** Optional second line, e.g. an address. */
   note?: string
   actions?: ReactNode
@@ -34,7 +36,17 @@ interface DetailHeaderProps {
  * client), the name with the page actions on its right (and an optional edit icon beside it), then
  * a row of facts. The actions drop under the name only when the row is too narrow.
  */
-export function DetailHeader({ title, details, note, actions, onEdit, editLabel = 'Edit', level, owner }: DetailHeaderProps) {
+export function DetailHeader({
+  title,
+  details,
+  extraDetails,
+  note,
+  actions,
+  onEdit,
+  editLabel = 'Edit',
+  level,
+  owner,
+}: DetailHeaderProps) {
   return (
     <div className={cn('flex flex-col gap-3', level && ['border-l-4 pl-5', LEVEL_ACCENT[level]])}>
       {level && <LevelBadge level={level} owner={owner} />}
@@ -62,6 +74,7 @@ export function DetailHeader({ title, details, note, actions, onEdit, editLabel 
           {details.map((detail) => (
             <li key={detail}>{detail}</li>
           ))}
+          {extraDetails}
         </ul>
         {note && <p>{note}</p>}
       </div>

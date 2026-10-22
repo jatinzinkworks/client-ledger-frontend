@@ -10,7 +10,10 @@ import {
   companyFormDefaults,
   companyFormSchema,
   toCompanyRequest,
+  clientBirthdayLabel,
+  clientHeaderDetails,
   clientDetailsDefaults,
+  clientDetailsSchema,
   deleteClientWarning,
   isClientDetailsComplete,
   toClientUpdateRequest,
@@ -50,6 +53,28 @@ describe('clientFormSchema', () => {
     const { discountPercent: _blank, ...request } = valid;
     // A blank discount is left out of the request, so the backend stores zero.
     expect(toClientRequest(parsed)).toStrictEqual(request);
+  });
+
+  it('formats a recorded birthday', () => {
+    expect(clientBirthdayLabel('1985-07-23')).toBe('23 Jul 1985');
+    expect(clientBirthdayLabel(undefined)).toBe('');
+  });
+
+  it('lists the client page details', () => {
+    const client = { email: 'a@b.in', phone: '99999', managerName: 'Neha Kulkarni', discountPercent: 10, createdAt: '2026-10-04T10:15:30Z' };
+    expect(clientHeaderDetails(client)).toEqual([
+      'a@b.in',
+      '99999',
+      'Manager: Neha Kulkarni',
+      '10% Discount',
+      'Client Since Oct 2026',
+    ]);
+  });
+
+  it('takes an optional birthday, not in the future', () => {
+    expect(toClientRequest(clientFormSchema.parse({ ...valid, birthday: '1985-07-23' })).birthday).toBe('1985-07-23');
+    expect(toClientRequest(clientFormSchema.parse({ ...valid, birthday: '' }))).not.toHaveProperty('birthday');
+    expect(issuesFor({ ...valid, birthday: '2999-01-01' })).toEqual({ birthday: 'The Birthday Cannot Be In The Future.' });
   });
 
   it('sends a discount when one is given', () => {
@@ -195,9 +220,18 @@ describe('Edit Client', () => {
       phone: '+91 98200 41177',
       email: 'rajesh@mehtatextiles.in',
       managerId: 'm-1',
+      birthday: '',
       discountPercent: '',
     });
     expect(clientDetailsDefaults({ ...stored, discountPercent: 7.5 }).discountPercent).toBe('7.5');
+    expect(clientDetailsDefaults({ ...stored, birthday: '1985-07-23' }).birthday).toBe('1985-07-23');
+  });
+
+  it('sends a birthday when given and omits a blank one, which clears it', () => {
+    const details = clientDetailsSchema.parse({ ...clientDetailsDefaults(stored), birthday: '1985-07-23' });
+    expect(toClientUpdateRequest(details).birthday).toBe('1985-07-23');
+    const cleared = clientDetailsSchema.parse({ ...clientDetailsDefaults(stored), birthday: '' });
+    expect(toClientUpdateRequest(cleared)).not.toHaveProperty('birthday');
   });
 
   it("sends only the client's own fields", () => {

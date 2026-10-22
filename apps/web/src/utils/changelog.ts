@@ -9,6 +9,27 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '22 Oct 2026, 13:21:38',
+    highlights: [
+      'New Birthdays screen (web menu and mobile tab): see which clients have a birthday this month, or step to any other month, with a card each showing the date, the age they turn and how to reach them. Today\'s birthdays stand out.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '22 Oct 2026, 13:01:06',
+    highlights: [
+      'Clients can have a birthday (web and mobile): optional on Onboard Client and Edit Client, and shown on the client card and the client page when set. Clearing it on Edit Client removes it.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '22 Oct 2026, 12:46:59',
+    highlights: [
+      "A manager's email is now optional when adding or editing them (web and mobile). Managers without one show \"No Email\" and are not copied into client emails.",
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '21 Oct 2026, 19:39:21',
     highlights: [
       'Mobile: sign in with your Google account to reach the live books, and sign out from Settings. The app now carries the Client Ledger "CL" icon and splash.',

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { getListBirthdaysQueryKey } from '../generated/birthdays/birthdays';
 import { getListClientsQueryKey } from '../generated/clients/clients';
 import { getListManagersQueryKey } from '../generated/manager-catalog/manager-catalog';
 import { getListServicesQueryKey } from '../generated/service-catalog/service-catalog';
@@ -10,7 +11,7 @@ import { refreshOverview } from './useOverview';
  * (Edit Client, Edit Company — a discount, an opening balance): every query under
  * `/clients/{clientId}` — the client, their companies and each company page, services, ledgers,
  * year summaries, Balance By Financial Year, payments — plus the figures built from them: the
- * client, manager and service lists and the Overview. `clientId` is the encoded id the query
+ * client, manager and service lists, the Overview and the Birthdays lists (a birthday may change). `clientId` is the encoded id the query
  * keys hold. Active queries refetch at once; the rest when next shown.
  */
 export function refreshClientData(queryClient: QueryClient, clientId: string) {
@@ -22,7 +23,7 @@ export function refreshClientData(queryClient: QueryClient, clientId: string) {
         return typeof url === 'string' && (url === clientPath || url.startsWith(`${clientPath}/`));
       },
     }),
-    ...[getListClientsQueryKey(), getListManagersQueryKey(), getListServicesQueryKey()].map((queryKey) =>
+    ...[getListClientsQueryKey(), getListManagersQueryKey(), getListServicesQueryKey(), getListBirthdaysQueryKey()].map((queryKey) =>
       queryClient.invalidateQueries({ queryKey }),
     ),
     refreshOverview(queryClient),

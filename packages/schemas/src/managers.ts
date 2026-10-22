@@ -13,11 +13,11 @@ import {
 } from '@cl/api/zod';
 import { z } from 'zod';
 
-import { requiredEmail, requiredPhone, requiredText } from './fields';
+import { optionalEmail, requiredPhone, requiredText } from './fields';
 
-// Lengths and the mobile pattern come from the generated OpenAPI schema. Every field is
-// mandatory on the backend (@NotBlank / @NotNull), which OpenAPI cannot express as a minimum
-// length, so the required checks are added here. Copy is Title Case to match the mocks.
+// Lengths and the mobile pattern come from the generated OpenAPI schema. Every field but the
+// email is mandatory on the backend (@NotBlank / @NotNull), which OpenAPI cannot express as a
+// minimum length, so the required checks are added here. Copy is Title Case to match the mocks.
 
 export type { Role };
 
@@ -34,7 +34,7 @@ export const ROLE_OPTIONS = ROLES.map((value) => ({ value, label: ROLE_LABELS[va
 export const managerFormSchema = z.object({
   firstName: requiredText(FIRST_NAME_MAX, 'Enter The First Name.'),
   lastName: requiredText(LAST_NAME_MAX, 'Enter The Last Name.'),
-  email: requiredEmail(EMAIL_MAX),
+  email: optionalEmail(EMAIL_MAX),
   role: z.enum(ROLES, 'Choose A Role.'),
   mobileNumber: requiredPhone(MOBILE_MAX, MOBILE_PATTERN, 'Enter The Mobile Number.'),
 });
@@ -63,8 +63,16 @@ export function managerFormDefaults(stored?: ManagerResponse): ManagerFormInput 
   };
 }
 
-/** The request body for a parsed form — every field is mandatory, so it maps one to one. */
-export const toManagerRequest = (values: ManagerFormValues): ManagerRequest => ({ ...values });
+/** Under the email field: why it is worth filling in. */
+export const MANAGER_EMAIL_HINT = 'Optional. Without One, The Manager Is Not Copied Into Client Emails.';
+
+/**
+ * The request body for a parsed form. A blank email is omitted, which the backend stores as none
+ * on create and update alike, so clearing it when editing removes the stored one.
+ */
+export function toManagerRequest({ email, ...rest }: ManagerFormValues): ManagerRequest {
+  return { ...rest, ...(email ? { email } : {}) };
+}
 
 /** The form field a backend validation error refers to, if it is one we render. */
 export function managerFieldFromApi(path: string): ManagerField | undefined {
@@ -82,6 +90,9 @@ export const managerInitials = (m: Named) =>
   [m.firstName, m.lastName].map((part) => part?.trim().charAt(0) ?? '').join('').toUpperCase();
 
 export const roleLabel = (role: Role | undefined) => (role ? ROLE_LABELS[role] : '');
+
+/** The email shown under a manager's name, or "No Email" when they have none. */
+export const managerEmailLabel = (m: Pick<ManagerResponse, 'email'>) => m.email || 'No Email';
 
 export const managerCountLabel = (count: number) => `${count} ${count === 1 ? 'Manager' : 'Managers'}`;
 

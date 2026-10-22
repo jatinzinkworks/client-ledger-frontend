@@ -264,7 +264,7 @@ export const useUpdateCompany = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first. Nor can a company with ledger entries, such as payments or an opening balance: a ledger is a financial record and is never deleted along with its company.
+ * Removes one company of the client. A client must keep at least one company, so their only company cannot be deleted; delete the client instead. A company with services assigned cannot be deleted; remove those services first. Nor can a company with payments or service charges in its ledger: a ledger is a financial record and is never deleted along with its company. An opening balance alone does not stop it; it is deleted with the company.
  * @summary Delete a company of a client
  */
 export const deleteCompany = async (id: string,
