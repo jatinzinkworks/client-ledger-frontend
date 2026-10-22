@@ -6,17 +6,28 @@
  * OpenAPI spec version: v1
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
   MutationFunction,
   QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
   BulkLedgerSummaryEmailResponse,
+  DownloadClientLedgerSummaryPdfParams,
+  DownloadLedgerSummaryPdfParams,
   ErrorResponse,
   LedgerSummaryEmailResponse,
   PaymentReminderResponse
@@ -29,6 +40,21 @@ import type { ErrorType } from '../../fetcher';
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
+  const result = { queryKey } as T & { queryKey: K };
+  for (const key of Object.keys(query)) {
+    // The explicit queryKey always wins, matching the previous
+    // `{ ...query, queryKey }` spread where it was set last.
+    if (key === 'queryKey') continue;
+    Object.defineProperty(result, key, {
+      enumerable: true,
+      configurable: true,
+      get: () => (query as Record<string, unknown>)[key],
+    });
+  }
+  return result;
+};
 
 export const getSendPaymentRemindersUrl = () => {
 
@@ -328,3 +354,243 @@ export const useSendLedgerSummary = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getSendLedgerSummaryMutationOptions(options), queryClient);
     }
+    export const getDownloadClientLedgerSummaryPdfUrl = (clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/ledger-summary-pdf?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/ledger-summary-pdf`
+}
+
+/**
+ * Downloads the PDF ledger statement that emailing the client their ledger summary attaches, without sending anything, across all of the client's companies, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year the client has been one, from the year they were added (or of their earliest entry) to the current year, as one period: the summary is across the whole span, so the amount pending is what the client owes overall, and each company lists every entry since it was taken on with a running balance. Either way it opens with the summary and a line per company, then each company's charges and payments on a page of its own, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the client and the year, such as Rohan_Mehta_Ledger_FY2026-27.pdf, or Rohan_Mehta_Ledger_All_Years.pdf for every year.
+ * @summary Download a client's ledger summary as a PDF
+ */
+export const downloadClientLedgerSummaryPdf = async (clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams, options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getDownloadClientLedgerSummaryPdfUrl(clientId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadClientLedgerSummaryPdfQueryKey = (clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams,) => {
+    return [
+    `/psc/cl/v1/clients/${clientId}/ledger-summary-pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getDownloadClientLedgerSummaryPdfQueryOptions = <TData = Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadClientLedgerSummaryPdfQueryKey(clientId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>> = ({ signal }) => downloadClientLedgerSummaryPdf(clientId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientId !== null && clientId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadClientLedgerSummaryPdfQueryResult = NonNullable<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>>
+export type DownloadClientLedgerSummaryPdfQueryError = ErrorType<ErrorResponse>
+
+
+export function useDownloadClientLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params: undefined |  DownloadClientLedgerSummaryPdfParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadClientLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadClientLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download a client's ledger summary as a PDF
+ */
+
+export function useDownloadClientLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    params?: DownloadClientLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadClientLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadClientLedgerSummaryPdfQueryOptions(clientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getDownloadLedgerSummaryPdfUrl = (clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-summary-pdf?${stringifiedParams}` : `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-summary-pdf`
+}
+
+/**
+ * Downloads the PDF ledger statement that emailing the client the ledger summary of one of their companies attaches, without sending anything, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year as one period, from the year the client was added (or of the company's earliest entry, if earlier) to the current year: the summary is across the whole span, so the amount pending is what the company owes overall, and the details list every entry since it was taken on with a running balance. Either way it opens with the company's summary, then its charges and payments, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.pdf, or Mehta_Textiles_Pvt_Ltd_Ledger_All_Years.pdf for every year.
+ * @summary Download the ledger summary of one of a client's companies as a PDF
+ */
+export const downloadLedgerSummaryPdf = async (clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams, options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
+
+  return apiFetch<Blob>(getDownloadLedgerSummaryPdfUrl(clientId,companyId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadLedgerSummaryPdfQueryKey = (clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams,) => {
+    return [
+    `/psc/cl/v1/clients/${clientId}/companies/${companyId}/ledger-summary-pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getDownloadLedgerSummaryPdfQueryOptions = <TData = Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadLedgerSummaryPdfQueryKey(clientId,companyId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>> = ({ signal }) => downloadLedgerSummaryPdf(clientId,companyId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: clientId !== null && clientId !== undefined && companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadLedgerSummaryPdfQueryResult = NonNullable<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>>
+export type DownloadLedgerSummaryPdfQueryError = ErrorType<ErrorResponse>
+
+
+export function useDownloadLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params: undefined |  DownloadLedgerSummaryPdfParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>,
+          TError,
+          Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download the ledger summary of one of a client's companies as a PDF
+ */
+
+export function useDownloadLedgerSummaryPdf<TData = Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError = ErrorType<ErrorResponse>>(
+ clientId: string,
+    companyId: string,
+    params?: DownloadLedgerSummaryPdfParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadLedgerSummaryPdf>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadLedgerSummaryPdfQueryOptions(clientId,companyId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

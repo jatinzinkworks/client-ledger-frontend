@@ -47,6 +47,8 @@ export * from './companyResponseCompanyType';
 export * from './companyTotals';
 export * from './companyYearStatus';
 export * from './companyYearStatusStatus';
+export * from './downloadClientLedgerSummaryPdfParams';
+export * from './downloadLedgerSummaryPdfParams';
 export * from './errorResponse';
 export * from './exportClientParams';
 export * from './exportCompanyParams';

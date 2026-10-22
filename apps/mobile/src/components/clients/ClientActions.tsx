@@ -1,4 +1,4 @@
-import { useClientLedgerEmail, useClientLedgerExport } from '@cl/api';
+import { useClientLedgerEmail, useClientLedgerExport, useClientLedgerPdf } from '@cl/api';
 import { TOO_MANY_COMPANIES, clientLedgerEmailDescription, companiesLeft } from '@cl/schemas';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
@@ -16,9 +16,13 @@ interface ClientActionsProps {
   companyCount: number;
 }
 
-/** The client page's actions, as in the web header: Record Payment, Add Company, Export Ledger and Email Summary. */
+/**
+ * The client page's actions, as in the web header: Record Payment, Add Company, Download Excel,
+ * Email Summary and Share PDF (the summary PDF in the share sheet, e.g. to send on WhatsApp).
+ */
 export function ClientActions({ clientId, name, companyCount }: ClientActionsProps) {
   const ledgerExport = useClientLedgerExport(clientId);
+  const ledgerPdf = useClientLedgerPdf(clientId);
   const ledgerEmail = useClientLedgerEmail(clientId);
   const full = companiesLeft(companyCount) === 0;
   return (
@@ -42,6 +46,7 @@ export function ClientActions({ clientId, name, companyCount }: ClientActionsPro
           className="flex-1"
         />
       </View>
+      <ExportLedgerButton ledgerExport={ledgerPdf} name={name} format="pdf" />
     </View>
   );
 }

@@ -223,9 +223,37 @@ export function accountStatus(pending: number | undefined): AccountStatus | unde
 
 // ── Export ──────────────────────────────────────────────────────────────────────────────
 
+/** The ledger files a client or company page offers: the Excel export and the PDF summary. */
+export type LedgerFileFormat = 'xlsx' | 'pdf';
+
 /**
- * The workbook's name when the backend does not send one, matching its own pattern:
- * Rohan_Mehta_Ledger_FY2026-27.xlsx.
+ * The file's name when the backend does not send one, matching its own pattern:
+ * Rohan_Mehta_Ledger_FY2026-27.xlsx (or .pdf).
  */
-export const ledgerExportFileName = (clientName: string, financialYear: string) =>
-  `${clientName.trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '') || 'Client'}_Ledger_FY${financialYear}.xlsx`;
+export const ledgerExportFileName = (clientName: string, financialYear: string, format: LedgerFileFormat = 'xlsx') =>
+  `${clientName.trim().replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '') || 'Client'}_Ledger_FY${financialYear}.${format}`;
+
+interface LedgerFileCopy {
+  /** The web button, which downloads the file. */
+  label: string;
+  /** The mobile button, which opens the share sheet (WhatsApp, email, Files…). */
+  shareLabel: string;
+  busyLabel: string;
+  tooltip: string;
+}
+
+/** Button copy per ledger file, for both apps. */
+export const LEDGER_FILE_COPY: Readonly<Record<LedgerFileFormat, LedgerFileCopy>> = {
+  xlsx: {
+    label: 'Download Excel',
+    shareLabel: 'Download Excel',
+    busyLabel: 'Preparing Excel…',
+    tooltip: "Download The Selected Financial Year's Ledger As An Excel Workbook",
+  },
+  pdf: {
+    label: 'Download PDF',
+    shareLabel: 'Share PDF',
+    busyLabel: 'Preparing PDF…',
+    tooltip: "Download The Selected Financial Year's Ledger Summary As A PDF, The Statement The Summary Email Attaches",
+  },
+};

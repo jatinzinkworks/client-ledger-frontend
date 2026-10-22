@@ -2062,6 +2062,21 @@ export const SummarizeClientResponse = zod.object({
 
 
 /**
+ * Downloads the PDF ledger statement that emailing the client their ledger summary attaches, without sending anything, across all of the client's companies, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year the client has been one, from the year they were added (or of their earliest entry) to the current year, as one period: the summary is across the whole span, so the amount pending is what the client owes overall, and each company lists every entry since it was taken on with a running balance. Either way it opens with the summary and a line per company, then each company's charges and payments on a page of its own, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the client and the year, such as Rohan_Mehta_Ledger_FY2026-27.pdf, or Rohan_Mehta_Ledger_All_Years.pdf for every year.
+ * @summary Download a client's ledger summary as a PDF
+ */
+export const DownloadClientLedgerSummaryPdfParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client')
+})
+
+export const DownloadClientLedgerSummaryPdfQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year of the statement, written as yyyy-yy. Omit for every year the client has been one, together')
+})
+
+export const DownloadClientLedgerSummaryPdfResponse = zod.unknown()
+
+
+/**
  * Returns, for every Indian financial year (1 April to 31 March) since the client became one, latest first, or only for the financialYear given: what was billed before discount, the discount given, what was received, the closing balance (billed less discount less received) and a status. The current year runs to date and is PENDING while it has an amount owing; a closed year that ended with an amount owing is CARRIED; a year with nothing owing is SETTLED, as is one where more was received than billed, whose closing balance is then negative. Charges count in the year they fell due and payments in the year they were received; each year stands alone, so an earlier year's balance is not brought into the next. The first year is that of the client's earliest ledger entry, or of the day they were added if earlier; years with no entries are listed with zeros. clientSince and yearCount always cover every year since then, whichever years are listed. Each year also carries the same figures for each company with entries in it; with pendingOnly, only the companies still owing for the year (a closing balance above zero) are listed, while the year's own figures and companyCount still cover every company.
  * @summary Show a client's balance for every financial year, or for one
  */
@@ -2251,6 +2266,22 @@ export const SummarizeCompanyResponse = zod.object({
   "companyName": zod.string().optional().describe('Name of the company that made the payment; given only in a client\'s summary')
 }).optional().describe('The most recent payment received in the year; absent when none was received')
 }).describe('A company\'s billing and payments for one Indian financial year')
+
+
+/**
+ * Downloads the PDF ledger statement that emailing the client the ledger summary of one of their companies attaches, without sending anything, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year as one period, from the year the client was added (or of the company's earliest entry, if earlier) to the current year: the summary is across the whole span, so the amount pending is what the company owes overall, and the details list every entry since it was taken on with a running balance. Either way it opens with the company's summary, then its charges and payments, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.pdf, or Mehta_Textiles_Pvt_Ltd_Ledger_All_Years.pdf for every year.
+ * @summary Download the ledger summary of one of a client's companies as a PDF
+ */
+export const DownloadLedgerSummaryPdfParams = zod.object({
+  "clientId": zod.uuid().describe('Identifier of the client'),
+  "companyId": zod.uuid().describe('Identifier of the company')
+})
+
+export const DownloadLedgerSummaryPdfQueryParams = zod.object({
+  "financialYear": zod.string().optional().describe('Indian financial year of the statement, written as yyyy-yy. Omit for every year together')
+})
+
+export const DownloadLedgerSummaryPdfResponse = zod.unknown()
 
 
 /**

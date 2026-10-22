@@ -5,6 +5,7 @@ import {
   useCompanyLedger,
   useCompanyLedgerEmail,
   useCompanyLedgerExport,
+  useCompanyLedgerPdf,
 } from '@cl/api';
 import { clientName, companyLedgerEmailDescription, financialYearLabel, ledgerSummaryCards } from '@cl/schemas';
 import { Stack, router } from 'expo-router';
@@ -42,6 +43,7 @@ export function CompanyScreen({ clientId, companyId }: { clientId: string; compa
   const { financialYear } = useFinancialYear();
   const ledger = useCompanyLedger(clientId, companyId, financialYear);
   const ledgerExport = useCompanyLedgerExport(clientId, companyId);
+  const ledgerPdf = useCompanyLedgerPdf(clientId, companyId);
   const ledgerEmail = useCompanyLedgerEmail(clientId, companyId);
   const owner = useClient(clientId);
   const ownerName = owner.client ? clientName(owner.client) : '';
@@ -95,6 +97,7 @@ export function CompanyScreen({ clientId, companyId }: { clientId: string; compa
               className="flex-1"
             />
           </View>
+          <ExportLedgerButton ledgerExport={ledgerPdf} name={company.companyName ?? ''} format="pdf" />
         </View>
 
         <View className="gap-3">

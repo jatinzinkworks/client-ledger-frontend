@@ -24,10 +24,6 @@
       "description": "Tenant-wide configuration for the Client Ledger, such as payment terms"
     },
     {
-      "name": "Notifications",
-      "description": "Emails sent to clients about their accounts"
-    },
-    {
       "name": "Client Services",
       "description": "Services from the Service Catalog delivered to a client's companies"
     },
@@ -46,6 +42,10 @@
     {
       "name": "Manager Catalog",
       "description": "Staff who can be assigned to client work, with their roles and contact details"
+    },
+    {
+      "name": "Notifications",
+      "description": "Emails sent to clients about their accounts, and the PDF they attach"
     },
     {
       "name": "Ledger",
@@ -4332,6 +4332,92 @@
         }
       }
     },
+    "/psc/cl/v1/clients/{clientId}/ledger-summary-pdf": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Download a client's ledger summary as a PDF",
+        "description": "Downloads the PDF ledger statement that emailing the client their ledger summary attaches, without sending anything, across all of the client's companies, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year the client has been one, from the year they were added (or of their earliest entry) to the current year, as one period: the summary is across the whole span, so the amount pending is what the client owes overall, and each company lists every entry since it was taken on with a running balance. Either way it opens with the summary and a line per company, then each company's charges and payments on a page of its own, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the client and the year, such as Rohan_Mehta_Ledger_FY2026-27.pdf, or Rohan_Mehta_Ledger_All_Years.pdf for every year.",
+        "operationId": "downloadClientLedgerSummaryPdf",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Identifier of the client",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
+          },
+          {
+            "name": "financialYear",
+            "in": "query",
+            "description": "Indian financial year of the statement, written as yyyy-yy. Omit for every year the client has been one, together",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-27"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF, as an attachment; a year with no entries gives zero totals",
+            "headers": {
+              "Content-Disposition": {
+                "description": "attachment, with the statement's file name",
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"Rohan_Mehta_Ledger_FY2026-27.pdf\""
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "financialYear is not a year such as 2026-27, or the identifier is not a valid UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No client carries this identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/psc/cl/v1/clients/{clientId}/ledger-status": {
       "get": {
         "tags": [
@@ -4709,6 +4795,103 @@
           },
           "400": {
             "description": "financialYear is missing or is not a year such as 2026-27, or an identifier is not a valid UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No client carries this identifier, or the client holds no such company",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/psc/cl/v1/clients/{clientId}/companies/{companyId}/ledger-summary-pdf": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Download the ledger summary of one of a client's companies as a PDF",
+        "description": "Downloads the PDF ledger statement that emailing the client the ledger summary of one of their companies attaches, without sending anything, every page headed by the firm's logo and its name from Global Settings. With financialYear, it covers that Indian financial year (1 April to 31 March); for the current year it is exactly the PDF the email attaches. Without it, it covers every year as one period, from the year the client was added (or of the company's earliest entry, if earlier) to the current year: the summary is across the whole span, so the amount pending is what the company owes overall, and the details list every entry since it was taken on with a running balance. Either way it opens with the company's summary, then its charges and payments, every charge as one total fee and every payment as the amount paid, with no discount shown. The file is named after the company and the year, such as Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.pdf, or Mehta_Textiles_Pvt_Ltd_Ledger_All_Years.pdf for every year.",
+        "operationId": "downloadLedgerSummaryPdf",
+        "parameters": [
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Identifier of the client",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "7a3d9e10-5b2c-4f81-a6e4-2c8b1d0f9e35"
+          },
+          {
+            "name": "companyId",
+            "in": "path",
+            "description": "Identifier of the company",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "4c1f8a52-2d6b-4e93-b7a0-9e5d3c1f6a28"
+          },
+          {
+            "name": "financialYear",
+            "in": "query",
+            "description": "Indian financial year of the statement, written as yyyy-yy. Omit for every year together",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "2026-27"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The PDF, as an attachment; a period with no entries gives zero totals",
+            "headers": {
+              "Content-Disposition": {
+                "description": "attachment, with the statement's file name",
+                "style": "simple",
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"Mehta_Textiles_Pvt_Ltd_Ledger_FY2026-27.pdf\""
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "financialYear is not a year such as 2026-27, or an identifier is not a valid UUID",
             "content": {
               "application/json": {
                 "schema": {

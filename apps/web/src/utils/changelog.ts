@@ -9,6 +9,14 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '22 Oct 2026, 13:53:40',
+    highlights: [
+      'Ledger summary as a PDF for a client or a company, for the selected financial year: Download PDF on web, and Share PDF on mobile to send it on WhatsApp, email or anywhere else from the share sheet.',
+      'Export Ledger is now called Download Excel, beside Download PDF; each carries its file icon, Excel in green and PDF in red.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '22 Oct 2026, 13:21:38',
     highlights: [
       'New Birthdays screen (web menu and mobile tab): see which clients have a birthday this month, or step to any other month, with a card each showing the date, the age they turn and how to reach them. Today\'s birthdays stand out.',

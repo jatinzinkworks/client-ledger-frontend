@@ -157,6 +157,10 @@ describe('ledgerExportFileName', () => {
     expect(ledgerExportFileName('Rohan Mehta', '2026-27')).toBe('Rohan_Mehta_Ledger_FY2026-27.xlsx');
   });
 
+  it('names the PDF summary the same way', () => {
+    expect(ledgerExportFileName('Rohan Mehta', '2026-27', 'pdf')).toBe('Rohan_Mehta_Ledger_FY2026-27.pdf');
+  });
+
   it('drops characters a file name should not carry', () => {
     expect(ledgerExportFileName(" D'Souza / Sons ", '2025-26')).toBe('D_Souza_Sons_Ledger_FY2025-26.xlsx');
     expect(ledgerExportFileName('', '2025-26')).toBe('Client_Ledger_FY2025-26.xlsx');

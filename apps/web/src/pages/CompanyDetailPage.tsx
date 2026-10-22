@@ -5,6 +5,7 @@ import {
   useCompanyLedger,
   useCompanyLedgerEmail,
   useCompanyLedgerExport,
+  useCompanyLedgerPdf,
   useServiceCatalog,
   type LedgerEntryResponse,
   type ServiceAssignmentResponse,
@@ -69,6 +70,7 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   const { financialYear } = useFinancialYear()
   const ledger = useCompanyLedger(id, companyId, financialYear)
   const ledgerExport = useCompanyLedgerExport(id, companyId)
+  const ledgerPdf = useCompanyLedgerPdf(id, companyId)
   const ledgerEmail = useCompanyLedgerEmail(id, companyId)
   const navigate = useNavigate()
   const catalog = useServiceCatalog(financialYear)
@@ -96,6 +98,10 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
   }
 
   const { company } = page
+  // Download the selected year's ledger files; a failure shows below the header with a Retry.
+  const companyName = company?.companyName ?? ''
+  const exportLedger = saveLedgerExport(ledgerExport.exportLedger, companyName, financialYear)
+  const downloadPdf = saveLedgerExport(ledgerPdf.exportLedger, companyName, financialYear, 'pdf')
   // The status badge, CIN / GSTIN and Export To Excel from the mock come once the API supports them.
   return (
     <div className="flex flex-col gap-6">
@@ -124,10 +130,8 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
                   onRefresh={() => Promise.all([page.refetch(), ledger.refetch()])}
                   refreshing={page.isRefreshing || ledger.isRefreshing}
                 />
-                <ExportLedgerButton
-                  onExport={saveLedgerExport(ledgerExport.exportLedger, company.companyName ?? '', financialYear)}
-                  exporting={ledgerExport.exporting}
-                />
+                <ExportLedgerButton onExport={exportLedger} exporting={ledgerExport.exporting} />
+                <ExportLedgerButton format="pdf" onExport={downloadPdf} exporting={ledgerPdf.exporting} />
                 <EmailLedgerButton
                   description={companyLedgerEmailDescription(company.companyName ?? '')}
                   tooltip={ledgerEmailTooltip('company')}
@@ -143,12 +147,8 @@ function CompanyDetail({ id, companyId }: { id: string; companyId: string }) {
               </>
             }
           />
-          {ledgerExport.error && (
-            <LoadError
-              error={ledgerExport.error}
-              onRetry={saveLedgerExport(ledgerExport.exportLedger, company.companyName ?? '', financialYear)}
-            />
-          )}
+          {ledgerExport.error && <LoadError error={ledgerExport.error} onRetry={exportLedger} />}
+          {ledgerPdf.error && <LoadError error={ledgerPdf.error} onRetry={downloadPdf} />}
           <SummaryCards
             label={`Summary For ${financialYearLabel(financialYear)}`}
             cards={ledger.yearSummary && ledgerSummaryCards(ledger.yearSummary, financialYear)}

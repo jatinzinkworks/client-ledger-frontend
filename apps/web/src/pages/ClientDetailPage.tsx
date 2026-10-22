@@ -2,6 +2,7 @@ import {
   useClient,
   useClientLedgerEmail,
   useClientLedgerExport,
+  useClientLedgerPdf,
   useClientLedgerSummary,
   useClientPayments,
   useClientYearBalances,
@@ -50,6 +51,7 @@ export function ClientDetailPage() {
   const payments = useClientPayments(id)
   const yearSummary = useClientLedgerSummary(id, financialYear)
   const ledgerExport = useClientLedgerExport(id)
+  const ledgerPdf = useClientLedgerPdf(id)
   const ledgerEmail = useClientLedgerEmail(id)
   const yearBalances = useClientYearBalances(id)
   // Which side sheet is open: none, Edit Client, Add Company or Record Payment.
@@ -71,6 +73,7 @@ export function ClientDetailPage() {
   const name = client ? clientName(client) : ''
   // Downloads the selected year's ledger; a failure shows below the header with a Retry.
   const exportLedger = saveLedgerExport(ledgerExport.exportLedger, name, financialYear)
+  const downloadPdf = saveLedgerExport(ledgerPdf.exportLedger, name, financialYear, 'pdf')
   // The client's services, for the Billed card's note: a sum over their companies' counts.
   const serviceCount = page.companies.reduce((total, c) => total + (c.serviceCount ?? 0), 0)
   const details = client ? clientHeaderDetails(client) : []
@@ -103,6 +106,7 @@ export function ClientDetailPage() {
                   refreshing={isRefreshing || yearSummary.isRefreshing || yearBalances.isRefreshing}
                 />
                 <ExportLedgerButton onExport={exportLedger} exporting={ledgerExport.exporting} />
+                <ExportLedgerButton format="pdf" onExport={downloadPdf} exporting={ledgerPdf.exporting} />
                 <EmailLedgerButton
                   description={clientLedgerEmailDescription(name)}
                   tooltip={ledgerEmailTooltip('client')}
@@ -119,6 +123,7 @@ export function ClientDetailPage() {
             }
           />
           {ledgerExport.error && <LoadError error={ledgerExport.error} onRetry={exportLedger} />}
+          {ledgerPdf.error && <LoadError error={ledgerPdf.error} onRetry={downloadPdf} />}
           <SummaryCards
             label={`Summary For ${financialYearLabel(financialYear)}`}
             cards={yearSummary.summary && clientSummaryCards(yearSummary.summary, financialYear, serviceCount)}
