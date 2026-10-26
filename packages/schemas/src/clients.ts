@@ -112,7 +112,8 @@ export const clientFormSchema = clientDetailsSchema.extend({
     .trim()
     .toUpperCase()
     .min(1, 'Enter The Client ID.')
-    .regex(CLIENT_ID_PATTERN, 'Use PSC- Followed By 5 Digits, Such As PSC-00042.'),
+    // Zod runs every check, so a blank id would also fail the pattern; it only needs "Enter".
+    .refine((id) => !id || CLIENT_ID_PATTERN.test(id), 'Use PSC- Followed By 5 Digits, Such As PSC-00042.'),
   companies: z
     .array(companyFormSchema)
     .min(1, 'Add At Least One Company.')

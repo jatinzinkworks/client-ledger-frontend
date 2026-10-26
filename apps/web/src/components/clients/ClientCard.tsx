@@ -29,7 +29,7 @@ export function ClientCard({ client }: { client: ClientSummaryResponse }) {
           {client.clientId && (
             <p className="text-sm font-bold text-muted-foreground tabular-nums">
               <span className="sr-only">{CLIENT_ID_LABEL} </span>
-              {client.clientId}
+              <span>{client.clientId}</span>
             </p>
           )}
           <p className="truncate text-sm text-muted-foreground">{client.email}</p>
