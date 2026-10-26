@@ -7,6 +7,7 @@ import { ClientCard } from './ClientCard'
 
 const rajesh: ClientSummaryResponse = {
   id: 'c1',
+  clientId: 'PSC-00001',
   firstName: 'Rajesh',
   lastName: 'Mehta',
   email: 'rajesh@mehtatextiles.in',
@@ -28,6 +29,12 @@ describe('ClientCard', () => {
     for (const text of ['Rajesh Mehta', 'rajesh@mehtatextiles.in', 'Mehta Exports LLP', 'Pending', '₹98,150', 'Overdue', 'Neha Kulkarni']) {
       expect(screen.getByText(text)).toBeVisible()
     }
+  })
+
+  it('shows the client id, named for screen readers', () => {
+    renderCard(rajesh)
+    expect(screen.getByText('PSC-00001')).toBeVisible()
+    expect(screen.getByText('PSC-00001').closest('p')).toHaveTextContent('Client ID PSC-00001')
   })
 
   it('reads Settled at zero and In Credit when overpaid', () => {

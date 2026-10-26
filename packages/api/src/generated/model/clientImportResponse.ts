@@ -13,12 +13,14 @@ import type { ImportedClient } from './importedClient';
 export interface ClientImportResponse {
   /** How many clients were created */
   clientCount?: number;
+  /** How many clients already on file had companies added to them */
+  existingClientCount?: number;
   /** How many companies were created, across every client */
   companyCount?: number;
   /** How many of the companies created were taken on with an opening balance, across every client */
   openingBalanceCount?: number;
   /** The opening balances recorded, added up across every client: positive when owed on the whole, negative when in credit; 0.00 when none were */
   openingBalanceTotal?: number;
-  /** Each client created, in the order of the Clients sheet */
+  /** Each client the import created or added companies to: first those on the Clients sheet, in its order, then any named only on the Companies sheet */
   clients?: ImportedClient[];
 }

@@ -19,3 +19,5 @@ export * from './reassignClients';
 export * from './workbookImport';
 export * from './serviceImport';
 export * from './clientImport';
+export * from './auth';
+export * from './bulkActions';

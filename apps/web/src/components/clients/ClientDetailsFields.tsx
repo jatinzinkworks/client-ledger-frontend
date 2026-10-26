@@ -1,5 +1,5 @@
 import type { ManagerResponse } from '@cl/api'
-import { CLIENT_FIELDS, managerOptions, type ClientDetailsInput, type ClientField } from '@cl/schemas'
+import { CLIENT_FIELDS, managerOptions, type ClientDetailsField, type ClientDetailsInput } from '@cl/schemas'
 import { useFormContext } from 'react-hook-form'
 import { Link } from 'react-router'
 
@@ -23,7 +23,7 @@ export function ClientDetailsFields({ managers, managersLoading, discountHint }:
     formState: { errors },
   } = useFormContext<ClientDetailsInput>()
 
-  const textField = (field: Exclude<ClientField, 'managerId'>, type = 'text', hint = CLIENT_FIELDS[field].hint) => (
+  const textField = (field: Exclude<ClientDetailsField, 'managerId'>, type = 'text', hint = CLIENT_FIELDS[field].hint) => (
     <TextField
       id={`client-${field}`}
       label={CLIENT_FIELDS[field].label}

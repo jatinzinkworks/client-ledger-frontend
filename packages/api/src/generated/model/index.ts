@@ -98,6 +98,7 @@ export * from './monthlyTrendParams';
 export * from './monthlyTrendResponse';
 export * from './newCompanyRequest';
 export * from './newCompanyRequestCompanyType';
+export * from './nextClientIdResponse';
 export * from './overviewParams';
 export * from './overviewResponse';
 export * from './pageMetadata';

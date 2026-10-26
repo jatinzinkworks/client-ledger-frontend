@@ -8,11 +8,14 @@ import { CompanyDetailPage } from './pages/CompanyDetailPage'
 import { ManagersPage } from './pages/ManagersPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { ServicesPage } from './pages/ServicesPage'
+import { SignedOutPage } from './pages/SignedOutPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
+import { SIGNED_OUT_PATH } from './utils/routes'
 
 export default function App() {
   return (
     <Routes>
+      <Route path={SIGNED_OUT_PATH} element={<SignedOutPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="services" element={<ServicesPage />} />

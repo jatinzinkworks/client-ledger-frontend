@@ -1,5 +1,5 @@
 import type { ClientSummaryResponse } from '@cl/api'
-import { accountStatus, clientName, formatInr } from '@cl/schemas'
+import { CLIENT_ID_LABEL, accountStatus, clientName, formatInr } from '@cl/schemas'
 import { Link } from 'react-router'
 
 import { cn } from '@/lib/utils'
@@ -12,7 +12,7 @@ import { EYEBROW } from '@/utils/typography'
 // The mock's "₹N Billed · ₹N Received" line joins here once the list carries those figures.
 
 /**
- * One client: name, email, birthday (when recorded) and status, their companies, what they still owe (across all years)
+ * One client: name, client id, email, birthday (when recorded) and status, their companies, what they still owe (across all years)
  * and their manager. The whole card opens the client page.
  */
 export function ClientCard({ client }: { client: ClientSummaryResponse }) {
@@ -26,6 +26,12 @@ export function ClientCard({ client }: { client: ClientSummaryResponse }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="truncate text-xl font-bold">{clientName(client)}</h2>
+          {client.clientId && (
+            <p className="text-sm font-bold text-muted-foreground tabular-nums">
+              <span className="sr-only">{CLIENT_ID_LABEL} </span>
+              {client.clientId}
+            </p>
+          )}
           <p className="truncate text-sm text-muted-foreground">{client.email}</p>
           <ClientBirthday birthday={client.birthday} className="text-sm text-muted-foreground" />
         </div>

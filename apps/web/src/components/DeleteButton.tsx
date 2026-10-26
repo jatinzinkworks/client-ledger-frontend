@@ -1,4 +1,4 @@
-import { ApiError, errorMessage } from '@cl/api'
+import { ApiError, errorMessage, serverMessage } from '@cl/api'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -24,7 +24,7 @@ interface DeleteButtonProps {
   description: string
   /** Why deleting is not allowed right now; disables the button and shows as its tooltip. */
   disabledReason?: string
-  /** Shown instead of the backend's message when it refuses with 409 (the record is in use). */
+  /** Shown when the backend refuses with 409 (the record is in use) without saying why. */
   conflictMessage?: string
   onDelete: () => Promise<unknown>
   deleting: boolean
@@ -53,7 +53,10 @@ export function DeleteButton({
       await onDelete()
       setOpen(false)
     } catch (e) {
-      setError(conflictMessage && e instanceof ApiError && e.status === 409 ? conflictMessage : errorMessage(e))
+      // A 409 carries the backend's reason (e.g. which company still has ledger entries); the
+      // caller's message stands in only when it gave none.
+      const conflict = conflictMessage && e instanceof ApiError && e.status === 409
+      setError(conflict ? (serverMessage(e) ?? conflictMessage) : errorMessage(e))
     }
   }
 

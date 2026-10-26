@@ -1,6 +1,7 @@
 import type { CompanyResponse } from '@cl/api'
 import {
   DELETE_COMPANY_IN_USE,
+  DELETE_COMPANY_REFUSED,
   DELETE_COMPANY_WARNING,
   LAST_COMPANY_REASON,
   accountStatus,
@@ -88,7 +89,7 @@ function columns({ clientId, companies, onDeleteCompany, deletingCompany }: Comp
             itemName={company.companyName ?? 'This Company'}
             description={DELETE_COMPANY_WARNING}
             disabledReason={deleteCompanyBlocker(company, onlyCompany)}
-            conflictMessage={DELETE_COMPANY_IN_USE}
+            conflictMessage={DELETE_COMPANY_REFUSED}
             onDelete={() => onDeleteCompany(company.id ?? '')}
             deleting={deletingCompany}
           />

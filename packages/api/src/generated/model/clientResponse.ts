@@ -13,6 +13,8 @@ import type { CompanyResponse } from './companyResponse';
 export interface ClientResponse {
   /** Identifier of the client */
   id?: string;
+  /** The firm's own identifier for the client; fixed when the client is added */
+  clientId?: string;
   /** Given name of the client */
   firstName?: string;
   /** Family name of the client */

@@ -1,5 +1,5 @@
 import type { ClientSummaryResponse } from '@cl/api';
-import { clientName, formatInr } from '@cl/schemas';
+import { CLIENT_ID_LABEL, clientName, formatInr } from '@cl/schemas';
 import { Phone } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 
@@ -16,7 +16,7 @@ interface ClientCardProps {
 }
 
 /**
- * One client, as the web ClientCard: name, email, phone, birthday (when recorded) and status, their companies, what they still
+ * One client, as the web ClientCard: name, client id, email, phone, birthday (when recorded) and status, their companies, what they still
  * owe (across all years) and their manager. Tapping it opens the client.
  */
 export function ClientCard({ client, onPress }: ClientCardProps) {
@@ -35,6 +35,11 @@ export function ClientCard({ client, onPress }: ClientCardProps) {
           <Text numberOfLines={1} className="text-lg font-bold text-card-foreground">
             {name}
           </Text>
+          {client.clientId ? (
+            <Text accessibilityLabel={`${CLIENT_ID_LABEL} ${client.clientId}`} className="text-[13px] font-bold text-muted-foreground">
+              {client.clientId}
+            </Text>
+          ) : null}
           <Text numberOfLines={1} className="text-[13px] text-muted-foreground">
             {client.email}
           </Text>

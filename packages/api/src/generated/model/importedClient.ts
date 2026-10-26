@@ -8,13 +8,15 @@
 import type { ImportedCompany } from './importedCompany';
 
 /**
- * A client created by an import
+ * A client created by an import, or one already on file that an import added companies to
  */
 export interface ImportedClient {
-  /** The client's reference on the Clients sheet */
-  clientRef?: string;
-  /** Identifier given to the new client */
+  /** Identifier of the client */
+  id?: string;
+  /** The client's client id, as on file */
   clientId?: string;
+  /** True when the import created the client; false when the client was already on file and only had companies added */
+  created?: boolean;
   /** Full name of the client */
   clientName?: string;
   /** How many companies were created for the client */
@@ -23,6 +25,6 @@ export interface ImportedClient {
   openingBalanceCount?: number;
   /** The opening balances recorded for the client's companies, added up: positive when owed on the whole, negative when in credit; 0.00 when none were */
   openingBalanceTotal?: number;
-  /** Each company created for the client, by name, with the opening balance recorded for it */
+  /** Each company created for the client, with the opening balance recorded for it */
   companies?: ImportedCompany[];
 }

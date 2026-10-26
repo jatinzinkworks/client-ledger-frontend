@@ -1,4 +1,4 @@
-import { ApiError, errorMessage } from '@cl/api';
+import { ApiError, errorMessage, serverMessage } from '@cl/api';
 import { Alert, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';
@@ -12,7 +12,7 @@ interface DeleteButtonProps {
   description: string;
   /** Why deleting is not allowed right now; disables the button and shows underneath. */
   disabledReason?: string;
-  /** Shown instead of the backend's message when it refuses with 409 (the record is in use). */
+  /** Shown when the backend refuses with 409 (the record is in use) without saying why. */
   conflictMessage?: string;
   /** Deletes, then moves on (the screen showing the record is gone). */
   onDelete: () => Promise<unknown>;
@@ -40,7 +40,8 @@ export function DeleteButton({
             await onDelete();
           } catch (error) {
             const conflict = conflictMessage && error instanceof ApiError && error.status === 409;
-            Alert.alert('Could Not Delete', conflict ? conflictMessage : errorMessage(error));
+            // The backend's reason when it gives one; the caller's message otherwise.
+            Alert.alert('Could Not Delete', conflict ? (serverMessage(error) ?? conflictMessage) : errorMessage(error));
           }
         },
       },

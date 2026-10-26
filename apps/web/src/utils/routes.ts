@@ -4,3 +4,6 @@ export const clientPath = (clientId: string) => `/clients/${encodeURIComponent(c
 
 export const companyPath = (clientId: string, companyId: string) =>
   `${clientPath(clientId)}/companies/${encodeURIComponent(companyId)}`
+
+/** Where Sign Out lands: outside the app shell, with Sign In Again. */
+export const SIGNED_OUT_PATH = '/signed-out'

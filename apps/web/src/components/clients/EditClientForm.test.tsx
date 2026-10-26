@@ -1,4 +1,5 @@
 import { ApiError, type ClientResponse, type ManagerResponse } from '@cl/api'
+import { DELETE_CLIENT_IN_USE } from '@cl/schemas'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
@@ -106,13 +107,13 @@ describe('EditClientForm', () => {
     expect(onDelete).toHaveBeenCalledTimes(1)
   })
 
-  it('explains a refusal while services are still assigned', async () => {
+  it('explains a refusal that gives no reason', async () => {
     const inUse = new ApiError(409, { status: 409, code: 'RESOURCE_IN_USE' })
     const { onDeleted, user } = setup(undefined, vi.fn().mockRejectedValue(inUse))
     await user.click(screen.getByRole('button', { name: 'Delete Client' }))
     await user.click(screen.getByRole('button', { name: 'Delete Client' }))
 
-    expect(await screen.findByText("This Client's Companies Still Have Services. Remove Those Services First.")).toBeVisible()
+    expect(await screen.findByText(DELETE_CLIENT_IN_USE)).toBeVisible()
     expect(onDeleted).not.toHaveBeenCalled()
   })
 })

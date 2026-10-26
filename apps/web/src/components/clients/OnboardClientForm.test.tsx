@@ -1,4 +1,5 @@
 import { ApiError, type ManagerResponse } from '@cl/api'
+import { DUPLICATE_CLIENT_ID } from '@cl/schemas'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
@@ -7,6 +8,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 import { OnboardClientForm } from './OnboardClientForm'
+
+// The suggested client id (GET /clients/next-client-id), without a backend or query client.
+const nextClientId = vi.hoisted(() => ({ value: 'PSC-00042' as string | undefined }))
+vi.mock('@cl/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@cl/api')>()),
+  useNextClientId: () => nextClientId.value,
+}))
 
 const managers: ManagerResponse[] = [{ id: 'm-1', firstName: 'Neha', lastName: 'Kulkarni' }]
 
@@ -52,6 +60,7 @@ describe('OnboardClientForm', () => {
 
     await waitFor(() => expect(onDone).toHaveBeenCalled())
     expect(onSave).toHaveBeenCalledWith({
+      clientId: 'PSC-00042',
       firstName: 'Rajesh',
       lastName: 'Mehta',
       phone: '+91 98200 12345',
@@ -114,6 +123,50 @@ describe('OnboardClientForm', () => {
     await user.click(submit())
 
     expect(await screen.findByText('Rejected By Server')).toBeVisible()
+    expect(onDone).not.toHaveBeenCalled()
+  })
+
+  it('fills in the suggested client id, which the user can change', async () => {
+    const { onSave, onDone, user } = setup()
+    const clientId = screen.getByLabelText('Client ID')
+    expect(clientId).toHaveValue('PSC-00042')
+
+    await user.clear(clientId)
+    await user.type(clientId, 'psc-00100')
+    await fillClient(user)
+    await user.type(screen.getByLabelText('Company Name'), 'Mehta Textiles')
+    await user.type(screen.getByLabelText('Address'), '12 MG Road')
+    await user.click(submit())
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ clientId: 'PSC-00100' }))
+  })
+
+  it('waits for a client id when none is suggested, and checks its format', async () => {
+    nextClientId.value = undefined
+    try {
+      const { onSave, user } = setup()
+      await fillClient(user)
+      await user.type(screen.getByLabelText('Company Name'), 'Mehta Textiles')
+      await user.type(screen.getByLabelText('Address'), '12 MG Road')
+      expect(submit()).toBeDisabled()
+
+      await user.type(screen.getByLabelText('Client ID'), 'PSC-1')
+      await user.click(submit())
+      expect(await screen.findByText('Use PSC- Followed By 5 Digits, Such As PSC-00042.')).toBeVisible()
+      expect(onSave).not.toHaveBeenCalled()
+    } finally {
+      nextClientId.value = 'PSC-00042'
+    }
+  })
+
+  it('shows a client id already taken (409) on the field', async () => {
+    const { onDone, user } = setup({ onSave: vi.fn().mockRejectedValue(new ApiError(409, { status: 409 })) })
+    await fillClient(user)
+    await user.type(screen.getByLabelText('Company Name'), 'Mehta Textiles')
+    await user.type(screen.getByLabelText('Address'), '12 MG Road')
+    await user.click(submit())
+
+    expect(await screen.findByText(DUPLICATE_CLIENT_ID)).toBeVisible()
     expect(onDone).not.toHaveBeenCalled()
   })
 

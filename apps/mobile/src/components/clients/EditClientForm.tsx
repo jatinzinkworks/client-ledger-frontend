@@ -11,7 +11,7 @@ import {
   toClientUpdateRequest,
   type ClientDetailsInput,
   type ClientDetailsValues,
-  type ClientField,
+  type ClientDetailsField,
 } from '@cl/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -68,7 +68,10 @@ export function EditClientForm({
       onDone();
     } catch (error) {
       // Only the client's own fields are on this form; anything else is reported as a whole.
-      const byField = Object.entries(fieldErrors(error)).filter(([path]) => path in CLIENT_FIELDS) as [ClientField, string][];
+      const byField = Object.entries(fieldErrors(error)).filter(([path]) => path in CLIENT_FIELDS && path !== 'clientId') as [
+        ClientDetailsField,
+        string,
+      ][];
       byField.forEach(([field, message]) => setError(field, { message }));
       if (!byField.length) setFormError(errorMessage(error));
     }

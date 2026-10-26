@@ -177,6 +177,7 @@ export const GetManagerResponse = zod.object({
   "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
   "clients": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -236,6 +237,7 @@ export const UpdateManagerResponse = zod.object({
   "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
   "clients": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -264,7 +266,7 @@ export const DeleteManagerResponse = zod.void()
 
 
 /**
- * Returns one client by identifier, with their companies in full and the name of the manager who looks after them.
+ * Returns one client by identifier, with their client id, their companies in full and the name of the manager who looks after them.
  * @summary Fetch a client
  */
 export const GetClientParams = zod.object({
@@ -273,6 +275,7 @@ export const GetClientParams = zod.object({
 
 export const GetClientResponse = zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -304,7 +307,7 @@ export const GetClientResponse = zod.object({
 
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. The client id cannot be changed, so it is not part of the payload. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
  * @summary Update a client
  */
 export const UpdateClientParams = zod.object({
@@ -343,6 +346,7 @@ export const UpdateClientBody = zod.object({
 
 export const UpdateClientResponse = zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -731,6 +735,7 @@ export const UpdateManager1Body = zod.object({
 
 export const UpdateManager1ResponseItem = zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -931,6 +936,7 @@ export const ListManagersResponseItem = zod.object({
   "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
   "clients": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -987,6 +993,7 @@ export const CreateManagerResponse = zod.object({
   "totalPending": zod.number().optional().describe('What the manager\'s clients still owe: everything billed to all of their companies less every payment received, across all financial years. Negative when they have paid more than billed. Returned when listing managers and when fetching one by id'),
   "clients": zod.array(zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -1140,7 +1147,7 @@ export const SaveFirmDetailsResponse = zod.object({
 
 
 /**
- * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
+ * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry carries the client's client id and names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
  * @summary List clients
  */
 export const ListClientsQueryParams = zod.object({
@@ -1149,6 +1156,7 @@ export const ListClientsQueryParams = zod.object({
 
 export const ListClientsResponseItem = zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -1164,9 +1172,12 @@ export const ListClientsResponse = zod.array(ListClientsResponseItem)
 
 
 /**
- * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog. A company may bring an opening balance: what it owed (positive) or was owed (negative) when taken on, dated openingBalanceDate or the day the client is added. It is recorded in the company's ledger as an OPENING_BALANCE entry, counted in what is pending but not as billed. Nothing is created when any of it cannot be.
+ * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog. The clientId is the firm's own identifier for the client, PSC- followed by 5 digits: no other client may hold it, and it cannot be changed afterwards. GET /clients/next-client-id suggests the next free one. A company may bring an opening balance: what it owed (positive) or was owed (negative) when taken on, dated openingBalanceDate or the day the client is added. It is recorded in the company's ledger as an OPENING_BALANCE entry, counted in what is pending but not as billed. Nothing is created when any of it cannot be.
  * @summary Create a client
  */
+
+
+export const createClientBodyClientIdRegExp = new RegExp('^PSC-[0-9]{5}$');
 export const createClientBodyFirstNameMin = 0;
 export const createClientBodyFirstNameMax = 100;
 
@@ -1200,6 +1211,7 @@ export const createClientBodyCompaniesMax = 50;
 
 
 export const CreateClientBody = zod.object({
+  "clientId": zod.string().min(1).regex(createClientBodyClientIdRegExp).describe('The firm\'s own identifier for the client: PSC- followed by 5 digits, held by no other client. GET /clients/next-client-id suggests the next free one. It cannot be changed once the client is added'),
   "firstName": zod.string().min(createClientBodyFirstNameMin).max(createClientBodyFirstNameMax).describe('Given name of the client'),
   "lastName": zod.string().min(createClientBodyLastNameMin).max(createClientBodyLastNameMax).describe('Family name of the client'),
   "phone": zod.string().min(createClientBodyPhoneMin).max(createClientBodyPhoneMax).regex(createClientBodyPhoneRegExp).describe('Contact phone number'),
@@ -1219,6 +1231,7 @@ export const CreateClientBody = zod.object({
 
 export const CreateClientResponse = zod.object({
   "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The firm\'s own identifier for the client; fixed when the client is added'),
   "firstName": zod.string().optional().describe('Given name of the client'),
   "lastName": zod.string().optional().describe('Family name of the client'),
   "phone": zod.string().optional().describe('Contact phone number'),
@@ -1699,7 +1712,7 @@ export const PostDueServicesResponse = zod.array(PostDueServicesResponseItem)
 
 
 /**
- * Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. The response lists each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.
+ * Imports a filled-in import template (GET /clients/import/template), matching clients by their Client ID, ignoring case. A Client ID no client holds yet creates the client, with the companies the Companies sheet links to it, as POST /clients would. A Client ID a client already holds adds the companies linked to it to that client, as POST /clients/{id}/companies would, leaving the client's own details as they are; such a client need not be on the Clients sheet. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their full name in the Manager Catalog. Up to 500 clients may be listed at once; each new client needs 1 to 50 companies, and no client may hold more than 50 in all. Importing the same workbook twice does not create its clients twice, but adds their companies again. The response lists each client created or added to, and each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.
  * @summary Import clients and their companies from an Excel workbook
  */
 export const ImportClientsBody = zod.object({
@@ -1708,12 +1721,14 @@ export const ImportClientsBody = zod.object({
 
 export const ImportClientsResponse = zod.object({
   "clientCount": zod.int().optional().describe('How many clients were created'),
+  "existingClientCount": zod.int().optional().describe('How many clients already on file had companies added to them'),
   "companyCount": zod.int().optional().describe('How many companies were created, across every client'),
   "openingBalanceCount": zod.int().optional().describe('How many of the companies created were taken on with an opening balance, across every client'),
   "openingBalanceTotal": zod.number().optional().describe('The opening balances recorded, added up across every client: positive when owed on the whole, negative when in credit; 0.00 when none were'),
   "clients": zod.array(zod.object({
-  "clientRef": zod.string().optional().describe('The client\'s reference on the Clients sheet'),
-  "clientId": zod.uuid().optional().describe('Identifier given to the new client'),
+  "id": zod.uuid().optional().describe('Identifier of the client'),
+  "clientId": zod.string().optional().describe('The client\'s client id, as on file'),
+  "created": zod.boolean().optional().describe('True when the import created the client; false when the client was already on file and only had companies added'),
   "clientName": zod.string().optional().describe('Full name of the client'),
   "companyCount": zod.int().optional().describe('How many companies were created for the client'),
   "openingBalanceCount": zod.int().optional().describe('How many of the client\'s companies were taken on with an opening balance'),
@@ -1723,8 +1738,8 @@ export const ImportClientsResponse = zod.object({
   "companyName": zod.string().optional().describe('Registered name of the company'),
   "openingBalanceAmount": zod.number().optional().describe('The opening balance recorded for the company: positive when owed, negative when in credit. Left out when the company brought none'),
   "openingBalanceDate": zod.iso.date().optional().describe('The date the opening balance stood at. Left out when the company brought none')
-}).describe('A company created by an import')).optional().describe('Each company created for the client, by name, with the opening balance recorded for it')
-}).describe('A client created by an import')).optional().describe('Each client created, in the order of the Clients sheet')
+}).describe('A company created by an import')).optional().describe('Each company created for the client, with the opening balance recorded for it')
+}).describe('A client created by an import, or one already on file that an import added companies to')).optional().describe('Each client the import created or added companies to: first those on the Clients sheet, in its order, then any named only on the Companies sheet')
 }).describe('The clients and companies created by an import')
 
 
@@ -2301,7 +2316,16 @@ export const ExportCompanyResponse = zod.unknown()
 
 
 /**
- * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
+ * Returns the client id to give the next client added: the highest client id held plus one, as PSC-00042, or PSC-00001 when there are no clients. The id is not reserved: if another client is added under it first, creating a client with it returns 409, and this endpoint can be asked again.
+ * @summary Get the next free client id
+ */
+export const NextClientIdResponse = zod.object({
+  "clientId": zod.string().optional().describe('One above the highest client id held, or PSC-00001 when there are no clients')
+}).describe('The next free client id')
+
+
+/**
+ * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client ID, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client ID, Company Name, Company Type, Address, Discount %, Opening Balance and Opening Balance Date, linked to its client by the Client ID. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
  * @summary Download the client import template
  */
 export const DownloadTemplate1Response = zod.unknown()

@@ -1,5 +1,15 @@
-import { errorMessage, fieldErrors, isNotFound, type ClientRequest, type ManagerResponse } from '@cl/api'
 import {
+  errorMessage,
+  fieldErrors,
+  isConflict,
+  isNotFound,
+  useNextClientId,
+  type ClientRequest,
+  type ManagerResponse,
+} from '@cl/api'
+import {
+  CLIENT_FIELDS,
+  DUPLICATE_CLIENT_ID,
   MAX_COMPANIES,
   clientFieldFromApi,
   clientFormDefaults,
@@ -10,9 +20,10 @@ import {
   type ClientFormValues,
 } from '@cl/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FormProvider, useForm, useWatch, type Path } from 'react-hook-form'
 
+import { TextField } from '@/components/form/TextField'
 import { Button } from '@/components/ui/button'
 import { SheetClose, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 
@@ -36,7 +47,14 @@ export function OnboardClientForm({ managers, managersLoading, onSave, saving, o
     resolver: zodResolver(clientFormSchema),
     defaultValues: clientFormDefaults(),
   })
-  const { control, setError } = form
+  const { control, setError, register, getValues, setValue, getFieldState, formState } = form
+  // The suggested client id fills the field once it arrives, unless the user has typed one already.
+  const suggestedClientId = useNextClientId()
+  useEffect(() => {
+    if (suggestedClientId && !getFieldState('clientId').isDirty && !getValues('clientId')) {
+      setValue('clientId', suggestedClientId)
+    }
+  }, [suggestedClientId, getFieldState, getValues, setValue])
   // Onboard stays disabled until every mandatory field has a value (the discount is optional).
   const complete = isClientFormComplete(useWatch({ control }))
   const [formError, setFormError] = useState<string>()
@@ -47,6 +65,11 @@ export function OnboardClientForm({ managers, managersLoading, onSave, saving, o
       await onSave(toClientRequest(values))
       onDone()
     } catch (error) {
+      // 409 on create: another client holds this client id (it was only a suggestion).
+      if (isConflict(error)) {
+        setError('clientId', { message: DUPLICATE_CLIENT_ID })
+        return
+      }
       // 404 on create means the chosen manager was removed meanwhile.
       if (isNotFound(error)) {
         setError('managerId', { message: 'This Manager No Longer Exists. Choose Another.' })
@@ -74,6 +97,15 @@ export function OnboardClientForm({ managers, managersLoading, onSave, saving, o
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
           <span className={SECTION_LABEL}>Client</span>
+          <TextField
+            id="client-clientId"
+            label={CLIENT_FIELDS.clientId.label}
+            placeholder={suggestedClientId ? CLIENT_FIELDS.clientId.placeholder : 'Loading…'}
+            hint={CLIENT_FIELDS.clientId.hint}
+            autoComplete="off"
+            error={formState.errors.clientId?.message}
+            registration={register('clientId')}
+          />
           <ClientDetailsFields managers={managers} managersLoading={managersLoading} />
 
           <div className="flex flex-col gap-4 border-t border-border pt-5">

@@ -1,3 +1,4 @@
+import { SIGN_IN_AGAIN_LABEL, SIGNED_OUT_COPY } from '@cl/schemas';
 import { LogIn } from 'lucide-react-native';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,9 +8,10 @@ import { Button } from '@/components/ui/Button';
 import { Loading } from '@/components/ui/LoadState';
 import { useThemeColors } from '@/theme/useThemeColors';
 
-/** Shown instead of the app until the user has signed in with Google. */
+/** Shown instead of the app until the user has signed in with Google, and after Sign Out. */
 export function SignInScreen() {
-  const { status, signingIn, error, signIn } = useAuth();
+  const { status, signingIn, error, signedOutReason, signIn } = useAuth();
+  const signedOut = signedOutReason ? SIGNED_OUT_COPY[signedOutReason] : null;
   const colors = useThemeColors();
 
   return (
@@ -17,9 +19,9 @@ export function SignInScreen() {
       <View className="flex-1 justify-center gap-6 px-6">
         <View className="items-center gap-3">
           <LogIn color={colors.primary} size={40} />
-          <Text className="text-2xl font-bold text-foreground">Client Ledger</Text>
+          <Text className="text-2xl font-bold text-foreground">{signedOut?.title ?? 'Client Ledger'}</Text>
           <Text className="text-center text-sm text-muted-foreground">
-            Sign In With Your Google Account To Continue.
+            {signedOut?.message ?? 'Sign In With Your Google Account To Continue.'}
           </Text>
         </View>
 

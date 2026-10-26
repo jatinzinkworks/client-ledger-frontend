@@ -9,6 +9,44 @@ export interface ChangelogEntry {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: '0.1.0',
+    date: '26 Oct 2026, 12:04:22',
+    highlights: [
+      'New Bulk Actions under Settings (web and mobile): send payment reminders to every client who owes, email every client their ledger summary, or post every company’s due services in one go. Each asks first, then reports what it did and lists anyone it could not reach.',
+      'Deleting a client or company that cannot be removed now says why, including when its ledger has payments or charges, rather than only mentioning services.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '26 Oct 2026, 11:58:42',
+    highlights: [
+      "Import Clients (web and mobile) now matches clients by Client ID: a Client ID already on file adds the workbook's companies to that client instead of creating them again, and managers are named by their full name. The result shows each client's Client ID and marks existing clients.",
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '26 Oct 2026, 11:49:13',
+    highlights: [
+      'Clients now have a Client ID such as PSC-00042 (web and mobile). Onboard Client fills in the next free one, which you can change before adding the client; it is shown on each client card and on the client page, and you can search by it.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '26 Oct 2026, 11:36:20',
+    highlights: [
+      'You are now signed out automatically after 30 minutes without activity (web and mobile), and the signed-out page says so.',
+      'Mobile: choose Light, Dark or System appearance under Settings; the choice is remembered.',
+      'The app version is shown below Sign Out on web and at the foot of Settings on mobile.',
+    ],
+  },
+  {
+    version: '0.1.0',
+    date: '26 Oct 2026, 11:31:09',
+    highlights: [
+      'Sign Out (web sidebar and mobile Settings) ends your session and clears its cookies, then shows a signed-out page with Sign In Again.',
+    ],
+  },
+  {
+    version: '0.1.0',
     date: '22 Oct 2026, 13:53:40',
     highlights: [
       'Ledger summary as a PDF for a client or a company, for the selected financial year: Download PDF on web, and Share PDF on mobile to send it on WhatsApp, email or anywhere else from the share sheet.',

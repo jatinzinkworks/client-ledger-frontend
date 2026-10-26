@@ -13,7 +13,8 @@ interface ClientDetailsFieldsProps {
   discountHint?: string;
 }
 
-type TextFieldName = Exclude<ClientField, 'managerId' | 'birthday'>;
+// The client id is Onboard Client's alone (it cannot be edited), so OnboardClientForm renders it.
+type TextFieldName = Exclude<ClientField, 'managerId' | 'birthday' | 'clientId'>;
 
 // Keyboard and capitalisation per field — the web's input types.
 const INPUT_HINTS: Readonly<Record<TextFieldName, Pick<TextInputProps, 'keyboardType' | 'autoCapitalize'>>> = {

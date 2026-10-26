@@ -8,6 +8,9 @@ import {
 import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 
 import { AccountCard } from '@/components/settings/AccountCard';
+import { AppearanceCard } from '@/components/settings/AppearanceCard';
+import { AppVersion } from '@/components/settings/AppVersion';
+import { BulkActionsCard } from '@/components/settings/BulkActionsCard';
 import { FirmDetailsForm } from '@/components/settings/FirmDetailsForm';
 import { PaymentTermsForm } from '@/components/settings/PaymentTermsForm';
 import { SettingsCard } from '@/components/settings/SettingsCard';
@@ -20,6 +23,7 @@ export default function SettingsScreen() {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
       <ScrollView contentContainerClassName="gap-4 p-4" keyboardShouldPersistTaps="handled">
         <AccountCard />
+        <AppearanceCard />
 
         <SettingsCard {...PAYMENT_TERMS_SECTION} setting={paymentTerms} savedMessage="Payment Terms Saved.">
           <PaymentTermsForm
@@ -39,6 +43,10 @@ export default function SettingsScreen() {
             saving={firmDetails.saving}
           />
         </SettingsCard>
+
+        <BulkActionsCard />
+
+        <AppVersion />
       </ScrollView>
     </KeyboardAvoidingView>
   );

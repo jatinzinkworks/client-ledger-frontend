@@ -1,5 +1,5 @@
 import type { CompanyRequest, CompanyResponse } from '@cl/api'
-import { DELETE_COMPANY_IN_USE, DELETE_COMPANY_WARNING, LAST_COMPANY_REASON, companyFormDefaults } from '@cl/schemas'
+import { DELETE_COMPANY_IN_USE, DELETE_COMPANY_REFUSED, DELETE_COMPANY_WARNING, LAST_COMPANY_REASON, companyFormDefaults } from '@cl/schemas'
 
 import { DeleteButton } from '@/components/DeleteButton'
 
@@ -49,7 +49,7 @@ export function EditCompanyForm({
           itemName={company.companyName ?? 'This Company'}
           description={DELETE_COMPANY_WARNING}
           disabledReason={onlyCompany ? LAST_COMPANY_REASON : hasServices ? DELETE_COMPANY_IN_USE : undefined}
-          conflictMessage={DELETE_COMPANY_IN_USE}
+          conflictMessage={DELETE_COMPANY_REFUSED}
           onDelete={async () => {
             await onDelete()
             onDeleted()

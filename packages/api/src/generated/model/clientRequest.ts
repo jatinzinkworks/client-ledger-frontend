@@ -12,6 +12,12 @@ import type { NewCompanyRequest } from './newCompanyRequest';
  */
 export interface ClientRequest {
   /**
+     * The firm's own identifier for the client: PSC- followed by 5 digits, held by no other client. GET /clients/next-client-id suggests the next free one. It cannot be changed once the client is added
+     * @minLength 1
+     * @pattern ^PSC-[0-9]{5}$
+     */
+  clientId: string;
+  /**
      * Given name of the client
      * @minLength 0
      * @maxLength 100

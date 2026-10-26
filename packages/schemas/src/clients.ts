@@ -10,6 +10,7 @@ import {
   type ManagerResponse,
 } from '@cl/api';
 import {
+  createClientBodyClientIdRegExp as CLIENT_ID_PATTERN,
   createClientBodyCompaniesItemAddressMax as ADDRESS_MAX,
   createClientBodyCompaniesItemCompanyNameMax as COMPANY_NAME_MAX,
   createClientBodyCompaniesItemDiscountPercentMax as COMPANY_DISCOUNT_MAX,
@@ -100,8 +101,18 @@ export const clientDetailsSchema = z.object({
   discountPercent: optionalPercent(DISCOUNT_MAX, `Enter A Discount From 0 To ${DISCOUNT_MAX}%.`),
 });
 
-/** Onboarding: the client's details plus at least one company. */
+/** "PSC-00042": the firm's own client id, chosen on Onboard Client and fixed after that. */
+export const CLIENT_ID_LABEL = 'Client ID';
+
+/** Onboarding: the client id, the client's details and at least one company. */
 export const clientFormSchema = clientDetailsSchema.extend({
+  // Typed in lower case or with spaces around it, it still matches the backend's PSC-NNNNN.
+  clientId: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(1, 'Enter The Client ID.')
+    .regex(CLIENT_ID_PATTERN, 'Use PSC- Followed By 5 Digits, Such As PSC-00042.'),
   companies: z
     .array(companyFormSchema)
     .min(1, 'Add At Least One Company.')
@@ -125,6 +136,8 @@ export type ClientFormValues = z.output<typeof clientFormSchema>;
 export type ClientDetailsInput = z.input<typeof clientDetailsSchema>;
 export type ClientDetailsValues = z.output<typeof clientDetailsSchema>;
 export type ClientField = Exclude<keyof ClientFormInput, 'companies'>;
+/** The fields Edit Client holds: every client field but the client id, which cannot change. */
+export type ClientDetailsField = keyof ClientDetailsInput;
 export type CompanyField = keyof CompanyFormInput;
 
 interface FieldCopy {
@@ -135,6 +148,11 @@ interface FieldCopy {
 
 /** Labels, placeholders and hints for the client fields, rendered identically by both apps. */
 export const CLIENT_FIELDS: Readonly<Record<ClientField, FieldCopy>> = {
+  clientId: {
+    label: CLIENT_ID_LABEL,
+    placeholder: 'PSC-00001',
+    hint: 'Filled In With The Next Free ID. You Can Change It, But Not After The Client Is Added.',
+  },
   firstName: { label: 'First Name' },
   lastName: { label: 'Last Name' },
   phone: { label: 'Phone', placeholder: '+91 98xxx Xxxxx' },
@@ -199,8 +217,12 @@ export const companyFormDefaults = (company: CompanyResponse): CompanyFormInput 
   openingBalanceDate: company.openingBalanceDate ?? '',
 });
 
-/** A blank onboarding form: one company, since every client needs at least one. */
-export const clientFormDefaults = (): ClientFormInput => ({
+/**
+ * A blank onboarding form: one company, since every client needs at least one. The client id is
+ * blank until the suggested one arrives (see `useNextClientId`).
+ */
+export const clientFormDefaults = (clientId = ''): ClientFormInput => ({
+  clientId,
   firstName: '',
   lastName: '',
   phone: '',
@@ -238,7 +260,7 @@ type PartialClientForm = Partial<Omit<ClientFormInput, 'companies'>> & {
  * gates the Onboard button; format checks (email, phone) still run on submit.
  */
 export function isClientFormComplete(values: PartialClientForm): boolean {
-  return isClientDetailsComplete(values) && areCompaniesComplete(values.companies);
+  return filled(values.clientId) && isClientDetailsComplete(values) && areCompaniesComplete(values.companies);
 }
 
 /** The request body for a parsed form; a blank birthday or discount is omitted rather than sent. */
@@ -296,6 +318,9 @@ export const toCompanyRequest = (
 export const hasOpeningBalance = (defaults: Pick<CompanyFormInput, 'openingBalance'>) =>
   defaults.openingBalance != null && defaults.openingBalance !== '' && Number(defaults.openingBalance) !== 0;
 
+/** Refused with 409 on Onboard Client: another client already holds the id. */
+export const DUPLICATE_CLIENT_ID = 'Another Client Already Has This Client ID. Choose Another.';
+
 /** How many more companies a client may hold (the backend allows at most MAX_COMPANIES). */
 export const companiesLeft = (held: number) => Math.max(0, MAX_COMPANIES - held);
 
@@ -309,8 +334,15 @@ export const TOO_MANY_COMPANIES = `A Client Can Hold Up To ${COMPANIES_MAX} Comp
 /** Why a company's delete is unavailable: a client must keep at least one. */
 export const LAST_COMPANY_REASON = "A Client Must Keep At Least One Company. Delete The Client Instead.";
 
-/** Why the backend refuses (409) to delete a company: services are still assigned to it. */
+/** Why a company's delete is unavailable when it has services (known before asking the backend). */
 export const DELETE_COMPANY_IN_USE = 'This Company Still Has Services. Remove Those Services First.';
+
+/**
+ * Why the backend refuses (409) to delete a company, when it does not say: services, or payments or
+ * service charges in its ledger (a financial record, never deleted). An opening balance alone does not stop it.
+ */
+export const DELETE_COMPANY_REFUSED =
+  'This Company Has Services, Or Payments Or Service Charges In Its Ledger, So It Cannot Be Deleted.';
 
 /** The Delete Company warning. */
 export const DELETE_COMPANY_WARNING = 'The Company Is Removed From This Client. This Cannot Be Undone.';
@@ -355,8 +387,12 @@ export function deleteClientWarning(client: Pick<ClientResponse, 'companies'>): 
   return `${companies} Deleted Too. This Cannot Be Undone.`;
 }
 
-/** Why the backend refuses (409): services are still assigned to one of the companies. */
-export const DELETE_CLIENT_IN_USE = "This Client's Companies Still Have Services. Remove Those Services First.";
+/**
+ * Why the backend refuses (409) to delete a client, when it does not say: a company of theirs has
+ * services, or payments or service charges in its ledger. Opening balances alone do not stop it.
+ */
+export const DELETE_CLIENT_IN_USE =
+  "This Client's Companies Have Services, Or Payments Or Service Charges In Their Ledgers, So The Client Cannot Be Deleted.";
 
 /** The manager filter's "everyone" value. */
 export const ALL_MANAGERS = 'ALL';
@@ -368,7 +404,7 @@ export const managerFilterOptions = (managers: readonly ManagerResponse[]) => [
 ];
 
 /**
- * Clients matching the search — case-insensitive on the client's name, email or any of their
+ * Clients matching the search — case-insensitive on the client's name, client id, email or any of their
  * company names — and, unless `managerId` is ALL_MANAGERS, looked after by that manager.
  */
 export function filterClients<T extends ClientSummaryResponse>(
@@ -383,7 +419,7 @@ export function filterClients<T extends ClientSummaryResponse>(
     (c) =>
       (managerId === ALL_MANAGERS || c.managerId === managerId) &&
       (!overdueOnly || accountStatus(c.totalPending) === 'OVERDUE') &&
-      (!q || [clientName(c), c.email ?? '', ...(c.companyNames ?? [])].some((text) => text.toLowerCase().includes(q))),
+      (!q || [clientName(c), c.clientId ?? '', c.email ?? '', ...(c.companyNames ?? [])].some((text) => text.toLowerCase().includes(q))),
   );
 }
 
@@ -417,11 +453,12 @@ export const clientSinceLabel = (createdAt: string | undefined) => {
 };
 
 /**
- * The text details under the client page's name: email, phone, manager, discount, client since.
+ * The text details under the client page's name: client id, email, phone, manager, discount, client since.
  * The birthday follows them, with its icon, so each app renders it.
  */
 export const clientHeaderDetails = (client: ClientResponse): string[] =>
   [
+    client.clientId && `${CLIENT_ID_LABEL}: ${client.clientId}`,
     client.email,
     client.phone,
     client.managerName && `Manager: ${client.managerName}`,

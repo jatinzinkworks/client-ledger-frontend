@@ -2,6 +2,7 @@ import { errorMessage, useFirmDetails, usePaymentTerms } from '@cl/api'
 import { CircleAlert } from 'lucide-react'
 
 import { PageHeader } from '@/components/PageHeader'
+import { BulkActionsSection } from '@/components/settings/BulkActionsSection'
 import { SettingsForm } from '@/components/settings/SettingsForm'
 import { Spinner } from '@/components/Spinner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -42,6 +43,8 @@ export function SettingsPage() {
           }}
         />
       )}
+      {/* Independent of the forms above (shown even if they fail to load): these act on every client. */}
+      <BulkActionsSection />
       {saveErrors.map((error, i) => (
         <Alert key={i} variant="destructive">
           <CircleAlert />

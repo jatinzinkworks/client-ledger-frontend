@@ -4,11 +4,13 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import type { SignOutReason } from '@cl/schemas';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { AUTH_ENABLED } from '@/utils/config';
 
+import { clearCookies } from './clearCookies';
 import { rememberUser, restoreUser } from './googleAuth';
 
 type AuthStatus = 'checking' | 'signedOut' | 'signedIn';
@@ -24,8 +26,10 @@ interface AuthState {
   user: SignedInUser | null;
   signingIn: boolean;
   error: string | null;
+  /** Why the user was signed out in this session, until they sign in again; null otherwise. */
+  signedOutReason: SignOutReason | null;
   signIn: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (reason?: SignOutReason) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -47,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SignedInUser | null>(null);
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signedOutReason, setSignedOutReason] = useState<SignOutReason | null>(null);
 
   useEffect(() => {
     if (!AUTH_ENABLED) return;
@@ -67,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!isSuccessResponse(response)) return; // cancelled
       rememberUser(response.data);
       setUser(response.data.user);
+      setSignedOutReason(null);
       setStatus('signedIn');
     } catch (e) {
       setError(signInError(e));
@@ -75,18 +81,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (reason: SignOutReason = 'user') => {
     await GoogleSignin.signOut().catch(() => null);
     rememberUser(null);
+    await clearCookies();
     // Nothing of the previous user's books stays on screen for the next one.
     queryClient.clear();
     setUser(null);
+    setSignedOutReason(reason);
     setStatus('signedOut');
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ status, user, signingIn, error, signIn, signOut }),
-    [status, user, signingIn, error, signIn, signOut],
+    () => ({ status, user, signingIn, error, signedOutReason, signIn, signOut }),
+    [status, user, signingIn, error, signedOutReason, signIn, signOut],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

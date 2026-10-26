@@ -2,7 +2,7 @@ import type { CompanyResponse } from '@cl/api'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ApiError } from '@cl/api'
-import { DELETE_COMPANY_IN_USE } from '@cl/schemas'
+import { DELETE_COMPANY_IN_USE, DELETE_COMPANY_REFUSED } from '@cl/schemas'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Sheet, SheetContent } from '@/components/ui/sheet'
@@ -93,14 +93,24 @@ describe('EditCompanyForm', () => {
     expect(onDelete).toHaveBeenCalledTimes(1)
   })
 
-  it('explains a 409 when the company still has services', async () => {
-    const onDelete = vi.fn().mockRejectedValue(new ApiError(409, { status: 409, code: 'BUSINESS_RULE_VIOLATION' }))
+  it('explains a 409 that gives no reason', async () => {
+    const onDelete = vi.fn().mockRejectedValue(new ApiError(409, { status: 409, code: 'RESOURCE_IN_USE' }))
     const { onDeleted, user } = setup({ onDelete })
     await user.click(screen.getByRole('button', { name: 'Delete Company' }))
     await user.click(screen.getByRole('button', { name: 'Delete Company' }))
 
-    expect(await screen.findByText(DELETE_COMPANY_IN_USE)).toBeVisible()
+    expect(await screen.findByText(DELETE_COMPANY_REFUSED)).toBeVisible()
     expect(onDeleted).not.toHaveBeenCalled()
+  })
+
+  it("shows the backend's reason for a 409, such as ledger entries", async () => {
+    const reason = 'Mehta Textiles Pvt Ltd has payments or service charges in its ledger'
+    const onDelete = vi.fn().mockRejectedValue(new ApiError(409, { status: 409, code: 'RESOURCE_IN_USE', message: reason }, reason))
+    const { user } = setup({ onDelete })
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+    await user.click(screen.getByRole('button', { name: 'Delete Company' }))
+
+    expect(await screen.findByText(reason)).toBeVisible()
   })
 
   it("won't delete a company that still has services", () => {

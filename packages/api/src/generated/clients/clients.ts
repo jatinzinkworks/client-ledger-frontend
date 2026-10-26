@@ -33,7 +33,8 @@ import type {
   ClientUpdateRequest,
   ErrorResponse,
   ImportClientsBody,
-  ListClientsParams
+  ListClientsParams,
+  NextClientIdResponse
 } from '../model';
 
 import { apiFetch } from '../../fetcher';
@@ -68,7 +69,7 @@ export const getGetClientUrl = (id: string,) => {
 }
 
 /**
- * Returns one client by identifier, with their companies in full and the name of the manager who looks after them.
+ * Returns one client by identifier, with their client id, their companies in full and the name of the manager who looks after them.
  * @summary Fetch a client
  */
 export const getClient = async (id: string, options?: Parameters<typeof apiFetch>[1]): Promise<ClientResponse> => {
@@ -169,7 +170,7 @@ export const getUpdateClientUrl = (id: string,) => {
 }
 
 /**
- * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
+ * Replaces a client's own fields wholesale. The client's companies are left as they are; add or delete them through the company endpoints. The client id cannot be changed, so it is not part of the payload. An omitted client discount resets to zero. Companies without a discount of their own take the new client discount.
  * @summary Update a client
  */
 export const updateClient = async (id: string,
@@ -427,7 +428,7 @@ export const useUpdateManager1 = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
+ * Returns every client, or only the clients of one manager when managerId is given, ordered by last name then first name. Each entry carries the client's client id and names the client's companies only; fetch a client by id for the full company details. Each entry also carries what the client still owes (totalPending): everything billed to all of their companies less every payment received, across all financial years. The list is returned whole; it is not paged.
  * @summary List clients
  */
 export const listClients = async (params?: ListClientsParams, options?: Parameters<typeof apiFetch>[1]): Promise<ClientSummaryResponse[]> => {
@@ -528,7 +529,7 @@ export const getCreateClientUrl = () => {
 }
 
 /**
- * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog. A company may bring an opening balance: what it owed (positive) or was owed (negative) when taken on, dated openingBalanceDate or the day the client is added. It is recorded in the company's ledger as an OPENING_BALANCE entry, counted in what is pending but not as billed. Nothing is created when any of it cannot be.
+ * Adds a client together with the companies they hold. Every field is mandatory, at least one company must be supplied, and the assigned manager must already exist in the Manager Catalog. The clientId is the firm's own identifier for the client, PSC- followed by 5 digits: no other client may hold it, and it cannot be changed afterwards. GET /clients/next-client-id suggests the next free one. A company may bring an opening balance: what it owed (positive) or was owed (negative) when taken on, dated openingBalanceDate or the day the client is added. It is recorded in the company's ledger as an OPENING_BALANCE entry, counted in what is pending but not as billed. Nothing is created when any of it cannot be.
  * @summary Create a client
  */
 export const createClient = async (clientRequest: ClientRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ClientResponse> => {
@@ -616,7 +617,7 @@ export const useCreateClient = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Creates every client on a filled-in import template (GET /clients/import/template), each with the companies the Companies sheet links to them, as POST /clients would. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their email in the Manager Catalog. Up to 500 clients may be imported at once, each with 1 to 50 companies. Clients already on file are not looked for, so importing the same workbook twice creates its clients twice. The response lists each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.
+ * Imports a filled-in import template (GET /clients/import/template), matching clients by their Client ID, ignoring case. A Client ID no client holds yet creates the client, with the companies the Companies sheet links to it, as POST /clients would. A Client ID a client already holds adds the companies linked to it to that client, as POST /clients/{id}/companies would, leaving the client's own details as they are; such a client need not be on the Clients sheet. The import is all or nothing: every row is checked first, and if any cell is missing or invalid, nothing is created and each cell at fault is listed under errors, by reference such as Clients!F3. Managers are named by their full name in the Manager Catalog. Up to 500 clients may be listed at once; each new client needs 1 to 50 companies, and no client may hold more than 50 in all. Importing the same workbook twice does not create its clients twice, but adds their companies again. The response lists each client created or added to, and each company created with the opening balance recorded for it, and counts and adds those balances up per client and overall, so they can be checked against the workbook.
  * @summary Import clients and their companies from an Excel workbook
  */
 export const importClients = async (importClientsBody?: ImportClientsBody, options?: Parameters<typeof apiFetch>[1]): Promise<ClientImportResponse> => {
@@ -685,7 +686,108 @@ export const useImportClients = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getImportClientsMutationOptions(options), queryClient);
     }
-    export const getDownloadTemplate1Url = () => {
+    export const getNextClientIdUrl = () => {
+
+
+
+
+  return `/psc/cl/v1/clients/next-client-id`
+}
+
+/**
+ * Returns the client id to give the next client added: the highest client id held plus one, as PSC-00042, or PSC-00001 when there are no clients. The id is not reserved: if another client is added under it first, creating a client with it returns 409, and this endpoint can be asked again.
+ * @summary Get the next free client id
+ */
+export const nextClientId = async ( options?: Parameters<typeof apiFetch>[1]): Promise<NextClientIdResponse> => {
+
+  return apiFetch<NextClientIdResponse>(getNextClientIdUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getNextClientIdQueryKey = () => {
+    return [
+    `/psc/cl/v1/clients/next-client-id`
+    ] as const;
+    }
+
+
+export const getNextClientIdQueryOptions = <TData = Awaited<ReturnType<typeof nextClientId>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getNextClientIdQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof nextClientId>>> = ({ signal }) => nextClientId({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type NextClientIdQueryResult = NonNullable<Awaited<ReturnType<typeof nextClientId>>>
+export type NextClientIdQueryError = ErrorType<ErrorResponse>
+
+
+export function useNextClientId<TData = Awaited<ReturnType<typeof nextClientId>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nextClientId>>,
+          TError,
+          Awaited<ReturnType<typeof nextClientId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNextClientId<TData = Awaited<ReturnType<typeof nextClientId>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nextClientId>>,
+          TError,
+          Awaited<ReturnType<typeof nextClientId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNextClientId<TData = Awaited<ReturnType<typeof nextClientId>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get the next free client id
+ */
+
+export function useNextClientId<TData = Awaited<ReturnType<typeof nextClientId>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nextClientId>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getNextClientIdQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+export const getDownloadTemplate1Url = () => {
 
 
 
@@ -694,7 +796,7 @@ export const useImportClients = <TError = ErrorType<ErrorResponse>,
 }
 
 /**
- * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client Ref, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client Ref, Company Name, Company Type, Address and Discount %, linked to its client by the Client Ref. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
+ * Returns the Excel workbook to fill in for POST /clients/import. Its Clients sheet takes one row per client: Client ID, First Name, Last Name, Phone, Email, Manager Name, Discount % and Birthday. Its Companies sheet takes one row per company: Client ID, Company Name, Company Type, Address, Discount %, Opening Balance and Opening Balance Date, linked to its client by the Client ID. An Instructions sheet describes every column with an example. Only clients and their companies are imported; services are assigned afterwards as usual.
  * @summary Download the client import template
  */
 export const downloadTemplate1 = async ( options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {

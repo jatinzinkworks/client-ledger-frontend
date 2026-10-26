@@ -18,6 +18,17 @@ export function fieldErrors(error: unknown): Record<string, string> {
   );
 }
 
+/** The backend's own explanation (`ErrorResponse.message`), when it gave one. */
+export function serverMessage(error: unknown): string | undefined {
+  if (!(error instanceof ApiError)) return undefined;
+  return (error.body as ErrorResponse | undefined)?.message || undefined;
+}
+
+/** True when the backend refused because of a clash, such as a name or id already taken (409). */
+export function isConflict(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 409;
+}
+
 /** True when the resource simply does not exist yet (e.g. payment terms before first save). */
 export function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404;

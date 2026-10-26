@@ -1,14 +1,18 @@
 /// <reference types="vitest/config" />
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
+  // The release version lives in the repo-root `version` file; shown in the sidebar.
+  const version = readFileSync(new URL('../../version', import.meta.url), 'utf8').trim()
   return {
     plugins: [react(), tailwindcss()],
+    define: { __APP_VERSION__: JSON.stringify(version) },
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
       // The shared workspace packages are symlinked, so make sure they resolve the app's

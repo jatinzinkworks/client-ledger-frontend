@@ -1,12 +1,22 @@
+import { versionLabel } from '@cl/schemas'
 import { NavLink, Outlet } from 'react-router'
 
+import { useIdleTimeout } from '@/auth/useIdleTimeout'
+import { useSignOut } from '@/auth/useSignOut'
 import { FinancialYearPicker } from '@/components/FinancialYearPicker'
+import { SignOutButton } from '@/components/SignOutButton'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { cn } from '@/lib/utils'
 import { FIRM } from '@/utils/branding'
+import { APP_VERSION } from '@/utils/config'
 import { NAV_ITEMS } from '@/utils/navigation'
 
+const SIDEBAR_ACTION = 'text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground'
+
 export function AppLayout() {
+  const signOut = useSignOut()
+  useIdleTimeout(() => void signOut('idle'))
+
   return (
     <div className="flex min-h-svh flex-col md:flex-row">
       <aside className="flex shrink-0 flex-col gap-6 bg-sidebar px-3 py-4 text-sidebar-foreground md:sticky md:top-0 md:h-svh md:w-52 md:overflow-y-auto md:py-6">
@@ -47,8 +57,11 @@ export function AppLayout() {
           ))}
         </nav>
 
-        <div className="border-t border-sidebar-border pt-3 md:mt-auto">
-          <ThemeToggle className="text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground" />
+        <div className="flex flex-wrap gap-1 border-t border-sidebar-border pt-3 md:mt-auto md:flex-col md:flex-nowrap md:items-start">
+          <ThemeToggle className={SIDEBAR_ACTION} />
+          <SignOutButton className={SIDEBAR_ACTION} />
+          {/* Lines up with the buttons' icons (size="sm" buttons with an icon pad 2.5). */}
+          <span className="w-full px-2.5 pt-1 text-left text-xs text-sidebar-muted">{versionLabel(APP_VERSION)}</span>
         </div>
       </aside>
 

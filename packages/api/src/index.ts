@@ -3,10 +3,11 @@
 export * from './generated';
 export * from './generated/model';
 export { ApiError, apiDownload, apiFetch, configureApi, fileNameFrom, type ApiConfig, type DownloadedFile } from './fetcher';
-export { errorMessage, fieldErrors, isNotFound } from './errors';
+export { errorMessage, fieldErrors, isConflict, isNotFound, serverMessage } from './errors';
 
 // Hand-written hooks composing the generated ones — shared screen logic for both apps.
 export { useBirthdays } from './hooks/useBirthdays';
+export { useBulkActions, type BulkRun } from './hooks/useBulkActions';
 export { useClient } from './hooks/useClient';
 export {
   useClientLedgerExport,
@@ -22,6 +23,7 @@ export { useClientYearBalances } from './hooks/useClientYearBalances';
 export { useCompany } from './hooks/useCompany';
 export { LEDGER_PAGE_SIZE, useCompanyLedger } from './hooks/useCompanyLedger';
 export { useClients } from './hooks/useClients';
+export { useNextClientId } from './hooks/useNextClientId';
 export { useFirmDetails } from './hooks/useFirmDetails';
 export { useManagerCatalog } from './hooks/useManagerCatalog';
 export { useManagerClients } from './hooks/useManagerClients';

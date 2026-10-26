@@ -33,6 +33,7 @@ import {
 } from './clients';
 
 const valid: ClientFormInput = {
+  clientId: 'PSC-00042',
   firstName: 'Rajesh',
   lastName: 'Mehta',
   phone: '+91 98200 12345',
@@ -61,8 +62,9 @@ describe('clientFormSchema', () => {
   });
 
   it('lists the client page details', () => {
-    const client = { email: 'a@b.in', phone: '99999', managerName: 'Neha Kulkarni', discountPercent: 10, createdAt: '2026-10-04T10:15:30Z' };
+    const client = { clientId: 'PSC-00007', email: 'a@b.in', phone: '99999', managerName: 'Neha Kulkarni', discountPercent: 10, createdAt: '2026-10-04T10:15:30Z' };
     expect(clientHeaderDetails(client)).toEqual([
+      'Client ID: PSC-00007',
       'a@b.in',
       '99999',
       'Manager: Neha Kulkarni',
@@ -90,6 +92,7 @@ describe('clientFormSchema', () => {
 
   it('requires every field, including each company field', () => {
     expect(issuesFor({ ...clientFormDefaults() })).toEqual({
+      clientId: 'Enter The Client ID.',
       firstName: 'Enter The First Name.',
       lastName: 'Enter The Last Name.',
       phone: 'Enter The Phone Number.',
@@ -98,6 +101,13 @@ describe('clientFormSchema', () => {
       'companies.0.companyName': 'Enter The Company Name.',
       'companies.0.address': 'Enter The Registered Address.',
     });
+  });
+
+  it('takes a client id of PSC- and 5 digits, tidied up as typed', () => {
+    expect(clientFormSchema.parse({ ...valid, clientId: ' psc-00042 ' }).clientId).toBe('PSC-00042');
+    const wrong = 'Use PSC- Followed By 5 Digits, Such As PSC-00042.';
+    expect(issuesFor({ ...valid, clientId: 'PSC-42' })).toEqual({ clientId: wrong });
+    expect(issuesFor({ ...valid, clientId: 'ABC-00042' })).toEqual({ clientId: wrong });
   });
 
   it('requires at least one company', () => {
@@ -112,6 +122,11 @@ describe('clientFormSchema', () => {
 });
 
 describe('clientFormDefaults', () => {
+  it('starts with the suggested client id, or none', () => {
+    expect(clientFormDefaults('PSC-00042').clientId).toBe('PSC-00042');
+    expect(clientFormDefaults().clientId).toBe('');
+  });
+
   it('starts with one blank Private Limited company', () => {
     expect(clientFormDefaults().companies).toEqual([
       { companyName: '', companyType: 'PRIVATE_LIMITED', address: '', discountPercent: '', openingBalance: '', openingBalanceDate: '' },
@@ -125,6 +140,7 @@ describe('isClientFormComplete', () => {
     expect(isClientFormComplete({ ...valid, discountPercent: '10' })).toBe(true);
     expect(isClientFormComplete(clientFormDefaults())).toBe(false);
     expect(isClientFormComplete({ ...valid, managerId: '' })).toBe(false);
+    expect(isClientFormComplete({ ...valid, clientId: '' })).toBe(false);
     expect(isClientFormComplete({ ...valid, email: '   ' })).toBe(false);
   });
 
@@ -146,8 +162,8 @@ describe('clientFieldFromApi', () => {
 
 describe('display helpers', () => {
   const clients = [
-    { firstName: 'Rajesh', lastName: 'Mehta', email: 'rajesh@mehtatextiles.in', managerId: 'm-1', companyNames: ['Mehta Textiles Pvt Ltd', 'Mehta Exports LLP'] },
-    { firstName: 'Priya', lastName: 'Nair', email: 'priya@nairstudio.in', managerId: 'm-2', companyNames: ['Nair Design Studio LLP'] },
+    { clientId: 'PSC-00001', firstName: 'Rajesh', lastName: 'Mehta', email: 'rajesh@mehtatextiles.in', managerId: 'm-1', companyNames: ['Mehta Textiles Pvt Ltd', 'Mehta Exports LLP'] },
+    { clientId: 'PSC-00002', firstName: 'Priya', lastName: 'Nair', email: 'priya@nairstudio.in', managerId: 'm-2', companyNames: ['Nair Design Studio LLP'] },
   ];
 
   it('counts clients and their companies', () => {
@@ -155,7 +171,8 @@ describe('display helpers', () => {
     expect(clientCountLabel(clients.slice(1))).toBe('1 Client · 1 Company');
   });
 
-  it('searches names, emails and company names', () => {
+  it('searches names, client ids, emails and company names', () => {
+    expect(filterClients(clients, 'psc-00002').map(clientName)).toEqual(['Priya Nair']);
     expect(filterClients(clients, 'exports').map(clientName)).toEqual(['Rajesh Mehta']);
     expect(filterClients(clients, 'NAIRSTUDIO').map(clientName)).toEqual(['Priya Nair']);
     expect(filterClients(clients, ' ')).toHaveLength(2);
